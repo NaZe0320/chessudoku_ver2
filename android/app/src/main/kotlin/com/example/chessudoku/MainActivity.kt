@@ -1,4 +1,4 @@
-package com.example.chessudoku
+package com.naze.chessudoku
 
 import io.flutter.embedding.android.FlutterActivity
 
