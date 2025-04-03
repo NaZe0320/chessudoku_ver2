@@ -32,7 +32,10 @@ class MainScreen extends ConsumerWidget {
           BottomNavigationBarItem(icon: Icon(Icons.gamepad), label: '퍼즐'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: '소셜'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: '상점점'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: '상점',
+          ),
         ],
       ),
     );
