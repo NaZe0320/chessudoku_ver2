@@ -1,3 +1,5 @@
+import 'package:chessudoku/data/repositories/puzzle_repository.dart';
+import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/domain/intents/puzzle_intent.dart';
 import 'package:chessudoku/domain/intents/select_tab_intent.dart';
 import 'package:chessudoku/domain/notifiers/navigation_notifier.dart';
@@ -36,4 +38,12 @@ final puzzleProvider = Provider<PuzzleState>(
 // 퍼즐 인텐트 프로바이더
 final puzzleIntentProvider = Provider<PuzzleIntent>(
   (ref) => PuzzleIntent(ref),
+);
+
+// 캐시 서비스 프로바이더 (싱글톤)
+final cacheServiceProvider = Provider<CacheService>((ref) => CacheService());
+
+// 퍼즐 레포지토리 프로바이더
+final puzzleRepositoryProvider = Provider<PuzzleRepository>(
+  (ref) => PuzzleRepository(ref.watch(cacheServiceProvider)),
 );

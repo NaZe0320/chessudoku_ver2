@@ -23,7 +23,7 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
 
   // 타이머 시작
   void startTimer() {
-    if (state.isTimerRunning) return;
+    if (state.isTimerRunning || _timer != null) return;
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       state = state.copyWith(
@@ -31,11 +31,15 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
         isTimerRunning: true,
       );
     });
+
+    // 타이머 상태를 즉시 실행 중으로 설정
+    state = state.copyWith(isTimerRunning: true);
   }
 
   // 타이머 정지
   void stopTimer() {
     _timer?.cancel();
+    _timer = null;
     state = state.copyWith(isTimerRunning: false);
   }
 
@@ -44,6 +48,22 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
     stopTimer();
     state = state.copyWith(elapsedTime: Duration.zero);
     startTimer();
+  }
+
+  // 타이머 일시정지
+  void pauseTimer() {
+    if (state.isTimerRunning) {
+      _timer?.cancel();
+      _timer = null;
+      state = state.copyWith(isTimerRunning: false);
+    }
+  }
+
+  // 타이머 재개
+  void resumeTimer() {
+    if (!state.isTimerRunning && !state.isCompleted) {
+      startTimer();
+    }
   }
 
   // 새 게임 초기화 (보드 데이터 주입)
@@ -62,6 +82,12 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
       historyIndex: -1, // 히스토리 인덱스 초기화
       isNoteMode: false, // 메모 모드 비활성화
     );
+  }
+
+  // 저장된 게임 상태로 초기화
+  void initializeGameWithState(PuzzleState savedState) {
+    // 저장된 상태를 그대로 사용하되, 타이머는 정지 상태로 시작
+    state = savedState.copyWith(isTimerRunning: false);
   }
 
   // 셀 선택

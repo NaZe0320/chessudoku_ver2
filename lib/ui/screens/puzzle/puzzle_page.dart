@@ -1,6 +1,7 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/routes/app_routes.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/ui/screens/puzzle/widgets/continue_game_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,6 +12,34 @@ class PuzzlePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final intent = ref.read(puzzleIntentProvider);
 
+    // 난이도별 게임 시작 핸들러
+    Future<void> handleStartGame(Difficulty difficulty) async {
+      // 난이도 변경
+      intent.changeDifficulty(difficulty);
+
+      // 선택한 난이도의 저장된 게임이 있는지 확인
+      final hasSavedGame = intent.hasSavedGame(difficulty);
+
+      if (hasSavedGame) {
+        // 저장된 게임이 있으면 다이얼로그 표시
+        final shouldContinue =
+            await ContinueGameDialog.show(context, difficulty);
+
+        if (shouldContinue == true) {
+          // 이어하기 선택 - 저장된 데이터 사용
+          AppRoutes.navigateToPuzzleScreen(context, difficulty);
+        } else if (shouldContinue == false) {
+          // 새로 시작 선택 - 저장된 데이터 삭제 후 시작
+          await intent.clearSavedGameState(difficulty);
+          AppRoutes.navigateToPuzzleScreen(context, difficulty);
+        }
+        // shouldContinue가 null이면 취소된 것이므로 아무 동작 없음
+      } else {
+        // 저장된 게임이 없으면 바로 게임 화면으로 이동
+        AppRoutes.navigateToPuzzleScreen(context, difficulty);
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('퍼즐')),
       body: Center(
@@ -18,26 +47,17 @@ class PuzzlePage extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: () {
-                intent.changeDifficulty(Difficulty.easy);
-                AppRoutes.navigateToPuzzleScreen(context, Difficulty.easy);
-              },
+              onPressed: () => handleStartGame(Difficulty.easy),
               child: const Text('쉬움'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                intent.changeDifficulty(Difficulty.medium);
-                AppRoutes.navigateToPuzzleScreen(context, Difficulty.medium);
-              },
+              onPressed: () => handleStartGame(Difficulty.medium),
               child: const Text('보통'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                intent.changeDifficulty(Difficulty.hard);
-                AppRoutes.navigateToPuzzleScreen(context, Difficulty.hard);
-              },
+              onPressed: () => handleStartGame(Difficulty.hard),
               child: const Text('어려움'),
             ),
           ],

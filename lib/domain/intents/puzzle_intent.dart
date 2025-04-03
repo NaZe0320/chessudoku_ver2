@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/data/repositories/puzzle_repository.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/notifiers/puzzle_notifier.dart';
@@ -16,16 +17,36 @@ class PuzzleIntent {
   // 노티파이어에 대한 참조를 쉽게 얻기 위한 getter
   PuzzleNotifier get _notifier => ref.read(puzzleNotifierProvider.notifier);
 
+  // 레포지토리에 대한 참조를 쉽게 얻기 위한 getter
+  PuzzleRepository get _repository => ref.read(puzzleRepositoryProvider);
+
   // 난이도 변경
   void changeDifficulty(Difficulty difficulty) {
     _notifier.changeDifficulty(difficulty);
   }
 
   // 새 게임 초기화 (간소화된 버전)
-  void initializeGame() {
+  Future<void> initializeGame() async {
     // 타이머 중지
     _notifier.stopTimer();
 
+    final state = ref.read(puzzleProvider);
+    final difficulty = state.difficulty;
+
+    // 저장된 게임 상태가 있는지 확인
+    final hasSavedState = _repository.hasCachedPuzzleState(difficulty);
+
+    if (hasSavedState) {
+      // 저장된 게임 상태 불러오기
+      final savedState = await _repository.loadPuzzleState(difficulty);
+      if (savedState != null) {
+        // 저장된 상태로 초기화 (타이머는 정지 상태로)
+        _notifier.initializeGameWithState(savedState);
+        return;
+      }
+    }
+
+    // 저장된 상태가 없는 경우 새 게임 생성
     const boardSize = 9;
     final random = Random();
 
@@ -64,6 +85,27 @@ class PuzzleIntent {
 
     // 타이머 시작
     _notifier.startTimer();
+  }
+
+  // 현재 게임 상태를 캐시에 저장
+  Future<bool> saveGameState() async {
+    final currentState = ref.read(puzzleProvider);
+    return await _repository.savePuzzleState(currentState);
+  }
+
+  // 캐시에서 게임 상태 삭제
+  Future<bool> clearSavedGameState([Difficulty? difficulty]) async {
+    if (difficulty != null) {
+      return await _repository.clearPuzzleState(difficulty);
+    } else {
+      final currentState = ref.read(puzzleProvider);
+      return await _repository.clearPuzzleState(currentState.difficulty);
+    }
+  }
+
+  // 저장된 게임이 있는지 확인
+  bool hasSavedGame(Difficulty difficulty) {
+    return _repository.hasCachedPuzzleState(difficulty);
   }
 
   // 셀 선택
@@ -140,6 +182,8 @@ class PuzzleIntent {
 
       if (isCompleted) {
         _notifier.stopTimer();
+        // 게임 완료 시 저장된 상태 삭제
+        clearSavedGameState();
       }
     }
   }
@@ -197,24 +241,6 @@ class PuzzleIntent {
 
     final newState = state.redo();
     _notifier.updateState(newState);
-  }
-
-  // 게임 재시작
-  void restartGame() {
-    final state = ref.read(puzzleProvider);
-    // 원래 보드의 초기값만 유지하고 나머지 셀은 비우기
-    final boardSize = state.boardSize;
-    final newBoard = List.generate(
-      boardSize,
-      (row) => List.generate(
-        boardSize,
-        (col) => state.board[row][col].isInitial
-            ? state.board[row][col]
-            : const CellContent(),
-      ),
-    );
-
-    _notifier.restartGame(newBoard);
   }
 
   // 보드의 깊은 복사 생성
@@ -287,7 +313,6 @@ class PuzzleIntent {
       }
     }
 
-    // 모든 검사 통과하면 완료
     return true;
   }
 
@@ -305,5 +330,15 @@ class PuzzleIntent {
       case ChessPiece.knight:
         return '♞';
     }
+  }
+
+  // 타이머 일시정지
+  void pauseTimer() {
+    _notifier.pauseTimer();
+  }
+
+  // 타이머 재개
+  void resumeTimer() {
+    _notifier.resumeTimer();
   }
 }
