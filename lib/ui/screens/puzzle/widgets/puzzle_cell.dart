@@ -40,9 +40,7 @@ class PuzzleCell extends ConsumerWidget {
     if (isSelected) {
       cellColor = AppColors.primaryLight.withAlpha(30);
     } else if (cell.isInitial) {
-      cellColor = cell.hasChessPiece
-          ? AppColors.secondaryLight.withAlpha(30)
-          : AppColors.neutral200;
+      cellColor = AppColors.neutral200;
     } else {
       cellColor = AppColors.neutral100;
     }
@@ -72,26 +70,73 @@ class PuzzleCell extends ConsumerWidget {
           ),
         ),
         alignment: Alignment.center,
-        child: cell.hasChessPiece
-            ? Text(
-                intent.getChessPieceSymbol(cell.chessPiece!),
-                style: TextStyle(
-                  fontSize: cellSize * 0.5,
-                  color: AppColors.neutral900,
-                  fontWeight: FontWeight.bold,
+        child: _buildCellContent(cell, intent),
+      ),
+    );
+  }
+
+  Widget _buildCellContent(cell, intent) {
+    // 체스 기물이 있는 경우
+    if (cell.hasChessPiece) {
+      return Text(
+        intent.getChessPieceSymbol(cell.chessPiece!),
+        style: TextStyle(
+          fontSize: cellSize * 0.5,
+          color: AppColors.neutral900,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    }
+
+    // 숫자가 있는 경우
+    if (cell.hasNumber) {
+      return Text(
+        cell.number.toString(),
+        style: TextStyle(
+          fontSize: cellSize * 0.5,
+          fontWeight: cell.isInitial ? FontWeight.bold : FontWeight.normal,
+          color: cell.isInitial ? AppColors.neutral900 : AppColors.primaryLight,
+        ),
+      );
+    }
+
+    // 메모가 있는 경우
+    if (cell.hasNotes) {
+      return _buildNotesGrid(cell);
+    }
+
+    // 빈 셀
+    return const SizedBox();
+  }
+
+  Widget _buildNotesGrid(cell) {
+    return GridView.builder(
+      padding: EdgeInsets.all(cellSize * 0.05),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1,
+        crossAxisSpacing: 1,
+        mainAxisSpacing: 1,
+      ),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 9,
+      itemBuilder: (context, index) {
+        final number = index + 1;
+        final hasNote = cell.hasNote(number);
+
+        return hasNote
+            ? Center(
+                child: Text(
+                  number.toString(),
+                  style: TextStyle(
+                    fontSize: cellSize * 0.2,
+                    color: AppColors.neutral700,
+                  ),
                 ),
               )
-            : Text(
-                cell.number?.toString() ?? '',
-                style: TextStyle(
-                  fontSize: cellSize * 0.5,
-                  fontWeight:
-                      cell.isInitial ? FontWeight.bold : FontWeight.normal,
-                  color:
-                      cell.isInitial ? AppColors.neutral900 : AppColors.primaryLight,
-                ),
-              ),
-      ),
+            : const SizedBox();
+      },
     );
   }
 }

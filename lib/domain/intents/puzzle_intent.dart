@@ -5,6 +5,7 @@ import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/notifiers/puzzle_notifier.dart';
+import 'package:chessudoku/domain/states/puzzle_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PuzzleIntent {
@@ -91,16 +92,55 @@ class PuzzleIntent {
       return;
     }
 
-    final newBoard = _deepCopyBoard(state.board);
-    newBoard[state.selectedRow!][state.selectedCol!] =
-        CellContent(number: number);
+    final row = state.selectedRow!;
+    final col = state.selectedCol!;
+    final oldContent = state.board[row][col];
 
-    final isCompleted = _checkCompletion(newBoard);
+    // 메모 모드인 경우
+    if (state.isNoteMode) {
+      final CellContent newContent = oldContent.toggleNote(number);
 
-    _notifier.updateBoard(newBoard, isCompleted);
+      // 액션 생성 및 히스토리에 추가
+      final action = PuzzleAction(
+        row: row,
+        col: col,
+        oldContent: oldContent,
+        newContent: newContent,
+      );
 
-    if (isCompleted) {
-      _notifier.stopTimer();
+      final newState = state.addAction(action);
+
+      // 보드 업데이트
+      final newBoard = _deepCopyBoard(state.board);
+      newBoard[row][col] = newContent;
+
+      _notifier.updateBoardWithState(newBoard, newState);
+    } else {
+      // 일반 모드 - 숫자 입력
+      final CellContent newContent = CellContent(number: number);
+
+      // 액션 생성 및 히스토리에 추가
+      final action = PuzzleAction(
+        row: row,
+        col: col,
+        oldContent: oldContent,
+        newContent: newContent,
+      );
+
+      final newState = state.addAction(action);
+
+      // 보드 업데이트
+      final newBoard = _deepCopyBoard(state.board);
+      newBoard[row][col] = newContent;
+
+      final isCompleted = _checkCompletion(newBoard);
+
+      _notifier.updateBoardWithState(newBoard, newState,
+          isCompleted: isCompleted);
+
+      if (isCompleted) {
+        _notifier.stopTimer();
+      }
     }
   }
 
@@ -114,10 +154,49 @@ class PuzzleIntent {
       return;
     }
 
-    final newBoard = _deepCopyBoard(state.board);
-    newBoard[state.selectedRow!][state.selectedCol!] = const CellContent();
+    final row = state.selectedRow!;
+    final col = state.selectedCol!;
+    final oldContent = state.board[row][col];
+    const CellContent newContent = CellContent();
 
-    _notifier.updateBoard(newBoard, false);
+    // 액션 생성 및 히스토리에 추가
+    final action = PuzzleAction(
+      row: row,
+      col: col,
+      oldContent: oldContent,
+      newContent: newContent,
+    );
+
+    final newState = state.addAction(action);
+
+    // 보드 업데이트
+    final newBoard = _deepCopyBoard(state.board);
+    newBoard[row][col] = newContent;
+
+    _notifier.updateBoardWithState(newBoard, newState, isCompleted: false);
+  }
+
+  // 메모 모드 토글
+  void toggleNoteMode() {
+    _notifier.toggleNoteMode();
+  }
+
+  // 되돌리기 액션
+  void undoAction() {
+    final state = ref.read(puzzleProvider);
+    if (!state.canUndo) return;
+
+    final newState = state.undo();
+    _notifier.updateState(newState);
+  }
+
+  // 다시 실행 액션
+  void redoAction() {
+    final state = ref.read(puzzleProvider);
+    if (!state.canRedo) return;
+
+    final newState = state.redo();
+    _notifier.updateState(newState);
   }
 
   // 게임 재시작

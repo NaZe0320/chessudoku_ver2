@@ -58,6 +58,9 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
       isCompleted: false,
       boardSize: boardSize,
       elapsedTime: Duration.zero,
+      history: [], // 히스토리 초기화
+      historyIndex: -1, // 히스토리 인덱스 초기화
+      isNoteMode: false, // 메모 모드 비활성화
     );
   }
 
@@ -74,6 +77,28 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
     );
   }
 
+  // 히스토리와 함께 보드 업데이트
+  void updateBoardWithState(
+    List<List<CellContent>> newBoard,
+    PuzzleState newState, {
+    bool? isCompleted,
+  }) {
+    state = newState.copyWith(
+      board: newBoard,
+      isCompleted: isCompleted ?? state.isCompleted,
+    );
+  }
+
+  // 상태 업데이트
+  void updateState(PuzzleState newState) {
+    state = newState;
+  }
+
+  // 메모 모드 토글
+  void toggleNoteMode() {
+    state = state.toggleNoteMode();
+  }
+
   // 게임 재시작
   void restartGame(List<List<CellContent>> newBoard) {
     state = state.copyWith(
@@ -81,6 +106,9 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
       selectedRow: null,
       selectedCol: null,
       isCompleted: false,
+      history: [], // 히스토리 초기화
+      historyIndex: -1, // 히스토리 인덱스 초기화
+      isNoteMode: false, // 메모 모드 비활성화
     );
 
     resetTimer();

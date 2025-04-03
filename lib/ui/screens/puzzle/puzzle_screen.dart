@@ -76,19 +76,22 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
           children: [
             // 헤더 - 난이도 및 완료 메시지
             PuzzleHeader(),
-
-            // 퍼즐 보드
             Expanded(
-              child: PuzzleBoard(),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    spacing: 16,
+                    children: [
+                      PuzzleBoard(),
+                    // 난이도 선택 및 게임 제어 버튼
+                    PuzzleControls(),
+                    // 숫자 키패드
+                    PuzzleKeypad(),
+                    ],
+                  ),
+                ),
+              )
             ),
-
-            // 숫자 키패드
-            PuzzleKeypad(),
-
-            // 난이도 선택 및 게임 제어 버튼
-            PuzzleControls(),
-
-            SizedBox(height: 10),
           ],
         ),
       ),

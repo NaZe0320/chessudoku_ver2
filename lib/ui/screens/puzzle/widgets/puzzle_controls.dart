@@ -1,6 +1,4 @@
 import 'package:chessudoku/core/di/providers.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/ui/common/widgets/app_button.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:chessudoku/ui/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
@@ -16,54 +14,71 @@ class PuzzleControls extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: AppColors.neutral200,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.neutral300),
-            ),
-            child: DropdownButton<Difficulty>(
-              value: puzzleState.difficulty,
-              underline: const SizedBox(),
-              icon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
-              items: Difficulty.values.map((difficulty) {
-                return DropdownMenuItem<Difficulty>(
-                  value: difficulty,
-                  child: Text(
-                    difficulty.label,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.neutral800,
+          // 히스토리 컨트롤 행
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 되돌리기 버튼
+              IconButton(
+                onPressed:
+                    puzzleState.canUndo ? () => intent.undoAction() : null,
+                icon: const Icon(Icons.undo),
+                color: puzzleState.canUndo
+                    ? AppColors.primary
+                    : AppColors.neutral400,
+                tooltip: '되돌리기',
+              ),
+
+              // 메모 모드 토글 버튼
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                child: ElevatedButton.icon(
+                  onPressed: () => intent.toggleNoteMode(),
+                  icon: Icon(
+                    Icons.edit_note,
+                    color: puzzleState.isNoteMode
+                        ? AppColors.neutral100
+                        : AppColors.primary,
+                  ),
+                  label: Text(
+                    '메모 모드',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: puzzleState.isNoteMode
+                          ? AppColors.neutral100
+                          : AppColors.primary,
                     ),
                   ),
-                );
-              }).toList(),
-              onChanged: (Difficulty? newValue) {
-                if (newValue != null) {
-                  intent.changeDifficulty(newValue);
-                }
-              },
-            ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: puzzleState.isNoteMode
+                        ? AppColors.primary
+                        : AppColors.neutral200,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                ),
+              ),
+
+              // 다시 실행 버튼
+              IconButton(
+                onPressed:
+                    puzzleState.canRedo ? () => intent.redoAction() : null,
+                icon: const Icon(Icons.redo),
+                color: puzzleState.canRedo
+                    ? AppColors.primary
+                    : AppColors.neutral400,
+                tooltip: '다시 실행',
+              ),
+            ],
           ),
-          AppButton(
-            text: '새 게임',
-            onTap: () => intent.initializeGame(),
-            type: ButtonType.success,
-            size: ButtonSize.medium,
-            prefixIcon:
-                const Icon(Icons.add, color: AppColors.neutral100, size: 18),
-          ),
-          AppButton(
-            text: '재시작',
-            onTap: () => intent.restartGame(),
-            type: ButtonType.warning,
-            size: ButtonSize.medium,
-            prefixIcon: const Icon(Icons.refresh,
-                color: AppColors.neutral100, size: 18),
-          ),
+
+          const SizedBox(height: 10),
         ],
       ),
     );

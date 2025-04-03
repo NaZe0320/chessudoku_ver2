@@ -17,7 +17,7 @@ class PuzzleBoard extends ConsumerWidget {
 
     // 화면에 맞게 보드 크기 조정
     final widthSize = screenSize.width * 0.9;
-    final heightSize = screenSize.height * 0.7;
+    final heightSize = screenSize.height * 0.6;
     final boardLength = widthSize < heightSize ? widthSize : heightSize;
     final cellSize = boardLength / boardSize;
 
