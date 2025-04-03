@@ -1,6 +1,5 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/routes/app_routes.dart';
-import 'package:chessudoku/domain/intents/select_tab_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,12 +9,14 @@ class MainScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navigationState = ref.watch(navigationProvider);
+    final navigationIntent = ref.read(navigationIntentProvider);
+
     return Scaffold(
       body: AppRoutes.navigationPages[navigationState.selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: navigationState.selectedIndex,
         onTap: (index) {
-          SelectTabIntent(ref, index).execute();
+          navigationIntent.selectTab(index);
         },
         type: BottomNavigationBarType.fixed,
         items: const [
