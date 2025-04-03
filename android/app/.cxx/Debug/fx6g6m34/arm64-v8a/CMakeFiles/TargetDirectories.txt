@@ -1,0 +1,2 @@
+C:/Users/jison/AndroidStudioProjects/ChesSudoku/chessudoku/android/app/.cxx/Debug/fx6g6m34/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/jison/AndroidStudioProjects/ChesSudoku/chessudoku/android/app/.cxx/Debug/fx6g6m34/arm64-v8a/CMakeFiles/rebuild_cache.dir

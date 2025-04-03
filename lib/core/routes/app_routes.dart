@@ -1,4 +1,5 @@
 import 'package:chessudoku/ui/screens/home/home_page.dart';
+import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:chessudoku/ui/screens/test/test_page.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,7 @@ class AppRoutes {
   static const String store = '/store';
 
   static Map<String, WidgetBuilder> get routes => {
+        main: (context) => MainScreen(),
         home: (context) => const HomePage(),
         puzzle: (context) => const TestPage(),
         social: (context) => const TestPage(),
