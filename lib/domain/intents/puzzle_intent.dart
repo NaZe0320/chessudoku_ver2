@@ -158,32 +158,54 @@ class PuzzleIntent {
 
       _notifier.updateBoardWithState(newBoard, newState);
     } else {
-      // 일반 모드 - 숫자 입력
-      final CellContent newContent = CellContent(number: number);
+      // 일반 모드 - 숫자 입력 또는 제거
+      // 이미 같은 숫자가 있는 경우 숫자 제거
+      if (oldContent.hasNumber && oldContent.number == number) {
+        const CellContent newContent = CellContent();
 
-      // 액션 생성 및 히스토리에 추가
-      final action = PuzzleAction(
-        row: row,
-        col: col,
-        oldContent: oldContent,
-        newContent: newContent,
-      );
+        // 액션 생성 및 히스토리에 추가
+        final action = PuzzleAction(
+          row: row,
+          col: col,
+          oldContent: oldContent,
+          newContent: newContent,
+        );
 
-      final newState = state.addAction(action);
+        final newState = state.addAction(action);
 
-      // 보드 업데이트
-      final newBoard = _deepCopyBoard(state.board);
-      newBoard[row][col] = newContent;
+        // 보드 업데이트
+        final newBoard = _deepCopyBoard(state.board);
+        newBoard[row][col] = newContent;
 
-      final isCompleted = _checkCompletion(newBoard);
+        _notifier.updateBoardWithState(newBoard, newState, isCompleted: false);
+      } else {
+        // 다른 숫자를 입력하는 경우
+        final CellContent newContent = CellContent(number: number);
 
-      _notifier.updateBoardWithState(newBoard, newState,
-          isCompleted: isCompleted);
+        // 액션 생성 및 히스토리에 추가
+        final action = PuzzleAction(
+          row: row,
+          col: col,
+          oldContent: oldContent,
+          newContent: newContent,
+        );
 
-      if (isCompleted) {
-        _notifier.stopTimer();
-        // 게임 완료 시 저장된 상태 삭제
-        clearSavedGameState();
+        final newState = state.addAction(action);
+
+        // 보드 업데이트
+        final newBoard = _deepCopyBoard(state.board);
+        newBoard[row][col] = newContent;
+
+        final isCompleted = _checkCompletion(newBoard);
+
+        _notifier.updateBoardWithState(newBoard, newState,
+            isCompleted: isCompleted);
+
+        if (isCompleted) {
+          _notifier.stopTimer();
+          // 게임 완료 시 저장된 상태 삭제
+          clearSavedGameState();
+        }
       }
     }
   }

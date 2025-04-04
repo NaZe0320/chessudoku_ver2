@@ -93,14 +93,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primary.withAlpha(13),
-              AppColors.neutral100,
-            ],
-          ),
+          color: AppColors.primary.withAlpha(13),
         ),
         child: Stack(
           children: [
