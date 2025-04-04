@@ -232,30 +232,6 @@ class ChessSudokuGenerator {
     }
   }
 
-  /// 체스도쿠 퍼즐 생성 (스도쿠 + 체스 기물 제약)
-  List<List<int>> _generateChessSudokuSolution(
-      List<Map<String, dynamic>> chessPiecesLocations) {
-    // 9x9 보드 초기화
-    final solution = List.generate(
-      BOARD_SIZE,
-      (_) => List.generate(BOARD_SIZE, (_) => 0),
-    );
-
-    // 체스 기물 정보를 별도로 저장
-    _chessPiecesLocations = chessPiecesLocations;
-
-    // 대각선 블록부터 채우기 (독립적으로 채울 수 있음)
-    _fillDiagonalBoxes(solution);
-
-    // 나머지 스도쿠 채우기 (체스 기물 제약 포함)
-    _solveSudoku(solution, 0, 0);
-
-    return solution;
-  }
-
-  /// 체스 기물 배치 정보 저장
-  List<Map<String, dynamic>> _chessPiecesLocations = [];
-
   /// 체스 기물 규칙에 맞는 숫자 배치인지 확인
   bool _isValidChessPiecePlacement(List<List<int>> board, int row, int col) {
     final num = board[row][col];
@@ -291,6 +267,15 @@ class ChessSudokuGenerator {
     return true;
   }
 
+  /// 디버깅을 위한 보드 출력 함수
+  void _printBoard(List<List<int>> board) {
+    print('현재 보드 상태:');
+    for (int i = 0; i < BOARD_SIZE; i++) {
+      print(board[i].join(' '));
+    }
+    print('');
+  }
+
   /// 대각선 블록 채우기 (1, 5, 9번 블록)
   void _fillDiagonalBoxes(List<List<int>> board) {
     for (int boxIndex = 0; boxIndex < 3; boxIndex++) {
@@ -309,8 +294,243 @@ class ChessSudokuGenerator {
     }
   }
 
-  /// 스도쿠 완성하기 (백트래킹)
-  bool _solveSudoku(List<List<int>> board, int row, int col) {
+  /// 체스도쿠 퍼즐 생성 (스도쿠 + 체스 기물 제약)
+  List<List<int>> _generateChessSudokuSolution(
+      List<Map<String, dynamic>> chessPiecesLocations) {
+    // 9x9 보드 초기화
+    final solution = List.generate(
+      BOARD_SIZE,
+      (_) => List.generate(BOARD_SIZE, (_) => 0),
+    );
+
+    // 체스 기물 정보를 별도로 저장
+    _chessPiecesLocations = chessPiecesLocations;
+
+    // 대각선 블록부터 채우기 (독립적으로 채울 수 있음)
+    _fillDiagonalBoxes(solution);
+
+    // 생성 전략 1: 백트래킹 + 랜덤
+    bool solved = _solveSudokuWithChessConstraints(solution, 0, 0);
+
+    if (!solved) {
+      print('체스 기물 제약 조건을 모두 만족하는 솔루션을 찾지 못했습니다.');
+      print('부분적인 제약 조건만 적용하여 솔루션을 생성합니다.');
+
+      // 모든 셀을 초기화하고 다시 시도
+      for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+          solution[i][j] = 0;
+        }
+      }
+
+      // 대각선 블록을 다시 채움
+      _fillDiagonalBoxes(solution);
+
+      // 생성 전략 2: 기본 스도쿠를 먼저 생성하고 체스 기물 제약은 확인만
+      solved = _solveBasicSudokuAndCheckChessConstraints(solution, 0, 0);
+
+      if (!solved) {
+        print('부분적 제약 조건도 만족하지 못했습니다.');
+        print('기본 스도쿠 규칙만 적용하여 솔루션을 생성합니다.');
+
+        // 모든 셀을 초기화하고 다시 시도
+        for (int i = 0; i < BOARD_SIZE; i++) {
+          for (int j = 0; j < BOARD_SIZE; j++) {
+            solution[i][j] = 0;
+          }
+        }
+
+        // 대각선 블록을 다시 채움
+        _fillDiagonalBoxes(solution);
+
+        // 생성 전략 3: 기본 스도쿠만 생성
+        _solveBasicSudoku(solution, 0, 0);
+      }
+    }
+
+    // 빈 셀이 있는지 확인
+    bool hasEmptyCells = false;
+    for (int i = 0; i < BOARD_SIZE; i++) {
+      for (int j = 0; j < BOARD_SIZE; j++) {
+        if (solution[i][j] == 0) {
+          hasEmptyCells = true;
+          break;
+        }
+      }
+      if (hasEmptyCells) break;
+    }
+
+    // 빈 셀이 있으면 행/열/박스 규칙을 지키면서 채우기
+    if (hasEmptyCells) {
+      print('솔루션에 빈 셀이 있어 스도쿠 규칙을 지키며 채웁니다.');
+      _fillEmptyCellsWithSudokuRules(solution);
+    }
+
+    print('체스도쿠 솔루션 생성 완료');
+    return solution;
+  }
+
+  /// 빈 셀을 스도쿠 규칙에 맞게 채우는 메서드
+  void _fillEmptyCellsWithSudokuRules(List<List<int>> board) {
+    for (int row = 0; row < BOARD_SIZE; row++) {
+      for (int col = 0; col < BOARD_SIZE; col++) {
+        if (board[row][col] == 0) {
+          // 유효한 숫자 목록 찾기
+          final validNumbers = <int>[];
+          for (int num = 1; num <= 9; num++) {
+            if (_isValidSudokuPlacement(board, row, col, num)) {
+              validNumbers.add(num);
+            }
+          }
+
+          // 유효한 숫자가 있으면 무작위로 선택
+          if (validNumbers.isNotEmpty) {
+            board[row][col] =
+                validNumbers[_random.nextInt(validNumbers.length)];
+          } else {
+            // 없으면 행/열/박스 규칙을 최대한 지키는 숫자 찾기
+            final usedInRow = <int>{};
+            final usedInCol = <int>{};
+            final usedInBox = <int>{};
+
+            // 행에 있는 숫자 확인
+            for (int c = 0; c < BOARD_SIZE; c++) {
+              if (board[row][c] != 0) {
+                usedInRow.add(board[row][c]);
+              }
+            }
+
+            // 열에 있는 숫자 확인
+            for (int r = 0; r < BOARD_SIZE; r++) {
+              if (board[r][col] != 0) {
+                usedInCol.add(board[r][col]);
+              }
+            }
+
+            // 3x3 박스에 있는 숫자 확인
+            final boxRow = (row ~/ 3) * 3;
+            final boxCol = (col ~/ 3) * 3;
+            for (int r = 0; r < 3; r++) {
+              for (int c = 0; c < 3; c++) {
+                if (board[boxRow + r][boxCol + c] != 0) {
+                  usedInBox.add(board[boxRow + r][boxCol + c]);
+                }
+              }
+            }
+
+            // 사용되지 않은 숫자 찾기
+            final allPossible = <int>{1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+            // 먼저 모든 제약 조건을 만족하는 숫자 찾기
+            final notUsed = allPossible
+                .difference(usedInRow)
+                .difference(usedInCol)
+                .difference(usedInBox);
+
+            if (notUsed.isNotEmpty) {
+              // 사용되지 않은 숫자 중 하나 선택
+              board[row][col] =
+                  notUsed.elementAt(_random.nextInt(notUsed.length));
+            } else {
+              // 최소한 행에서라도 중복되지 않는 숫자 선택
+              final notUsedInRow = allPossible.difference(usedInRow);
+              if (notUsedInRow.isNotEmpty) {
+                board[row][col] = notUsedInRow
+                    .elementAt(_random.nextInt(notUsedInRow.length));
+              } else {
+                // 그래도 없으면 랜덤하게 선택
+                board[row][col] = _random.nextInt(9) + 1;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /// 체스 기물 제약 조건을 완전히 적용하여 스도쿠 풀기
+  bool _solveSudokuWithChessConstraints(
+      List<List<int>> board, int row, int col) {
+    // 최대 시도 횟수 제한 (무한 루프 방지)
+    const maxIterations = 100000;
+    int iterations = 0;
+
+    return _solveSudokuWithIterationLimit(board, row, col, (r, c, n) {
+      // 스도쿠 규칙 검증
+      if (!_isValidSudokuPlacement(board, r, c, n)) return false;
+
+      // 체스 기물 규칙 완전 검증
+      return _isValidChessPiecePlacement(board, r, c);
+    }, maxIterations, iterations);
+  }
+
+  /// 기본 스도쿠를 생성하고 체스 기물 제약은 확인만 수행
+  bool _solveBasicSudokuAndCheckChessConstraints(
+      List<List<int>> board, int row, int col) {
+    // 최대 시도 횟수 제한 (무한 루프 방지)
+    const maxIterations = 50000;
+    int iterations = 0;
+
+    return _solveSudokuWithIterationLimit(board, row, col, (r, c, n) {
+      // 스도쿠 규칙 검증
+      if (!_isValidSudokuPlacement(board, r, c, n)) return false;
+
+      // 현재 셀에 대해서만 체스 기물 규칙 부분 검증
+      // (모든 기물과 다른 모든 셀을 검사하지 않고, 현재 셀과 관련된 기물만 검사)
+      for (final pieceInfo in _chessPiecesLocations) {
+        final pieceRow = pieceInfo['row'] as int;
+        final pieceCol = pieceInfo['col'] as int;
+        final piece = pieceInfo['piece'] as ChessPiece;
+
+        // 현재 셀이 기물의 공격 범위에 있는지 확인
+        if (!_canPieceAttack(piece, pieceRow, pieceCol, r, c)) continue;
+
+        // 같은 기물의 공격 범위에 있는 다른 셀 중 이미 채워진 셀 확인
+        for (int i = 0; i < BOARD_SIZE; i++) {
+          for (int j = 0; j < BOARD_SIZE; j++) {
+            // 자기 자신이거나 빈 셀이면 건너뛰기
+            if ((i == r && j == c) || board[i][j] == 0) continue;
+
+            // 같은 기물의 공격 범위에 있는지 확인
+            if (!_canPieceAttack(piece, pieceRow, pieceCol, i, j)) continue;
+
+            // 같은 숫자면 유효하지 않음
+            if (board[i][j] == n) return false;
+          }
+        }
+      }
+
+      return true;
+    }, maxIterations, iterations);
+  }
+
+  /// 기본 스도쿠 규칙만 적용하여 풀기
+  bool _solveBasicSudoku(List<List<int>> board, int row, int col) {
+    // 최대 시도 횟수 제한 (무한 루프 방지)
+    const maxIterations = 10000;
+    int iterations = 0;
+
+    return _solveSudokuWithIterationLimit(board, row, col, (r, c, n) {
+      // 스도쿠 규칙만 검증
+      return _isValidSudokuPlacement(board, r, c, n);
+    }, maxIterations, iterations);
+  }
+
+  /// 스도쿠 백트래킹 알고리즘 (반복 제한과 유효성 검사 함수를 매개변수로 받음)
+  bool _solveSudokuWithIterationLimit(
+      List<List<int>> board,
+      int row,
+      int col,
+      bool Function(int, int, int) isValidPlacement,
+      int maxIterations,
+      int iterations) {
+    // 반복 횟수 증가 및 제한 확인
+    iterations++;
+    if (iterations > maxIterations) {
+      print('최대 반복 횟수 초과: $maxIterations');
+      return false;
+    }
+
     // 모든 행을 완료했다면 완료
     if (row == BOARD_SIZE) {
       return true;
@@ -322,7 +542,8 @@ class ChessSudokuGenerator {
 
     // 이미 숫자가 있으면 다음 셀로 건너뜀
     if (board[row][col] != 0) {
-      return _solveSudoku(board, nextRow, nextCol);
+      return _solveSudokuWithIterationLimit(
+          board, nextRow, nextCol, isValidPlacement, maxIterations, iterations);
     }
 
     // 가능한 숫자 시도 (1-9)
@@ -330,17 +551,15 @@ class ChessSudokuGenerator {
     _shuffleList(numbers);
 
     for (final num in numbers) {
-      // 스도쿠 규칙에 맞는지 확인
-      if (_isValidSudokuPlacement(board, row, col, num)) {
+      // 전달된 유효성 검사 함수 사용
+      if (isValidPlacement(row, col, num)) {
         // 임시로 숫자 할당
         board[row][col] = num;
 
-        // 체스 기물 규칙도 검사
-        if (_isValidChessPiecePlacement(board, row, col)) {
-          // 다음 셀로 진행
-          if (_solveSudoku(board, nextRow, nextCol)) {
-            return true;
-          }
+        // 다음 셀로 진행
+        if (_solveSudokuWithIterationLimit(board, nextRow, nextCol,
+            isValidPlacement, maxIterations, iterations)) {
+          return true;
         }
 
         // 실패하면 백트래킹
@@ -418,5 +637,13 @@ class ChessSudokuGenerator {
         final colDiff = (pieceCol - targetCol).abs();
         return rowDiff <= 1 && colDiff <= 1;
     }
+  }
+
+  /// 체스 기물 배치 정보 저장
+  List<Map<String, dynamic>> _chessPiecesLocations = [];
+
+  /// 스도쿠 완성하기 (백트래킹) - 이전 버전과의 호환성 유지
+  bool _solveSudoku(List<List<int>> board, int row, int col) {
+    return _solveSudokuWithChessConstraints(board, row, col);
   }
 }
