@@ -13,38 +13,64 @@ class PuzzleTimer extends ConsumerWidget {
     final puzzleIntent = ref.read(puzzleIntentProvider);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primaryDark,
-        borderRadius: BorderRadius.circular(15),
+        gradient: const LinearGradient(
+          colors: [
+            AppColors.primaryDark,
+            AppColors.primary,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withAlpha(77),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer, size: 18, color: AppColors.neutral100),
+          const Icon(
+            Icons.timer_outlined,
+            size: 16,
+            color: AppColors.neutral100,
+          ),
           const SizedBox(width: 4),
           Text(
             puzzleState.formattedTime,
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.bold,
+            style: AppTextStyles.buttonMedium.copyWith(
               color: AppColors.neutral100,
+              fontSize: 14,
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: Icon(
-              puzzleState.isTimerRunning ? Icons.pause : Icons.play_arrow,
-              size: 18,
-              color: AppColors.neutral100,
+          const SizedBox(width: 4),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (puzzleState.isTimerRunning) {
+                  puzzleIntent.pauseTimer();
+                } else {
+                  puzzleIntent.resumeTimer();
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: Icon(
+                  puzzleState.isTimerRunning
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
+                  size: 16,
+                  color: AppColors.neutral100,
+                ),
+              ),
             ),
-            onPressed: () {
-              if (puzzleState.isTimerRunning) {
-                puzzleIntent.pauseTimer();
-              } else {
-                puzzleIntent.resumeTimer();
-              }
-            },
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
           ),
         ],
       ),

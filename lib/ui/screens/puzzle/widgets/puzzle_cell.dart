@@ -1,5 +1,6 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
+import 'package:chessudoku/ui/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,13 +33,13 @@ class PuzzleCell extends ConsumerWidget {
         puzzleState.selectedRow == row && puzzleState.selectedCol == col;
 
     // 3x3 박스 경계 처리
-    final isRightBorder = (col + 1) % 3 == 0 && col < boardSize - 1;
-    final isBottomBorder = (row + 1) % 3 == 0 && row < boardSize - 1;
+    final isRightBorder = (col + 1) % 3 == 0 && col <= boardSize - 1;
+    final isBottomBorder = (row + 1) % 3 == 0 && row <= boardSize - 1;
 
     // 셀 배경색 결정
     Color cellColor;
     if (isSelected) {
-      cellColor = AppColors.primaryLight.withAlpha(30);
+      cellColor = AppColors.primaryLight.withAlpha(64);
     } else if (cell.isInitial) {
       cellColor = AppColors.neutral200;
     } else {
@@ -47,27 +48,40 @@ class PuzzleCell extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () => intent.selectCell(row, col),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: cellColor,
           border: Border(
             right: BorderSide(
-              width: isRightBorder ? 1 : 0.5,
-              color: AppColors.neutral700,
+              width: isRightBorder ? 2 : 0.5,
+              color:
+                  isRightBorder ? AppColors.neutral700 : AppColors.neutral400,
             ),
             bottom: BorderSide(
-              width: isBottomBorder ? 1 : 0.5,
-              color: AppColors.neutral700,
+              width: isBottomBorder ? 2 : 0.5,
+              color:
+                  isBottomBorder ? AppColors.neutral700 : AppColors.neutral400,
             ),
             top: BorderSide(
-              width: row == 0 ? 1 : 0.5,
-              color: AppColors.neutral700,
+              width: row == 0 ? 2 : 0.5,
+              color: row == 0 ? AppColors.neutral700 : AppColors.neutral400,
             ),
             left: BorderSide(
-              width: col == 0 ? 1 : 0.5,
-              color: AppColors.neutral700,
+              width: col == 0 ? 2 : 0.5,
+              color: col == 0 ? AppColors.neutral700 : AppColors.neutral400,
             ),
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withAlpha(77),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  )
+                ]
+              : null,
         ),
         alignment: Alignment.center,
         child: _buildCellContent(cell, intent),
@@ -92,11 +106,7 @@ class PuzzleCell extends ConsumerWidget {
     if (cell.hasNumber) {
       return Text(
         cell.number.toString(),
-        style: TextStyle(
-          fontSize: cellSize * 0.5,
-          fontWeight: cell.isInitial ? FontWeight.bold : FontWeight.normal,
-          color: cell.isInitial ? AppColors.neutral900 : AppColors.primaryLight,
-        ),
+        style: AppTextStyles.cellNumber(isInitial: cell.isInitial),
       );
     }
 
@@ -129,10 +139,7 @@ class PuzzleCell extends ConsumerWidget {
             ? Center(
                 child: Text(
                   number.toString(),
-                  style: TextStyle(
-                    fontSize: cellSize * 0.2,
-                    color: AppColors.neutral700,
-                  ),
+                  style: AppTextStyles.cellNote,
                 ),
               )
             : const SizedBox();

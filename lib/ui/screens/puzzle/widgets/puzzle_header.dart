@@ -13,55 +13,115 @@ class PuzzleHeader extends ConsumerWidget {
 
     return Column(
       children: [
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         // 현재 난이도 표시
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           decoration: BoxDecoration(
-            color: AppColors.primaryLight.withAlpha(10),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.primaryLight.withAlpha(30)),
-          ),
-          child: Text(
-            '현재 난이도: ${puzzleState.difficulty.label}',
-            style: AppTextStyles.headline3.copyWith(
-              color: AppColors.primary,
-              fontSize: 18,
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withAlpha(26),
+                AppColors.primaryLight.withAlpha(13),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withAlpha(26),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+            border: Border.all(
+              color: AppColors.primary.withAlpha(51),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.leaderboard_rounded,
+                color: AppColors.primary,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '난이도: ${puzzleState.difficulty.label}',
+                style: AppTextStyles.subtitle2.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
         ),
 
         // 게임 완료 메시지
         if (puzzleState.isCompleted)
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 10),
+            margin: const EdgeInsets.symmetric(vertical: 8),
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
-              color: AppColors.success.withAlpha(10),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.success.withAlpha(26),
+                  AppColors.accent1.withAlpha(26),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.success.withAlpha(30)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withAlpha(26),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+              border: Border.all(
+                color: AppColors.success.withAlpha(77),
+                width: 1,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  Icons.check_circle,
+                  Icons.check_circle_rounded,
                   color: AppColors.success,
-                  size: 20,
+                  size: 18,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '축하합니다! 퍼즐을 완료했습니다!',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '축하합니다!',
+                      style: AppTextStyles.subtitle1.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '퍼즐을 성공적으로 완료했습니다.',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.success,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 8),
       ],
     );
   }

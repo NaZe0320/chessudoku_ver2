@@ -16,51 +16,53 @@ class PuzzleBoard extends ConsumerWidget {
     final boardSize = puzzleState.boardSize;
 
     // 화면에 맞게 보드 크기 조정
-    final widthSize = screenSize.width * 0.9;
+    final widthSize = screenSize.width - 32;
     final heightSize = screenSize.height * 0.6;
     final boardLength = widthSize < heightSize ? widthSize : heightSize;
     final cellSize = boardLength / boardSize;
 
-    return Center(
-      child: Container(
-        width: boardLength,
-        height: boardLength,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.neutral700, width: 2),
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.neutral400.withAlpha(30),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Container(
+      width: boardLength,
+      height: boardLength,
+      decoration: BoxDecoration(
+        color: AppColors.neutral200,
+        border: Border.all(
+          color: AppColors.neutral600,
+          width: 1.5,
         ),
-        child: puzzleState.board.isEmpty
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                ),
-              )
-            : GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: boardSize,
-                ),
-                itemCount: boardSize * boardSize,
-                itemBuilder: (context, index) {
-                  final row = index ~/ boardSize;
-                  final col = index % boardSize;
-
-                  return PuzzleCell(
-                    row: row,
-                    col: col,
-                    cellSize: cellSize,
-                    boardSize: boardSize,
-                  );
-                },
-              ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.neutral700.withAlpha(10),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+            spreadRadius: 0,
+          ),
+        ],
       ),
+      child: puzzleState.board.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
+            )
+          : GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: boardSize,
+              ),
+              itemCount: boardSize * boardSize,
+              itemBuilder: (context, index) {
+                final row = index ~/ boardSize;
+                final col = index % boardSize;
+
+                return PuzzleCell(
+                  row: row,
+                  col: col,
+                  cellSize: cellSize,
+                  boardSize: boardSize,
+                );
+              },
+            ),
     );
   }
 }

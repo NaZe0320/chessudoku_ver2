@@ -1,5 +1,6 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
+import 'package:chessudoku/ui/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,7 +13,7 @@ class PuzzleKeypad extends ConsumerWidget {
     final puzzleState = ref.watch(puzzleProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         children: [
           // 1-5 키패드
@@ -79,39 +80,38 @@ class PuzzleKeypad extends ConsumerWidget {
     bool isSelected = false,
   }) {
     return SizedBox(
-      width: 50,
-      height: 50,
+      width: 48,
+      height: 48,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(24),
           child: Ink(
             decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.primary
-                  : AppColors.primaryLight.withAlpha(10),
+              color: isSelected ? AppColors.primary : AppColors.neutral200,
               shape: BoxShape.circle,
-              boxShadow: [
-                if (!isSelected)
-                  BoxShadow(
-                    color: AppColors.neutral400.withAlpha(30),
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
-                  ),
-              ],
               border: Border.all(
-                color: isSelected
-                    ? AppColors.primaryLight
-                    : AppColors.primary.withAlpha(30),
-                width: 1.5,
+                color: isSelected ? Colors.transparent : AppColors.neutral300,
+                width: 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isSelected
+                      ? AppColors.primary.withAlpha(51)
+                      : AppColors.neutral400.withAlpha(10),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                  spreadRadius: 0,
+                ),
+              ],
             ),
             child: Center(
               child: Text(
                 '$number',
                 style: TextStyle(
-                  color: isSelected ? AppColors.neutral100 : AppColors.primary,
+                  color:
+                      isSelected ? AppColors.neutral100 : AppColors.neutral800,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -127,34 +127,38 @@ class PuzzleKeypad extends ConsumerWidget {
     required VoidCallback onTap,
   }) {
     return SizedBox(
-      width: 50,
-      height: 50,
+      width: 48,
+      height: 48,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(24),
           child: Ink(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFF44336), Color(0xFFFF5252)],
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.error.withAlpha(204),
+                  AppColors.error,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.error.withAlpha(30),
+                  color: AppColors.error.withAlpha(51),
                   blurRadius: 2,
                   offset: const Offset(0, 1),
+                  spreadRadius: 0,
                 ),
               ],
             ),
             child: const Center(
               child: Icon(
                 Icons.backspace_outlined,
-                color: Colors.white,
-                size: 24,
+                color: AppColors.neutral100,
+                size: 20,
               ),
             ),
           ),

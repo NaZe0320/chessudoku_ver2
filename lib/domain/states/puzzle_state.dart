@@ -76,7 +76,9 @@ class PuzzleState {
     if (selectedRow! < 0 ||
         selectedRow! >= boardSize ||
         selectedCol! < 0 ||
-        selectedCol! >= boardSize) return null;
+        selectedCol! >= boardSize) {
+      return null;
+    }
     return board[selectedRow!][selectedCol!];
   }
 

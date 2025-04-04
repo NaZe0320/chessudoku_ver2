@@ -2,19 +2,24 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTextStyles {
+  // 기본 폰트 패밀리
+  static const String _fontFamily = 'Pretendard'; // 또는 'NotoSansKR'로 변경 가능
+
   // 헤드라인 스타일
   static const TextStyle headline1 = TextStyle(
     fontSize: 32,
     fontWeight: FontWeight.bold,
     color: AppColors.neutral900,
-    letterSpacing: -1.5,
+    letterSpacing: -0.5,
+    height: 1.2,
   );
 
   static const TextStyle headline2 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: AppColors.neutral900,
-    letterSpacing: -0.5,
+    letterSpacing: -0.25,
+    height: 1.3,
   );
 
   static const TextStyle headline3 = TextStyle(
@@ -22,6 +27,24 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.neutral900,
     letterSpacing: 0,
+    height: 1.4,
+  );
+
+  // 부제목 스타일
+  static const TextStyle subtitle1 = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: AppColors.neutral800,
+    letterSpacing: 0.15,
+    height: 1.4,
+  );
+
+  static const TextStyle subtitle2 = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.neutral800,
+    letterSpacing: 0.1,
+    height: 1.5,
   );
 
   // 본문 스타일
@@ -30,13 +53,15 @@ class AppTextStyles {
     fontWeight: FontWeight.normal,
     color: AppColors.neutral800,
     letterSpacing: 0.15,
+    height: 1.5,
   );
 
   static const TextStyle bodyMedium = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
-    color: AppColors.neutral800,
+    color: AppColors.neutral700,
     letterSpacing: 0.25,
+    height: 1.5,
   );
 
   static const TextStyle bodySmall = TextStyle(
@@ -44,6 +69,16 @@ class AppTextStyles {
     fontWeight: FontWeight.normal,
     color: AppColors.neutral700,
     letterSpacing: 0.4,
+    height: 1.5,
+  );
+
+  // 캡션 스타일
+  static const TextStyle caption = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.normal,
+    color: AppColors.neutral600,
+    letterSpacing: 0.4,
+    height: 1.4,
   );
 
   // 버튼 스타일
@@ -52,6 +87,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.neutral100,
     letterSpacing: 0.5,
+    height: 1.4,
   );
 
   static const TextStyle buttonMedium = TextStyle(
@@ -59,6 +95,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.neutral100,
     letterSpacing: 0.5,
+    height: 1.4,
   );
 
   static const TextStyle buttonSmall = TextStyle(
@@ -66,5 +103,21 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.neutral100,
     letterSpacing: 0.5,
+    height: 1.4,
+  );
+
+  // 셀 스타일 (추가)
+  static TextStyle cellNumber({bool isInitial = false}) => TextStyle(
+        fontSize: 20,
+        fontWeight: isInitial ? FontWeight.bold : FontWeight.w500,
+        color: isInitial ? AppColors.neutral900 : AppColors.primary,
+        letterSpacing: 0,
+      );
+
+  static const TextStyle cellNote = TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.normal,
+    color: AppColors.neutral600,
+    letterSpacing: 0,
   );
 }
