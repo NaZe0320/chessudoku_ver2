@@ -14,44 +14,48 @@ class PuzzleControls extends ConsumerWidget {
     final intent = ref.read(puzzleIntentProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
         children: [
-          // 되돌리기 버튼
-          _buildIconButton(
-            icon: Icons.undo,
-            onTap: puzzleState.canUndo ? () => intent.undoAction() : null,
-            isEnabled: puzzleState.canUndo,
-            tooltip: '되돌리기',
-          ),
-
-          // 메모 모드 토글 버튼
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            child: AppNeomorphicButton(
-              text: '메모 모드',
-              prefixIcon: Icon(
-                Icons.edit_note,
-                color: puzzleState.isNoteMode
-                    ? AppColors.primary
-                    : AppColors.neutral700,
-                size: 18,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 되돌리기 버튼
+              _buildIconButton(
+                icon: Icons.undo,
+                onTap: puzzleState.canUndo ? () => intent.undoAction() : null,
+                isEnabled: puzzleState.canUndo,
+                tooltip: '되돌리기',
               ),
-              onTap: () => intent.toggleNoteMode(),
-              type: NeomorphicButtonType.primary,
-              size: NeomorphicButtonSize.medium,
-              borderRadius: 16,
-              isActive: puzzleState.isNoteMode,
-            ),
-          ),
 
-          // 다시 실행 버튼
-          _buildIconButton(
-            icon: Icons.redo,
-            onTap: puzzleState.canRedo ? () => intent.redoAction() : null,
-            isEnabled: puzzleState.canRedo,
-            tooltip: '다시 실행',
+              // 메모 모드 토글 버튼
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                child: AppNeomorphicButton(
+                  text: '메모 모드',
+                  prefixIcon: Icon(
+                    Icons.edit_note,
+                    color: puzzleState.isNoteMode
+                        ? AppColors.primary
+                        : AppColors.neutral700,
+                    size: 18,
+                  ),
+                  onTap: () => intent.toggleNoteMode(),
+                  type: NeomorphicButtonType.primary,
+                  size: NeomorphicButtonSize.medium,
+                  borderRadius: 16,
+                  isActive: puzzleState.isNoteMode,
+                ),
+              ),
+
+              // 다시 실행 버튼
+              _buildIconButton(
+                icon: Icons.redo,
+                onTap: puzzleState.canRedo ? () => intent.redoAction() : null,
+                isEnabled: puzzleState.canRedo,
+                tooltip: '다시 실행',
+              ),
+            ],
           ),
         ],
       ),

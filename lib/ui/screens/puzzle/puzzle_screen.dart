@@ -23,9 +23,9 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // 화면이 처음 열릴 때 게임 초기화
+    // 게임은 이미 PuzzlePage에서 초기화되어 있으므로 여기서는 타이머만 시작
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(puzzleIntentProvider).initializeGame();
+      ref.read(puzzleIntentProvider).resumeTimer();
     });
   }
 

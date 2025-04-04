@@ -11,22 +11,44 @@ class PuzzleKeypad extends ConsumerWidget {
     final intent = ref.read(puzzleIntentProvider);
     final puzzleState = ref.watch(puzzleProvider);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        children: [
-          // 1-5 키패드
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (index) {
-              final number = index + 1;
+    return Column(
+      children: [
+        // 1-5 키패드
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(5, (index) {
+            final number = index + 1;
+            bool isSelected = false;
+    
+            final selectedCell = puzzleState.selectedCell;
+            if (selectedCell != null && selectedCell.number == number) {
+              isSelected = true;
+            }
+    
+            return Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: _buildNumberKey(
+                number: number,
+                onTap: () => intent.enterNumber(number),
+                isSelected: isSelected,
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 8),
+        // 6-9 키패드 및 지우기 버튼
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ...List.generate(4, (index) {
+              final number = index + 6;
               bool isSelected = false;
-
+    
               final selectedCell = puzzleState.selectedCell;
               if (selectedCell != null && selectedCell.number == number) {
                 isSelected = true;
               }
-
+    
               return Padding(
                 padding: const EdgeInsets.all(4.0),
                 child: _buildNumberKey(
@@ -36,40 +58,15 @@ class PuzzleKeypad extends ConsumerWidget {
                 ),
               );
             }),
-          ),
-          const SizedBox(height: 8),
-          // 6-9 키패드 및 지우기 버튼
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ...List.generate(4, (index) {
-                final number = index + 6;
-                bool isSelected = false;
-
-                final selectedCell = puzzleState.selectedCell;
-                if (selectedCell != null && selectedCell.number == number) {
-                  isSelected = true;
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: _buildNumberKey(
-                    number: number,
-                    onTap: () => intent.enterNumber(number),
-                    isSelected: isSelected,
-                  ),
-                );
-              }),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: _buildClearKey(
-                  onTap: () => intent.clearValue(),
-                ),
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: _buildClearKey(
+                onTap: () => intent.clearValue(),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

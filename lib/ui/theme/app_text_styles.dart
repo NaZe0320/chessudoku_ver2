@@ -115,7 +115,7 @@ class AppTextStyles {
       );
 
   static const TextStyle cellNote = TextStyle(
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: FontWeight.normal,
     color: AppColors.neutral600,
     letterSpacing: 0,

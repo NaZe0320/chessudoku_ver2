@@ -7,6 +7,8 @@ import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/notifiers/puzzle_notifier.dart';
 import 'package:chessudoku/domain/states/puzzle_state.dart';
+import 'package:chessudoku/domain/utils/chess_sudoku_generator.dart';
+import 'package:chessudoku/domain/utils/chess_sudoku_validator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PuzzleIntent {
@@ -20,12 +22,15 @@ class PuzzleIntent {
   // 레포지토리에 대한 참조를 쉽게 얻기 위한 getter
   PuzzleRepository get _repository => ref.read(puzzleRepositoryProvider);
 
+  // 체스도쿠 생성기에 대한 참조
+  ChessSudokuGenerator get _generator => ref.read(chessSudokuGeneratorProvider);
+
   // 난이도 변경
   void changeDifficulty(Difficulty difficulty) {
     _notifier.changeDifficulty(difficulty);
   }
 
-  // 새 게임 초기화 (간소화된 버전)
+  // 새 게임 초기화
   Future<void> initializeGame() async {
     // 타이머 중지
     _notifier.stopTimer();
@@ -47,37 +52,10 @@ class PuzzleIntent {
     }
 
     // 저장된 상태가 없는 경우 새 게임 생성
-    const boardSize = 9;
-    final random = Random();
+    const boardSize = ChessSudokuGenerator.BOARD_SIZE;
 
-    // 간소화된 방식으로 보드 생성 (랜덤 숫자와 체스 기물)
-    final gameBoard = List.generate(
-      boardSize,
-      (row) => List.generate(
-        boardSize,
-        (col) {
-          // 랜덤하게 셀 내용 결정 (80%는 숫자, 20%는 체스 기물)
-          if (random.nextDouble() < 0.2) {
-            // 체스 기물 (랜덤 선택)
-            final pieceIndex = random.nextInt(ChessPiece.values.length);
-            return CellContent(
-              chessPiece: ChessPiece.values[pieceIndex],
-              isInitial: true,
-            );
-          } else {
-            // 숫자 (50% 확률로 초기값 또는 빈칸)
-            if (random.nextBool()) {
-              return CellContent(
-                number: random.nextInt(9) + 1,
-                isInitial: true,
-              );
-            } else {
-              return const CellContent();
-            }
-          }
-        },
-      ),
-    );
+    // 체스도쿠 생성기를 사용하여 보드 생성
+    final gameBoard = _generator.generateBoard(difficulty);
 
     // 상태 업데이트
     _notifier.initializeGameWithBoard(
@@ -278,64 +256,7 @@ class PuzzleIntent {
 
   // 퍼즐 완료 여부 확인
   bool _checkCompletion(List<List<CellContent>> board) {
-    final size = board.length;
-
-    // 모든 빈 셀 확인 (체스 기물이 없는 셀에 숫자가 있어야 함)
-    for (int row = 0; row < size; row++) {
-      for (int col = 0; col < size; col++) {
-        if (!board[row][col].hasChessPiece && !board[row][col].hasNumber) {
-          return false;
-        }
-      }
-    }
-
-    // 각 행에 1-9 숫자가 하나씩만 있는지 확인
-    for (int row = 0; row < size; row++) {
-      final numbers = <int>{};
-      for (int col = 0; col < size; col++) {
-        final cell = board[row][col];
-        if (cell.hasNumber) {
-          if (numbers.contains(cell.number)) {
-            return false;
-          }
-          numbers.add(cell.number!);
-        }
-      }
-    }
-
-    // 각 열에 1-9 숫자가 하나씩만 있는지 확인
-    for (int col = 0; col < size; col++) {
-      final numbers = <int>{};
-      for (int row = 0; row < size; row++) {
-        final cell = board[row][col];
-        if (cell.hasNumber) {
-          if (numbers.contains(cell.number)) {
-            return false;
-          }
-          numbers.add(cell.number!);
-        }
-      }
-    }
-
-    // 각 3x3 박스에 1-9 숫자가 하나씩만 있는지 확인
-    for (int boxRow = 0; boxRow < 3; boxRow++) {
-      for (int boxCol = 0; boxCol < 3; boxCol++) {
-        final numbers = <int>{};
-        for (int row = 0; row < 3; row++) {
-          for (int col = 0; col < 3; col++) {
-            final cell = board[boxRow * 3 + row][boxCol * 3 + col];
-            if (cell.hasNumber) {
-              if (numbers.contains(cell.number)) {
-                return false;
-              }
-              numbers.add(cell.number!);
-            }
-          }
-        }
-      }
-    }
-
-    return true;
+    return ChessSudokuValidator.isValidBoard(board);
   }
 
   // 체스 기물을 문자로 변환 (UI 표시용)

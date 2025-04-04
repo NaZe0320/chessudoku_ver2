@@ -27,15 +27,21 @@ class PuzzlePage extends ConsumerWidget {
 
         if (shouldContinue == true) {
           // 이어하기 선택 - 저장된 데이터 사용
+          // 이어하기는 PuzzleScreen에서 자동으로 처리됨
           AppRoutes.navigateToPuzzleScreen(context, difficulty);
         } else if (shouldContinue == false) {
           // 새로 시작 선택 - 저장된 데이터 삭제 후 시작
           await intent.clearSavedGameState(difficulty);
+
+          // 퍼즐 생성 및 게임 초기화 (PuzzleScreen으로 이동하기 전)
+          await intent.initializeGame();
+
           AppRoutes.navigateToPuzzleScreen(context, difficulty);
         }
         // shouldContinue가 null이면 취소된 것이므로 아무 동작 없음
       } else {
-        // 저장된 게임이 없으면 바로 게임 화면으로 이동
+        // 저장된 게임이 없으면 퍼즐 생성 후 게임 화면으로 이동
+        await intent.initializeGame(); // 퍼즐 생성 및 게임 초기화
         AppRoutes.navigateToPuzzleScreen(context, difficulty);
       }
     }

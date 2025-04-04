@@ -120,30 +120,32 @@ class PuzzleCell extends ConsumerWidget {
   }
 
   Widget _buildNotesGrid(cell) {
-    return GridView.builder(
-      padding: EdgeInsets.all(cellSize * 0.05),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1,
-        crossAxisSpacing: 1,
-        mainAxisSpacing: 1,
-      ),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 9,
-      itemBuilder: (context, index) {
-        final number = index + 1;
-        final hasNote = cell.hasNote(number);
+    return Padding(
+      padding: const EdgeInsets.all(2.0),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 1,
+        ),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 9,
+        itemBuilder: (context, index) {
+          final number = index + 1;
+          final hasNote = cell.hasNote(number);
 
-        return hasNote
-            ? Center(
-                child: Text(
-                  number.toString(),
-                  style: AppTextStyles.cellNote,
-                ),
-              )
-            : const SizedBox();
-      },
+          return hasNote
+              ? Container(
+                  alignment: Alignment.center,
+                  child: Text(
+                    number.toString(),
+                    style: AppTextStyles.cellNote,
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : const SizedBox();
+        },
+      ),
     );
   }
 }
