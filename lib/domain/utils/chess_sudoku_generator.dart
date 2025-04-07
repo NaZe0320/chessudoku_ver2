@@ -16,6 +16,14 @@ class ChessSudokuGenerator {
   late List<Set<int>> _rowSets, _colSets, _boxSets;
   final Map<String, Set<String>> _attackedCells = {};
 
+  // 난이도별 빈칸 설정 (최소, 최대, 배치크기)
+  // 배치 있는 이유 (계산 횟수 감소 시키려고 batch 마다 검산 시도)
+  final Map<Difficulty, Map<String, int>> _puzzleConfig = {
+    Difficulty.easy: {'minEmpty': 30, 'maxEmpty': 40, 'batchSize': 1},
+    Difficulty.medium: {'minEmpty': 41, 'maxEmpty': 50, 'batchSize': 1},
+    Difficulty.hard: {'minEmpty': 51, 'maxEmpty': 60, 'batchSize': 1},
+  };
+
   /// 체스도쿠 보드 생성
   List<List<CellContent>> generateBoard(Difficulty difficulty) {
     const int maxAttempts = 100000;
@@ -40,6 +48,35 @@ class ChessSudokuGenerator {
     }
 
     throw Exception("체스도쿠 생성에 실패했습니다. 최대 시도 횟수 초과.");
+  }
+
+  /// 체스도쿠 퍼즐 생성 (빈칸이 있는 문제)
+  Future<List<List<CellContent>>> generatePuzzle(Difficulty difficulty) async {
+    // 3초 시간 제한 설정
+    final deadline = DateTime.now().add(const Duration(seconds: 10));
+
+    while (DateTime.now().isBefore(deadline)) {
+      try {
+        // 완전한 솔루션 보드 생성
+        final solutionBoard = generateBoard(difficulty);
+
+        // 퍼즐용 보드 복제
+        final puzzleBoard = _cloneBoard(solutionBoard);
+
+        // 빈칸 뚫기
+        final success =
+            await _digHoles(puzzleBoard, solutionBoard, difficulty, deadline);
+
+        if (success) {
+          print('퍼즐 생성 성공');
+          return puzzleBoard;
+        }
+      } catch (e) {
+        print('퍼즐 생성 오류: $e');
+      }
+    }
+
+    throw Exception("시간 제한 내에 퍼즐 생성에 실패했습니다.");
   }
 
   /// 초기화
@@ -69,6 +106,73 @@ class ChessSudokuGenerator {
 
     // 공격 범위 캐시 초기화
     _attackedCells.clear();
+  }
+
+  /// 빈칸 뚫기 알고리즘
+  Future<bool> _digHoles(
+      List<List<CellContent>> puzzleBoard,
+      List<List<CellContent>> solutionBoard,
+      Difficulty difficulty,
+      DateTime deadline) async {
+    // 난이도별 설정 가져오기
+    final config = _puzzleConfig[difficulty]!;
+
+    // 숫자가 있는 모든 셀 위치 목록 생성
+    final cellsWithNumbers = <List<int>>[];
+    for (int i = 0; i < boardSize; i++) {
+      for (int j = 0; j < boardSize; j++) {
+        if (puzzleBoard[i][j].hasNumber) {
+          cellsWithNumbers.add([i, j]);
+        }
+      }
+    }
+
+    // 랜덤하게 섞기
+    cellsWithNumbers.shuffle(_random);
+
+    // 목표 빈칸 수 계산
+    final targetEmpty = config['minEmpty']! +
+        _random.nextInt(config['maxEmpty']! - config['minEmpty']! + 1);
+
+    int emptyCellCount = 0;
+    int batchSize = config['batchSize']!;
+
+    // 배치 단위로 효율적으로 처리
+    while (emptyCellCount < targetEmpty &&
+        cellsWithNumbers.isNotEmpty &&
+        DateTime.now().isBefore(deadline)) {
+      // 배치 선택
+      final batch = <List<int>>[];
+      final int batchCount = min(batchSize, cellsWithNumbers.length);
+
+      for (int i = 0; i < batchCount; i++) {
+        if (cellsWithNumbers.isEmpty) break;
+        batch.add(cellsWithNumbers.removeAt(0));
+      }
+
+      // 배치에서 숫자 제거
+      for (final cell in batch) {
+        final row = cell[0];
+        final col = cell[1];
+
+        // 숫자 제거
+        puzzleBoard[row][col] = const CellContent(isInitial: false);
+        emptyCellCount++;
+      }
+    }
+
+    return emptyCellCount >= config['minEmpty']!;
+  }
+
+  /// 보드 복제
+  List<List<CellContent>> _cloneBoard(List<List<CellContent>> board) {
+    return List.generate(
+      boardSize,
+      (i) => List.generate(
+        boardSize,
+        (j) => board[i][j].copyWith(),
+      ),
+    );
   }
 
   /// 체스 기물 생성
