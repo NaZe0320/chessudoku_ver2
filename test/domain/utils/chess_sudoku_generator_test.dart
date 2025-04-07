@@ -2,7 +2,6 @@ import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_generator.dart';
-import 'package:chessudoku/domain/utils/chess_sudoku_validator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -42,18 +41,74 @@ void main() {
         }
         print('총 체스 기물 개수: $chessPieceCount');
 
-        // 기본 검증: 모든 셀이 숫자 또는 체스 기물을 가져야 함
+        // 빈 셀 개수와 숫자 셀 개수 확인
+        int emptyCount = 0;
+        int numberCount = 0;
         for (int row = 0; row < ChessSudokuGenerator.BOARD_SIZE; row++) {
           for (int col = 0; col < ChessSudokuGenerator.BOARD_SIZE; col++) {
             final cell = board[row][col];
-            expect(cell.hasNumber || cell.hasChessPiece, isTrue,
-                reason: '셀 ($row, $col)이 비어있습니다.');
+            if (cell.isEmpty) {
+              emptyCount++;
+            } else if (cell.hasNumber) {
+              numberCount++;
+            }
+          }
+        }
+        print('빈 셀 개수: $emptyCount, 숫자 셀 개수: $numberCount');
+
+        // 체스 기물이 있는 셀이 확인
+        for (int row = 0; row < ChessSudokuGenerator.BOARD_SIZE; row++) {
+          for (int col = 0; col < ChessSudokuGenerator.BOARD_SIZE; col++) {
+            if (board[row][col].hasChessPiece) {
+              expect(board[row][col].hasNumber, isFalse,
+                  reason: '셀 ($row, $col)에 체스 기물과 숫자가 동시에 있습니다.');
+            }
           }
         }
 
-        // ChessSudokuValidator를 사용하여 보드의 유효성 검증
+        // 숫자가 있는 셀의 초기값 여부 확인
+        for (int row = 0; row < ChessSudokuGenerator.BOARD_SIZE; row++) {
+          for (int col = 0; col < ChessSudokuGenerator.BOARD_SIZE; col++) {
+            if (board[row][col].hasNumber) {
+              expect(board[row][col].isInitial, isTrue,
+                  reason: '숫자 셀 ($row, $col)이 초기값으로 설정되지 않았습니다.');
+            }
+          }
+        }
+
+        // 유효한 스도쿠 보드인지 확인 (행, 열, 3x3 박스 규칙)
         final isValid = _validateBoard(board);
         expect(isValid, isTrue, reason: '체스도쿠 규칙에 맞지 않는 보드가 생성되었습니다.');
+      }
+    });
+
+    test('난이도별 빈 셀 개수 검증', () {
+      // 난이도별로 예상되는 빈 셀 개수 범위
+      final difficultyEmptyCells = {
+        Difficulty.easy: [35, 40], // 35-40개의 빈 셀
+        Difficulty.medium: [45, 50], // 45-50개의 빈 셀
+        Difficulty.hard: [55, 60] // 55-60개의 빈 셀
+      };
+
+      for (final difficulty in Difficulty.values) {
+        final board = generator.generateBoard(difficulty);
+
+        // 빈 셀 개수 계산
+        int emptyCount = 0;
+        for (int row = 0; row < ChessSudokuGenerator.BOARD_SIZE; row++) {
+          for (int col = 0; col < ChessSudokuGenerator.BOARD_SIZE; col++) {
+            if (!board[row][col].hasChessPiece && !board[row][col].hasNumber) {
+              emptyCount++;
+            }
+          }
+        }
+
+        print('[$difficulty] 빈 셀 개수: $emptyCount');
+
+        // 난이도에 맞는 빈 셀 개수 범위 검증
+        final expectedRange = difficultyEmptyCells[difficulty]!;
+        expect(emptyCount, inInclusiveRange(expectedRange[0], expectedRange[1]),
+            reason: '[$difficulty] 난이도의 빈 셀 개수가 예상 범위를 벗어났습니다.');
       }
     });
 
@@ -112,7 +167,7 @@ void _printBoard(List<List<CellContent>> board) {
       } else if (cell.hasNumber) {
         rowStr += '${cell.number} ';
       } else {
-        rowStr += '0 ';
+        rowStr += '. ';
       }
     }
     print(rowStr);
@@ -279,28 +334,72 @@ List<List<CellContent>> _createTestBoardWithKnight() {
   board[4][4] =
       const CellContent(chessPiece: ChessPiece.knight, isInitial: true);
 
-  // 숫자 배치 (나이트 공격 범위에 같은 숫자 없도록)
-  // 나이트 공격 범위: (2,3), (2,5), (3,2), (3,6), (5,2), (5,6), (6,3), (6,5)
-  board[2][3] = const CellContent(number: 1, isInitial: true);
-  board[2][5] = const CellContent(number: 2, isInitial: true);
-  board[3][2] = const CellContent(number: 3, isInitial: true);
-  board[3][6] = const CellContent(number: 4, isInitial: true);
-  board[5][2] = const CellContent(number: 5, isInitial: true);
-  board[5][6] = const CellContent(number: 6, isInitial: true);
-  board[6][3] = const CellContent(number: 7, isInitial: true);
-  board[6][5] = const CellContent(number: 8, isInitial: true);
+  // 나이트 공격 범위에 각기 다른 숫자 배치 (L자 이동)
+  final knightMoves = [
+    [2, 3],
+    [2, 5],
+    [3, 2],
+    [3, 6],
+    [5, 2],
+    [5, 6],
+    [6, 3],
+    [6, 5]
+  ];
 
-  // 다른 셀들에 숫자 채우기
-  for (int i = 0; i < ChessSudokuGenerator.BOARD_SIZE; i++) {
-    for (int j = 0; j < ChessSudokuGenerator.BOARD_SIZE; j++) {
-      if (!board[i][j].hasChessPiece && !board[i][j].hasNumber) {
-        // 간단한 패턴으로 채우기
-        board[i][j] = CellContent(number: (i + j) % 9 + 1, isInitial: true);
+  for (int i = 0; i < knightMoves.length; i++) {
+    final row = knightMoves[i][0];
+    final col = knightMoves[i][1];
+    board[row][col] = CellContent(number: i + 1, isInitial: true);
+  }
+
+  // 나머지 셀에 숫자 채우기 (모든 행, 열, 박스에 중복 없게)
+  for (int row = 0; row < ChessSudokuGenerator.BOARD_SIZE; row++) {
+    for (int col = 0; col < ChessSudokuGenerator.BOARD_SIZE; col++) {
+      if (!board[row][col].hasChessPiece && !board[row][col].hasNumber) {
+        // 1-9 사이의 숫자 중에서 유효한 숫자 찾기
+        for (int num = 1; num <= 9; num++) {
+          if (_isValidForTestBoard(board, row, col, num)) {
+            board[row][col] = CellContent(number: num, isInitial: true);
+            break;
+          }
+        }
       }
     }
   }
 
   return board;
+}
+
+// 테스트 보드에서 유효한 숫자인지 확인하는 헬퍼 함수
+bool _isValidForTestBoard(
+    List<List<CellContent>> board, int row, int col, int num) {
+  // 행 검증
+  for (int c = 0; c < ChessSudokuGenerator.BOARD_SIZE; c++) {
+    if (board[row][c].hasNumber && board[row][c].number == num) {
+      return false;
+    }
+  }
+
+  // 열 검증
+  for (int r = 0; r < ChessSudokuGenerator.BOARD_SIZE; r++) {
+    if (board[r][col].hasNumber && board[r][col].number == num) {
+      return false;
+    }
+  }
+
+  // 3x3 박스 검증
+  int boxRow = (row ~/ 3) * 3;
+  int boxCol = (col ~/ 3) * 3;
+  for (int r = 0; r < 3; r++) {
+    for (int c = 0; c < 3; c++) {
+      if (board[boxRow + r][boxCol + c].hasNumber &&
+          board[boxRow + r][boxCol + c].number == num) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 // 룩 테스트 보드
