@@ -12,6 +12,7 @@ class AppTextStyles {
     color: AppColors.neutral900,
     letterSpacing: -0.5,
     height: 1.2,
+    fontFamily: _fontFamily,
   );
 
   static const TextStyle headline2 = TextStyle(
@@ -20,6 +21,7 @@ class AppTextStyles {
     color: AppColors.neutral900,
     letterSpacing: -0.25,
     height: 1.3,
+    fontFamily: _fontFamily,
   );
 
   static const TextStyle headline3 = TextStyle(
@@ -28,6 +30,7 @@ class AppTextStyles {
     color: AppColors.neutral900,
     letterSpacing: 0,
     height: 1.4,
+    fontFamily: _fontFamily,
   );
 
   // 부제목 스타일
@@ -37,6 +40,7 @@ class AppTextStyles {
     color: AppColors.neutral800,
     letterSpacing: 0.15,
     height: 1.4,
+    fontFamily: _fontFamily,
   );
 
   static const TextStyle subtitle2 = TextStyle(
@@ -45,6 +49,7 @@ class AppTextStyles {
     color: AppColors.neutral800,
     letterSpacing: 0.1,
     height: 1.5,
+    fontFamily: _fontFamily,
   );
 
   // 본문 스타일
@@ -54,6 +59,7 @@ class AppTextStyles {
     color: AppColors.neutral800,
     letterSpacing: 0.15,
     height: 1.5,
+    fontFamily: _fontFamily,
   );
 
   static const TextStyle bodyMedium = TextStyle(
@@ -62,6 +68,7 @@ class AppTextStyles {
     color: AppColors.neutral700,
     letterSpacing: 0.25,
     height: 1.5,
+    fontFamily: _fontFamily,
   );
 
   static const TextStyle bodySmall = TextStyle(
@@ -70,6 +77,7 @@ class AppTextStyles {
     color: AppColors.neutral700,
     letterSpacing: 0.4,
     height: 1.5,
+    fontFamily: _fontFamily,
   );
 
   // 캡션 스타일
@@ -79,6 +87,7 @@ class AppTextStyles {
     color: AppColors.neutral600,
     letterSpacing: 0.4,
     height: 1.4,
+    fontFamily: _fontFamily,
   );
 
   // 버튼 스타일
@@ -88,6 +97,7 @@ class AppTextStyles {
     color: AppColors.neutral100,
     letterSpacing: 0.5,
     height: 1.4,
+    fontFamily: _fontFamily,
   );
 
   static const TextStyle buttonMedium = TextStyle(
@@ -96,6 +106,7 @@ class AppTextStyles {
     color: AppColors.neutral100,
     letterSpacing: 0.5,
     height: 1.4,
+    fontFamily: _fontFamily,
   );
 
   static const TextStyle buttonSmall = TextStyle(
@@ -104,6 +115,7 @@ class AppTextStyles {
     color: AppColors.neutral100,
     letterSpacing: 0.5,
     height: 1.4,
+    fontFamily: _fontFamily,
   );
 
   // 셀 스타일 (추가)
@@ -112,6 +124,7 @@ class AppTextStyles {
         fontWeight: isInitial ? FontWeight.bold : FontWeight.w500,
         color: isInitial ? AppColors.neutral900 : AppColors.primary,
         letterSpacing: 0,
+        fontFamily: _fontFamily,
       );
 
   static const TextStyle cellNote = TextStyle(
@@ -119,5 +132,6 @@ class AppTextStyles {
     fontWeight: FontWeight.normal,
     color: AppColors.neutral600,
     letterSpacing: 0,
+    fontFamily: _fontFamily,
   );
 }
