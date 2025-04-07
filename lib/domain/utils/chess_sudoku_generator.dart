@@ -716,14 +716,111 @@ class ChessSudokuGenerator {
   /// 난이도에 따라 체스 기물 배치를 랜덤하게 생성
   List<List<dynamic>> _generateRandomPiecePositions(Difficulty difficulty) {
     final Random random = Random();
-
-    // 기본적으로 나이트 1개를 배치
     final List<List<dynamic>> piecePositions = [];
 
-    // 보드의 랜덤한 위치에 나이트 배치
-    final int row = random.nextInt(BOARD_SIZE);
-    final int col = random.nextInt(BOARD_SIZE);
-    piecePositions.add([ChessPiece.knight, row, col]);
+    // 난이도별 기물 제한 설정
+    Map<ChessPiece, List<int>> pieceRanges = {};
+    int minPieces = 0;
+    int maxPieces = 0;
+
+    switch (difficulty) {
+      case Difficulty.easy:
+        // 쉬움: 총 1-2개 기물
+        pieceRanges = {
+          ChessPiece.king: [0, 1], // 킹 0-1개
+          ChessPiece.queen: [0, 0], // 퀸 0개
+          ChessPiece.bishop: [0, 1], // 비숍 0-1개
+          ChessPiece.knight: [1, 1], // 나이트 1개 (필수)
+          ChessPiece.rook: [0, 0] // 룩 0개
+        };
+        minPieces = 1;
+        maxPieces = 2;
+        break;
+      case Difficulty.medium:
+        // 보통: 총 2-3개 기물
+        pieceRanges = {
+          ChessPiece.king: [0, 1], // 킹 0-1개
+          ChessPiece.queen: [0, 1], // 퀸 0-1개
+          ChessPiece.bishop: [0, 1], // 비숍 0-1개
+          ChessPiece.knight: [1, 2], // 나이트 1-2개
+          ChessPiece.rook: [0, 1] // 룩 0-1개
+        };
+        minPieces = 2;
+        maxPieces = 3;
+        break;
+      case Difficulty.hard:
+        // 어려움: 총 3-5개 기물
+        pieceRanges = {
+          ChessPiece.king: [0, 1], // 킹 0-1개
+          ChessPiece.queen: [0, 2], // 퀸 0-2개
+          ChessPiece.bishop: [0, 2], // 비숍 0-2개
+          ChessPiece.knight: [1, 2], // 나이트 1-2개
+          ChessPiece.rook: [0, 1] // 룩 0-1개
+        };
+        minPieces = 3;
+        maxPieces = 5;
+        break;
+    }
+
+    // 총 기물 수 결정 (범위 내에서 랜덤)
+    int totalPieces = minPieces + random.nextInt(maxPieces - minPieces + 1);
+
+    // 각 기물 종류별 배치 수 결정
+    Map<ChessPiece, int> pieceCount = {};
+
+    // 나이트는 최소 1개 이상 보장
+    pieceCount[ChessPiece.knight] = pieceRanges[ChessPiece.knight]![0];
+    int remainingPieces = totalPieces - pieceCount[ChessPiece.knight]!;
+
+    // 나머지 기물 랜덤 배치
+    List<ChessPiece> availablePieces = [
+      ChessPiece.king,
+      ChessPiece.queen,
+      ChessPiece.bishop,
+      ChessPiece.knight, // 나이트 추가 배치 가능
+      ChessPiece.rook
+    ];
+
+    while (remainingPieces > 0 && availablePieces.isNotEmpty) {
+      // 랜덤하게 기물 선택
+      int pieceIndex = random.nextInt(availablePieces.length);
+      ChessPiece piece = availablePieces[pieceIndex];
+
+      // 현재 기물 수 확인 (초기값 0)
+      pieceCount[piece] ??= 0;
+
+      // 최대 제한에 도달했는지 확인
+      if (pieceCount[piece]! >= pieceRanges[piece]![1]) {
+        // 최대치 도달한 기물은 목록에서 제거
+        availablePieces.removeAt(pieceIndex);
+        continue;
+      }
+
+      // 기물 카운트 증가
+      pieceCount[piece] = pieceCount[piece]! + 1;
+      remainingPieces--;
+    }
+
+    // 각 기물을 보드에 배치
+    pieceCount.forEach((piece, count) {
+      for (int i = 0; i < count; i++) {
+        // 보드의 랜덤한 위치에 배치 (중복 방지)
+        bool placed = false;
+        while (!placed) {
+          final int row = random.nextInt(BOARD_SIZE);
+          final int col = random.nextInt(BOARD_SIZE);
+
+          // 이미 배치된 위치인지 확인
+          bool positionOccupied =
+              piecePositions.any((pos) => pos[1] == row && pos[2] == col);
+
+          if (!positionOccupied) {
+            piecePositions.add([piece, row, col]);
+            placed = true;
+          }
+        }
+      }
+    });
 
     return piecePositions;
   }
