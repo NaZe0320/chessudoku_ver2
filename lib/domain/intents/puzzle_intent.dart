@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/repositories/puzzle_repository.dart';
@@ -45,8 +43,10 @@ class PuzzleIntent {
       // 저장된 게임 상태 불러오기
       final savedState = await _repository.loadPuzzleState(difficulty);
       if (savedState != null) {
-        // 저장된 상태로 초기화 (타이머는 정지 상태로)
+        // 저장된 상태로 초기화
         _notifier.initializeGameWithState(savedState);
+        // 타이머 시작
+        _notifier.startTimer();
         return;
       }
     }
