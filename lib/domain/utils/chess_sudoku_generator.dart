@@ -5,337 +5,388 @@ import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 
 /// 체스도쿠 퍼즐 생성기
-///
 /// 체스도쿠 규칙에 맞는 유효한 퍼즐을 효율적으로 생성합니다.
-/// 백트래킹 알고리즘과 최적화 기법을 사용하여 빠른 생성 속도를 보장합니다.
 class ChessSudokuGenerator {
-  static const int BOARD_SIZE = 9;
+  static const int boardSize = 9;
   final Random _random = Random();
 
-  /// 체스 기물 심볼
-  final Map<ChessPiece, String> _pieces = {
-    ChessPiece.king: '♚',
-    ChessPiece.queen: '♛',
-    ChessPiece.bishop: '♝',
-    ChessPiece.knight: '♞',
-    ChessPiece.rook: '♜'
-  };
+  // 보드 상태 데이터
+  late List<List<CellContent>> _board;
+  late List<List<Set<int>>> _candidates;
+  late List<Set<int>> _rowSets, _colSets, _boxSets;
+  final Map<String, Set<String>> _attackedCells = {};
 
-  /// 각 기물의 위치 저장
-  Map<ChessPiece, List<List<int>>> _piecePositions = {
-    ChessPiece.king: [],
-    ChessPiece.queen: [],
-    ChessPiece.bishop: [],
-    ChessPiece.knight: [],
-    ChessPiece.rook: []
-  };
+  /// 체스도쿠 보드 생성
+  List<List<CellContent>> generateBoard(Difficulty difficulty) {
+    const int maxAttempts = 100000;
 
-  /// 나이트의 이동 위치에 있는 숫자들을 추적하기 위한 맵
-  Map<String, Set<int>> _knightMoveNumbers = {};
+    for (int attempts = 0; attempts < maxAttempts; attempts++) {
+      try {
+        _initialize();
 
-  /// 비숍의 대각선 위치에 있는 숫자들을 추적하기 위한 맵
-  Map<String, Map<String, Set<int>>> _bishopDiagonals = {};
+        // 난이도별 체스 기물 배치
+        final pieces = _generatePieces(difficulty);
+        _placePieces(pieces);
+        _calculateAttackRanges(pieces);
 
-  /// 킹 주변의 숫자들을 추적하기 위한 맵
-  Map<String, Set<int>> _kingAdjacentNumbers = {};
+        // 백트래킹으로 퍼즐 생성
+        if (_solveSudoku()) {
+          print('스도쿠 솔루션 생성 성공: 시도 $attempts/$maxAttempts');
+          return _board;
+        }
+      } catch (e) {
+        print('예외 발생: $e, 시도 ${attempts + 1}/$maxAttempts');
+      }
+    }
 
-  /// 퀸의 이동 위치에 있는 숫자들을 추적하기 위한 맵
-  Map<String, Map<String, Set<int>>> _queenMoveNumbers = {};
-
-  /// 9x9 보드 초기화
-  List<List<CellContent>> _board = List.generate(
-    BOARD_SIZE,
-    (_) => List.generate(
-      BOARD_SIZE,
-      (_) => const CellContent(isInitial: false),
-    ),
-  );
-
-  /// 킹의 이동 가능한 위치(주변 8방향) 반환
-  List<List<int>> _getKingMoves(int row, int col) {
-    final moves = [
-      [row - 1, col - 1],
-      [row - 1, col],
-      [row - 1, col + 1],
-      [row, col - 1],
-      [row, col + 1],
-      [row + 1, col - 1],
-      [row + 1, col],
-      [row + 1, col + 1]
-    ];
-    return moves
-        .where((pos) =>
-            pos[0] >= 0 &&
-            pos[0] < BOARD_SIZE &&
-            pos[1] >= 0 &&
-            pos[1] < BOARD_SIZE)
-        .toList();
+    throw Exception("체스도쿠 생성에 실패했습니다. 최대 시도 횟수 초과.");
   }
 
-  /// 퀸의 이동 가능한 위치들을 반환 (가로, 세로, 대각선)
-  Map<String, List<List<int>>> _getQueenMoves(int row, int col) {
-    final moves = {
-      'row': <List<int>>[], // 가로 방향
-      'col': <List<int>>[], // 세로 방향
-      'main': <List<int>>[], // 주 대각선 (↘️ 방향)
-      'anti': <List<int>>[] // 반대 대각선 (↙️ 방향)
-    };
+  /// 초기화
+  void _initialize() {
+    // 보드 초기화
+    _board = List.generate(
+      boardSize,
+      (_) => List.generate(
+        boardSize,
+        (_) => const CellContent(isInitial: false),
+      ),
+    );
 
-    // 가로 방향 (행)
-    for (int j = 0; j < BOARD_SIZE; j++) {
-      if (j != col && !_board[row][j].hasChessPiece) {
-        moves['row']!.add([row, j]);
-      }
-    }
+    // 후보 숫자 초기화 (1-9)
+    _candidates = List.generate(
+      boardSize,
+      (_) => List.generate(
+        boardSize,
+        (_) => Set<int>.from(List.generate(9, (i) => i + 1)),
+      ),
+    );
 
-    // 세로 방향 (열)
-    for (int i = 0; i < BOARD_SIZE; i++) {
-      if (i != row && !_board[i][col].hasChessPiece) {
-        moves['col']!.add([i, col]);
-      }
-    }
+    // 제약 조건 추적용 집합 초기화
+    _rowSets = List.generate(boardSize, (_) => <int>{});
+    _colSets = List.generate(boardSize, (_) => <int>{});
+    _boxSets = List.generate(boardSize, (_) => <int>{});
 
-    // 대각선 방향 (비숍과 동일하게 처리)
-    final bishopDiagonals = _getBishopDiagonals(row, col);
-    moves['main'] = bishopDiagonals['main']!;
-    moves['anti'] = bishopDiagonals['anti']!;
-
-    return moves;
+    // 공격 범위 캐시 초기화
+    _attackedCells.clear();
   }
 
-  /// 비숍의 대각선 이동 가능한 위치들을 반환
-  Map<String, List<List<int>>> _getBishopDiagonals(int row, int col) {
-    final diagonals = {
-      'main': <List<int>>[], // 왼쪽 위에서 오른쪽 아래 방향
-      'anti': <List<int>>[] // 오른쪽 위에서 왼쪽 아래 방향
-    };
+  /// 체스 기물 생성
+  List<List<dynamic>> _generatePieces(Difficulty difficulty) {
+    final pieces = <List<dynamic>>[];
+    final Map<ChessPiece, int> pieceCount = {};
 
-    // 메인 대각선 (↘️)
-    var r = row - 1;
-    var c = col - 1;
-    while (r >= 0 && c >= 0) {
-      if (!_board[r][c].hasChessPiece) {
-        // 체스 기물이 없는 경우만
-        diagonals['main']!.add([r, c]);
-      } else {
-        break; // 체스 기물을 만나면 그 방향으로의 탐색 중단
+    // 난이도별 기물 설정
+    final config = _getDifficultyConfig(difficulty);
+    int totalPieces = config['minPieces']! +
+        _random.nextInt(config['maxPieces']! - config['minPieces']! + 1);
+
+    // 나이트는 최소 1개 이상 보장
+    pieceCount[ChessPiece.knight] = config['pieces']![ChessPiece.knight]![0];
+    int remainingPieces = totalPieces - pieceCount[ChessPiece.knight]!;
+
+    // 나머지 기물 랜덤 배치
+    List<ChessPiece> availablePieces = ChessPiece.values.toList();
+
+    while (remainingPieces > 0 && availablePieces.isNotEmpty) {
+      int pieceIndex = _random.nextInt(availablePieces.length);
+      ChessPiece piece = availablePieces[pieceIndex];
+
+      pieceCount[piece] ??= 0;
+
+      // 최대 제한 확인
+      if (pieceCount[piece]! >= config['pieces']![piece]![1]) {
+        availablePieces.removeAt(pieceIndex);
+        continue;
       }
-      r--;
-      c--;
+
+      pieceCount[piece] = pieceCount[piece]! + 1;
+      remainingPieces--;
     }
 
-    r = row + 1;
-    c = col + 1;
-    while (r < BOARD_SIZE && c < BOARD_SIZE) {
-      if (!_board[r][c].hasChessPiece) {
-        diagonals['main']!.add([r, c]);
-      } else {
+    // 기물 보드에 배치
+    pieceCount.forEach((piece, count) {
+      for (int i = 0; i < count; i++) {
+        _placePieceRandomly(pieces, piece);
+      }
+    });
+
+    return pieces;
+  }
+
+  /// 랜덤 위치에 기물 배치
+  void _placePieceRandomly(List<List<dynamic>> pieces, ChessPiece piece) {
+    while (true) {
+      final int row = _random.nextInt(boardSize);
+      final int col = _random.nextInt(boardSize);
+
+      // 중복 방지
+      if (!pieces.any((pos) => pos[1] == row && pos[2] == col)) {
+        pieces.add([piece, row, col]);
         break;
       }
-      r++;
-      c++;
     }
-
-    // 반대 대각선 (↙️)
-    r = row - 1;
-    c = col + 1;
-    while (r >= 0 && c < BOARD_SIZE) {
-      if (!_board[r][c].hasChessPiece) {
-        diagonals['anti']!.add([r, c]);
-      } else {
-        break;
-      }
-      r--;
-      c++;
-    }
-
-    r = row + 1;
-    c = col - 1;
-    while (r < BOARD_SIZE && c >= 0) {
-      if (!_board[r][c].hasChessPiece) {
-        diagonals['anti']!.add([r, c]);
-      } else {
-        break;
-      }
-      r++;
-      c--;
-    }
-
-    return diagonals;
   }
 
-  /// 나이트의 이동 가능한 위치 반환
-  List<List<int>> _getKnightMoves(int row, int col) {
-    final moves = [
-      [row - 2, col - 1],
-      [row - 2, col + 1],
-      [row - 1, col - 2],
-      [row - 1, col + 2],
-      [row + 1, col - 2],
-      [row + 1, col + 2],
-      [row + 2, col - 1],
-      [row + 2, col + 1]
-    ];
-    return moves
-        .where((pos) =>
-            pos[0] >= 0 &&
-            pos[0] < BOARD_SIZE &&
-            pos[1] >= 0 &&
-            pos[1] < BOARD_SIZE)
-        .toList();
-  }
-
-  /// 체스 기물을 보드에 배치하고 이동 가능 위치 표시
-  bool _placePiece(ChessPiece piece, int row, int col) {
-    if (_pieces.containsKey(piece) &&
-        row >= 0 &&
-        row < BOARD_SIZE &&
-        col >= 0 &&
-        col < BOARD_SIZE) {
-      _board[row][col] = CellContent(chessPiece: piece, isInitial: true);
-      _piecePositions[piece]!.add([row, col]);
-
-      final posKey = '$row,$col';
-
-      if (piece == ChessPiece.knight) {
-        _knightMoveNumbers[posKey] = <int>{};
-      } else if (piece == ChessPiece.bishop) {
-        _bishopDiagonals[posKey] = {'main': <int>{}, 'anti': <int>{}};
-      } else if (piece == ChessPiece.king) {
-        _kingAdjacentNumbers[posKey] = <int>{};
-      } else if (piece == ChessPiece.queen) {
-        _queenMoveNumbers[posKey] = {
-          'row': <int>{},
-          'col': <int>{},
-          'main': <int>{},
-          'anti': <int>{}
+  /// 난이도별 설정 반환
+  Map<String, dynamic> _getDifficultyConfig(Difficulty difficulty) {
+    switch (difficulty) {
+      case Difficulty.easy:
+        return {
+          'pieces': {
+            ChessPiece.king: [0, 1],
+            ChessPiece.queen: [0, 0],
+            ChessPiece.bishop: [0, 1],
+            ChessPiece.knight: [1, 1],
+            ChessPiece.rook: [0, 0]
+          },
+          'minPieces': 1,
+          'maxPieces': 2
         };
-      }
-      return true;
+      case Difficulty.medium:
+        return {
+          'pieces': {
+            ChessPiece.king: [0, 1],
+            ChessPiece.queen: [0, 1],
+            ChessPiece.bishop: [0, 2],
+            ChessPiece.knight: [1, 3],
+            ChessPiece.rook: [0, 1]
+          },
+          'minPieces': 3,
+          'maxPieces': 5
+        };
+      case Difficulty.hard:
+        return {
+          'pieces': {
+            ChessPiece.king: [0, 2],
+            ChessPiece.queen: [0, 2],
+            ChessPiece.bishop: [1, 4],
+            ChessPiece.knight: [2, 5],
+            ChessPiece.rook: [0, 3]
+          },
+          'minPieces': 5,
+          'maxPieces': 8
+        };
     }
+  }
+
+  /// 체스 기물 보드에 배치
+  void _placePieces(List<List<dynamic>> pieces) {
+    for (final piece in pieces) {
+      final ChessPiece type = piece[0];
+      final int row = piece[1];
+      final int col = piece[2];
+
+      _board[row][col] = CellContent(chessPiece: type, isInitial: true);
+      _candidates[row][col].clear(); // 기물 위치에는 숫자 배치 불가
+    }
+  }
+
+  /// 체스 기물 공격 범위 계산
+  void _calculateAttackRanges(List<List<dynamic>> pieces) {
+    for (final piece in pieces) {
+      final ChessPiece type = piece[0];
+      final int row = piece[1];
+      final int col = piece[2];
+      final String pieceKey = '$row,$col';
+
+      // 기물 타입별 공격 범위 계산
+      _attackedCells[pieceKey] = _getAttacks(type, row, col);
+    }
+  }
+
+  /// 기물 타입별 공격 범위 반환
+  Set<String> _getAttacks(ChessPiece type, int row, int col) {
+    switch (type) {
+      case ChessPiece.knight:
+        return _getKnightAttacks(row, col);
+      case ChessPiece.bishop:
+        return _getBishopAttacks(row, col);
+      case ChessPiece.king:
+        return _getKingAttacks(row, col);
+      case ChessPiece.queen:
+        return _getQueenAttacks(row, col);
+      case ChessPiece.rook:
+        return _getRookAttacks(row, col);
+    }
+  }
+
+  /// 나이트 공격 범위
+  Set<String> _getKnightAttacks(int row, int col) {
+    final moves = [
+      [-2, -1],
+      [-2, 1],
+      [-1, -2],
+      [-1, 2],
+      [1, -2],
+      [1, 2],
+      [2, -1],
+      [2, 1]
+    ];
+
+    return _getValidPositions(row, col, moves);
+  }
+
+  /// 킹 공격 범위
+  Set<String> _getKingAttacks(int row, int col) {
+    final moves = [
+      [-1, -1],
+      [-1, 0],
+      [-1, 1],
+      [0, -1],
+      [0, 1],
+      [1, -1],
+      [1, 0],
+      [1, 1]
+    ];
+
+    return _getValidPositions(row, col, moves);
+  }
+
+  /// 유효한 위치 계산 (나이트, 킹 공통)
+  Set<String> _getValidPositions(int row, int col, List<List<int>> moves) {
+    return moves
+        .map((dir) => [row + dir[0], col + dir[1]])
+        .where((pos) =>
+            pos[0] >= 0 &&
+            pos[0] < boardSize &&
+            pos[1] >= 0 &&
+            pos[1] < boardSize)
+        .map((pos) => '${pos[0]},${pos[1]}')
+        .toSet();
+  }
+
+  /// 비숍 공격 범위
+  Set<String> _getBishopAttacks(int row, int col) {
+    // 대각선 방향
+    final directions = [
+      [-1, 1],
+      [1, 1],
+      [1, -1],
+      [-1, -1]
+    ];
+    return _getSlidingAttacks(row, col, directions);
+  }
+
+  /// 룩 공격 범위
+  Set<String> _getRookAttacks(int row, int col) {
+    // 가로 세로 방향
+    final directions = [
+      [0, 1],
+      [1, 0],
+      [0, -1],
+      [-1, 0]
+    ];
+    return _getSlidingAttacks(row, col, directions);
+  }
+
+  /// 퀸 공격 범위
+  Set<String> _getQueenAttacks(int row, int col) {
+    // 비숍 + 룩 공격 범위
+    return _getBishopAttacks(row, col).union(_getRookAttacks(row, col));
+  }
+
+  /// 슬라이딩 기물(비숍, 룩, 퀸)용 공격 범위 계산
+  Set<String> _getSlidingAttacks(int row, int col, List<List<int>> directions) {
+    Set<String> attacks = <String>{};
+
+    for (final dir in directions) {
+      int r = row + dir[0];
+      int c = col + dir[1];
+
+      while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
+        attacks.add('$r,$c');
+        // 다른 기물에 막히면 중단
+        if (_board[r][c].hasChessPiece) break;
+        r += dir[0];
+        c += dir[1];
+      }
+    }
+
+    return attacks;
+  }
+
+  /// 백트래킹 알고리즘으로 스도쿠 풀기
+  bool _solveSudoku() {
+    final nextCell = _findNextCell();
+    if (nextCell == null) return true; // 모든 셀이 채워짐
+
+    final row = nextCell[0];
+    final col = nextCell[1];
+    final originalCandidates = Set<int>.from(_candidates[row][col]);
+
+    // 후보 숫자들을 랜덤하게 시도
+    final candidates = List<int>.from(_candidates[row][col]);
+    candidates.shuffle(_random);
+
+    for (final num in candidates) {
+      if (_canPlace(row, col, num)) {
+        // 숫자 배치 및 제약 전파
+        _board[row][col] = CellContent(number: num, isInitial: true);
+        _updateCandidates(row, col, num);
+
+        // 재귀적으로 계속 풀기
+        if (_solveSudoku()) return true;
+
+        // 백트래킹
+        _board[row][col] = const CellContent(isInitial: false);
+        _restoreCandidates(row, col, num, originalCandidates);
+      }
+    }
+
     return false;
   }
 
-  /// 주어진 위치에 숫자를 놓을 수 있는지 확인
-  bool _isValidNumber(int row, int col, int num) {
-    // 체스 기물이 있는 칸인지 확인
-    if (_board[row][col].hasChessPiece) {
+  /// MRV 휴리스틱으로 다음 채울 셀 찾기
+  List<int>? _findNextCell() {
+    int minCandidates = 10;
+    List<int>? bestCell;
+
+    for (int i = 0; i < boardSize; i++) {
+      for (int j = 0; j < boardSize; j++) {
+        if (!_board[i][j].hasNumber && !_board[i][j].hasChessPiece) {
+          int candidateCount = _candidates[i][j].length;
+
+          if (candidateCount < minCandidates) {
+            minCandidates = candidateCount;
+            bestCell = [i, j];
+
+            if (minCandidates == 1) return bestCell; // 최적의 선택
+          }
+        }
+      }
+    }
+
+    return bestCell;
+  }
+
+  /// 숫자 배치 가능 여부 확인
+  bool _canPlace(int row, int col, int num) {
+    // 후보에 없으면 배치 불가
+    if (!_candidates[row][col].contains(num)) return false;
+
+    // 행, 열, 박스 제약 확인
+    final boxIdx = (row ~/ 3) * 3 + (col ~/ 3);
+    if (_rowSets[row].contains(num) ||
+        _colSets[col].contains(num) ||
+        _boxSets[boxIdx].contains(num)) {
       return false;
     }
 
-    // 행 검사
-    for (int j = 0; j < BOARD_SIZE; j++) {
-      if (_board[row][j].hasNumber && _board[row][j].number == num) {
-        return false;
-      }
-    }
+    // 체스 기물 제약 확인
+    final cellKey = '$row,$col';
 
-    // 열 검사
-    for (int i = 0; i < BOARD_SIZE; i++) {
-      if (_board[i][col].hasNumber && _board[i][col].number == num) {
-        return false;
-      }
-    }
+    for (final entry in _attackedCells.entries) {
+      if (entry.value.contains(cellKey)) {
+        // 같은 기물의 공격 범위에 같은 숫자가 있는지 확인
+        for (final attackedCell in entry.value) {
+          if (attackedCell == cellKey) continue;
 
-    // 3x3 박스 검사
-    final boxRow = 3 * (row ~/ 3);
-    final boxCol = 3 * (col ~/ 3);
-    for (int i = boxRow; i < boxRow + 3; i++) {
-      for (int j = boxCol; j < boxCol + 3; j++) {
-        if (_board[i][j].hasNumber && _board[i][j].number == num) {
-          return false;
-        }
-      }
-    }
+          final coords = attackedCell.split(',');
+          final r = int.parse(coords[0]);
+          final c = int.parse(coords[1]);
 
-    // 나이트 이동 규칙 검사
-    for (final knightPos in _piecePositions[ChessPiece.knight]!) {
-      final posKey = '${knightPos[0]},${knightPos[1]}';
-      final knightMoves = _getKnightMoves(knightPos[0], knightPos[1]);
-
-      for (final move in knightMoves) {
-        if (move[0] == row && move[1] == col) {
-          if (_knightMoveNumbers[posKey]?.contains(num) ?? false) {
-            return false;
-          }
-        }
-      }
-    }
-
-    // 비숍 대각선 규칙 검사
-    for (final bishopPos in _piecePositions[ChessPiece.bishop]!) {
-      final posKey = '${bishopPos[0]},${bishopPos[1]}';
-      final diagonals = _getBishopDiagonals(bishopPos[0], bishopPos[1]);
-
-      // 메인 대각선 검사
-      for (final pos in diagonals['main']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_bishopDiagonals[posKey]?['main']?.contains(num) ?? false) {
-            return false;
-          }
-        }
-      }
-
-      // 반대 대각선 검사
-      for (final pos in diagonals['anti']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_bishopDiagonals[posKey]?['anti']?.contains(num) ?? false) {
-            return false;
-          }
-        }
-      }
-    }
-
-    // 킹 주변 규칙 검사
-    for (final kingPos in _piecePositions[ChessPiece.king]!) {
-      final posKey = '${kingPos[0]},${kingPos[1]}';
-      final kingMoves = _getKingMoves(kingPos[0], kingPos[1]);
-
-      for (final move in kingMoves) {
-        if (move[0] == row && move[1] == col) {
-          if (_kingAdjacentNumbers[posKey]?.contains(num) ?? false) {
-            return false;
-          }
-        }
-      }
-    }
-
-    // 퀸 이동 규칙 검사
-    for (final queenPos in _piecePositions[ChessPiece.queen]!) {
-      final posKey = '${queenPos[0]},${queenPos[1]}';
-      final queenMoves = _getQueenMoves(queenPos[0], queenPos[1]);
-
-      // 가로 방향 검사
-      for (final pos in queenMoves['row']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_queenMoveNumbers[posKey]?['row']?.contains(num) ?? false) {
-            return false;
-          }
-        }
-      }
-
-      // 세로 방향 검사
-      for (final pos in queenMoves['col']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_queenMoveNumbers[posKey]?['col']?.contains(num) ?? false) {
-            return false;
-          }
-        }
-      }
-
-      // 메인 대각선 검사
-      for (final pos in queenMoves['main']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_queenMoveNumbers[posKey]?['main']?.contains(num) ?? false) {
-            return false;
-          }
-        }
-      }
-
-      // 반대 대각선 검사
-      for (final pos in queenMoves['anti']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_queenMoveNumbers[posKey]?['anti']?.contains(num) ?? false) {
+          if (_board[r][c].hasNumber && _board[r][c].number == num) {
             return false;
           }
         }
@@ -345,540 +396,53 @@ class ChessSudokuGenerator {
     return true;
   }
 
-  /// 숫자를 보드에 배치
-  bool _placeNumber(int row, int col, int num) {
-    if (_isValidNumber(row, col, num)) {
-      _board[row][col] = CellContent(number: num, isInitial: true);
+  /// 제약 전파
+  void _updateCandidates(int row, int col, int num) {
+    final boxIdx = (row ~/ 3) * 3 + (col ~/ 3);
 
-      // 나이트의 이동 범위에 있는 경우 해당 숫자 기록
-      for (final knightPos in _piecePositions[ChessPiece.knight]!) {
-        final posKey = '${knightPos[0]},${knightPos[1]}';
-        final knightMoves = _getKnightMoves(knightPos[0], knightPos[1]);
+    // 행, 열, 박스에서 후보 제거
+    for (int i = 0; i < boardSize; i++) {
+      _candidates[row][i].remove(num); // 행
+      _candidates[i][col].remove(num); // 열
 
-        for (final move in knightMoves) {
-          if (move[0] == row && move[1] == col) {
-            _knightMoveNumbers[posKey]?.add(num);
-          }
-        }
-      }
-
-      // 비숍의 대각선 범위에 있는 경우 해당 숫자 기록
-      for (final bishopPos in _piecePositions[ChessPiece.bishop]!) {
-        final posKey = '${bishopPos[0]},${bishopPos[1]}';
-        final diagonals = _getBishopDiagonals(bishopPos[0], bishopPos[1]);
-
-        for (final pos in diagonals['main']!) {
-          if (pos[0] == row && pos[1] == col) {
-            _bishopDiagonals[posKey]?['main']?.add(num);
-          }
-        }
-
-        for (final pos in diagonals['anti']!) {
-          if (pos[0] == row && pos[1] == col) {
-            _bishopDiagonals[posKey]?['anti']?.add(num);
-          }
-        }
-      }
-
-      // 킹의 주변 8방향에 있는 경우 해당 숫자 기록
-      for (final kingPos in _piecePositions[ChessPiece.king]!) {
-        final posKey = '${kingPos[0]},${kingPos[1]}';
-        final kingMoves = _getKingMoves(kingPos[0], kingPos[1]);
-
-        for (final move in kingMoves) {
-          if (move[0] == row && move[1] == col) {
-            _kingAdjacentNumbers[posKey]?.add(num);
-          }
-        }
-      }
-
-      // 퀸의 이동 범위에 있는 경우 해당 숫자 기록
-      for (final queenPos in _piecePositions[ChessPiece.queen]!) {
-        final posKey = '${queenPos[0]},${queenPos[1]}';
-        final queenMoves = _getQueenMoves(queenPos[0], queenPos[1]);
-
-        // 가로 방향 확인
-        for (final pos in queenMoves['row']!) {
-          if (pos[0] == row && pos[1] == col) {
-            _queenMoveNumbers[posKey]?['row']?.add(num);
-          }
-        }
-
-        // 세로 방향 확인
-        for (final pos in queenMoves['col']!) {
-          if (pos[0] == row && pos[1] == col) {
-            _queenMoveNumbers[posKey]?['col']?.add(num);
-          }
-        }
-
-        // 메인 대각선 확인
-        for (final pos in queenMoves['main']!) {
-          if (pos[0] == row && pos[1] == col) {
-            _queenMoveNumbers[posKey]?['main']?.add(num);
-          }
-        }
-
-        // 반대 대각선 확인
-        for (final pos in queenMoves['anti']!) {
-          if (pos[0] == row && pos[1] == col) {
-            _queenMoveNumbers[posKey]?['anti']?.add(num);
-          }
-        }
-      }
-
-      return true;
+      // 같은 박스
+      final boxRow = 3 * (boxIdx ~/ 3) + (i ~/ 3);
+      final boxCol = 3 * (boxIdx % 3) + (i % 3);
+      _candidates[boxRow][boxCol].remove(num);
     }
-    return false;
+
+    // 체스 기물 제약 처리
+    final cellKey = '$row,$col';
+
+    for (final entry in _attackedCells.entries) {
+      if (entry.value.contains(cellKey)) {
+        for (final attackedCell in entry.value) {
+          if (attackedCell == cellKey) continue;
+
+          final coords = attackedCell.split(',');
+          final r = int.parse(coords[0]);
+          final c = int.parse(coords[1]);
+
+          _candidates[r][c].remove(num);
+        }
+      }
+    }
+
+    // 제약 세트 업데이트
+    _rowSets[row].add(num);
+    _colSets[col].add(num);
+    _boxSets[boxIdx].add(num);
   }
 
-  /// 비어있는 셀 찾기
-  List<int>? _findEmptyCell() {
-    for (int i = 0; i < BOARD_SIZE; i++) {
-      for (int j = 0; j < BOARD_SIZE; j++) {
-        if (!_board[i][j].hasChessPiece && !_board[i][j].hasNumber) {
-          return [i, j];
-        }
-      }
-    }
-    return null; // 비어있는 셀이 없음
-  }
+  /// 제약 전파 복원 (백트래킹용)
+  void _restoreCandidates(
+      int row, int col, int num, Set<int> originalCandidates) {
+    _candidates[row][col] = Set<int>.from(originalCandidates);
 
-  /// 백트래킹을 사용하여 스도쿠 해결
-  bool _solveSudoku() {
-    final empty = _findEmptyCell();
-
-    // 모든 셀이 채워졌다면 완료
-    if (empty == null) {
-      return true;
-    }
-
-    final row = empty[0];
-    final col = empty[1];
-
-    // 1-9를 랜덤하게 섞어서 시도
-    final numbers = List<int>.generate(9, (i) => i + 1)..shuffle(_random);
-
-    // 체스 기물 제약 관련 실패 원인 추적
-    final failureReasons = <int, String>{};
-
-    for (final num in numbers) {
-      // 현재 숫자가 유효한지 확인
-      if (_isValidNumber(row, col, num)) {
-        // 숫자 배치
-        _placeNumber(row, col, num);
-
-        // 재귀적으로 나머지 셀 해결 시도
-        if (_solveSudoku()) {
-          return true;
-        }
-
-        // 해결책을 찾지 못했다면 백트래킹
-        _board[row][col] = const CellContent(isInitial: false);
-
-        // 나이트의 이동 범위에서 숫자 제거
-        for (final knightPos in _piecePositions[ChessPiece.knight]!) {
-          final posKey = '${knightPos[0]},${knightPos[1]}';
-          final knightMoves = _getKnightMoves(knightPos[0], knightPos[1]);
-
-          for (final move in knightMoves) {
-            if (move[0] == row && move[1] == col) {
-              _knightMoveNumbers[posKey]?.remove(num);
-            }
-          }
-        }
-
-        // 비숍의 대각선에서 숫자 제거
-        for (final bishopPos in _piecePositions[ChessPiece.bishop]!) {
-          final posKey = '${bishopPos[0]},${bishopPos[1]}';
-          final diagonals = _getBishopDiagonals(bishopPos[0], bishopPos[1]);
-
-          for (final pos in diagonals['main']!) {
-            if (pos[0] == row && pos[1] == col) {
-              _bishopDiagonals[posKey]?['main']?.remove(num);
-            }
-          }
-
-          for (final pos in diagonals['anti']!) {
-            if (pos[0] == row && pos[1] == col) {
-              _bishopDiagonals[posKey]?['anti']?.remove(num);
-            }
-          }
-        }
-
-        // 킹의 주변에서 숫자 제거
-        for (final kingPos in _piecePositions[ChessPiece.king]!) {
-          final posKey = '${kingPos[0]},${kingPos[1]}';
-          final kingMoves = _getKingMoves(kingPos[0], kingPos[1]);
-
-          for (final move in kingMoves) {
-            if (move[0] == row && move[1] == col) {
-              _kingAdjacentNumbers[posKey]?.remove(num);
-            }
-          }
-        }
-
-        // 퀸의 이동 범위에서 숫자 제거
-        for (final queenPos in _piecePositions[ChessPiece.queen]!) {
-          final posKey = '${queenPos[0]},${queenPos[1]}';
-          final queenMoves = _getQueenMoves(queenPos[0], queenPos[1]);
-
-          // 가로 방향 제거
-          for (final pos in queenMoves['row']!) {
-            if (pos[0] == row && pos[1] == col) {
-              _queenMoveNumbers[posKey]?['row']?.remove(num);
-            }
-          }
-
-          // 세로 방향 제거
-          for (final pos in queenMoves['col']!) {
-            if (pos[0] == row && pos[1] == col) {
-              _queenMoveNumbers[posKey]?['col']?.remove(num);
-            }
-          }
-
-          // 메인 대각선 제거
-          for (final pos in queenMoves['main']!) {
-            if (pos[0] == row && pos[1] == col) {
-              _queenMoveNumbers[posKey]?['main']?.remove(num);
-            }
-          }
-
-          // 반대 대각선 제거
-          for (final pos in queenMoves['anti']!) {
-            if (pos[0] == row && pos[1] == col) {
-              _queenMoveNumbers[posKey]?['anti']?.remove(num);
-            }
-          }
-        }
-      } else {
-        // 유효하지 않은 숫자의 원인 파악 (기물 제약 조건만)
-        final reason = _getInvalidReason(row, col, num);
-        if (reason != null) {
-          failureReasons[num] = reason;
-        }
-      }
-    }
-
-    // 기물 제약 조건 관련 실패가 있는 경우에만 로그 출력
-    if (failureReasons.isNotEmpty) {
-      print('현재 보드 상태:');
-      _printBoard();
-
-      print('체스 기물 제약 조건 실패 원인:');
-      failureReasons.forEach((num, reason) {
-        print('숫자 $num: $reason');
-      });
-    }
-
-    return false;
-  }
-
-  /// 특정 위치에 숫자가 유효하지 않은 이유를 반환 (기물 제약 조건만)
-  String? _getInvalidReason(int row, int col, int num) {
-    // 체스 기물 관련 실패 원인만 반환하도록 수정
-
-    // 나이트 이동 규칙 검사
-    for (final knightPos in _piecePositions[ChessPiece.knight]!) {
-      final posKey = '${knightPos[0]},${knightPos[1]}';
-      final knightMoves = _getKnightMoves(knightPos[0], knightPos[1]);
-
-      for (final move in knightMoves) {
-        if (move[0] == row && move[1] == col) {
-          if (_knightMoveNumbers[posKey]?.contains(num) ?? false) {
-            return "나이트(${knightPos[0]}, ${knightPos[1]})의 이동 범위에 이미 숫자 $num이 있음";
-          }
-        }
-      }
-    }
-
-    // 비숍 대각선 규칙 검사
-    for (final bishopPos in _piecePositions[ChessPiece.bishop]!) {
-      final posKey = '${bishopPos[0]},${bishopPos[1]}';
-      final diagonals = _getBishopDiagonals(bishopPos[0], bishopPos[1]);
-
-      // 메인 대각선 검사
-      for (final pos in diagonals['main']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_bishopDiagonals[posKey]?['main']?.contains(num) ?? false) {
-            return "비숍(${bishopPos[0]}, ${bishopPos[1]})의 메인 대각선에 이미 숫자 $num이 있음";
-          }
-        }
-      }
-
-      // 반대 대각선 검사
-      for (final pos in diagonals['anti']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_bishopDiagonals[posKey]?['anti']?.contains(num) ?? false) {
-            return "비숍(${bishopPos[0]}, ${bishopPos[1]})의 반대 대각선에 이미 숫자 $num이 있음";
-          }
-        }
-      }
-    }
-
-    // 킹 주변 규칙 검사
-    for (final kingPos in _piecePositions[ChessPiece.king]!) {
-      final posKey = '${kingPos[0]},${kingPos[1]}';
-      final kingMoves = _getKingMoves(kingPos[0], kingPos[1]);
-
-      for (final move in kingMoves) {
-        if (move[0] == row && move[1] == col) {
-          if (_kingAdjacentNumbers[posKey]?.contains(num) ?? false) {
-            return "킹(${kingPos[0]}, ${kingPos[1]})의 주변에 이미 숫자 $num이 있음";
-          }
-        }
-      }
-    }
-
-    // 퀸 이동 규칙 검사
-    for (final queenPos in _piecePositions[ChessPiece.queen]!) {
-      final posKey = '${queenPos[0]},${queenPos[1]}';
-      final queenMoves = _getQueenMoves(queenPos[0], queenPos[1]);
-
-      // 가로 방향 검사
-      for (final pos in queenMoves['row']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_queenMoveNumbers[posKey]?['row']?.contains(num) ?? false) {
-            return "퀸(${queenPos[0]}, ${queenPos[1]})의 가로 방향에 이미 숫자 $num이 있음";
-          }
-        }
-      }
-
-      // 세로 방향 검사
-      for (final pos in queenMoves['col']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_queenMoveNumbers[posKey]?['col']?.contains(num) ?? false) {
-            return "퀸(${queenPos[0]}, ${queenPos[1]})의 세로 방향에 이미 숫자 $num이 있음";
-          }
-        }
-      }
-
-      // 메인 대각선 검사
-      for (final pos in queenMoves['main']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_queenMoveNumbers[posKey]?['main']?.contains(num) ?? false) {
-            return "퀸(${queenPos[0]}, ${queenPos[1]})의 메인 대각선에 이미 숫자 $num이 있음";
-          }
-        }
-      }
-
-      // 반대 대각선 검사
-      for (final pos in queenMoves['anti']!) {
-        if (pos[0] == row && pos[1] == col) {
-          if (_queenMoveNumbers[posKey]?['anti']?.contains(num) ?? false) {
-            return "퀸(${queenPos[0]}, ${queenPos[1]})의 반대 대각선에 이미 숫자 $num이 있음";
-          }
-        }
-      }
-    }
-
-    // 체스 기물 관련 제약 조건이 없는 경우 null 반환
-    return null;
-  }
-
-  /// 현재 보드 상태를 콘솔에 출력
-  void _printBoard() {
-    for (int i = 0; i < BOARD_SIZE; i++) {
-      String rowStr = '';
-      for (int j = 0; j < BOARD_SIZE; j++) {
-        if (_board[i][j].hasChessPiece) {
-          final piece = _board[i][j].chessPiece!;
-          String pieceSymbol = '';
-          switch (piece) {
-            case ChessPiece.king:
-              pieceSymbol = 'K';
-              break;
-            case ChessPiece.queen:
-              pieceSymbol = 'Q';
-              break;
-            case ChessPiece.bishop:
-              pieceSymbol = 'B';
-              break;
-            case ChessPiece.knight:
-              pieceSymbol = 'N';
-              break;
-            case ChessPiece.rook:
-              pieceSymbol = 'R';
-              break;
-            default:
-              pieceSymbol = '?';
-          }
-          rowStr += '[$pieceSymbol]';
-        } else if (_board[i][j].hasNumber) {
-          rowStr += '[${_board[i][j].number}]';
-        } else {
-          rowStr += '[ ]';
-        }
-      }
-      print('$i: $rowStr');
-    }
-  }
-
-  /// 난이도에 따라 체스 기물 배치를 랜덤하게 생성
-  List<List<dynamic>> _generateRandomPiecePositions(Difficulty difficulty) {
-    final Random random = Random();
-    final List<List<dynamic>> piecePositions = [];
-
-    // 난이도별 기물 제한 설정
-    Map<ChessPiece, List<int>> pieceRanges = {};
-    int minPieces = 0;
-    int maxPieces = 0;
-
-    switch (difficulty) {
-      case Difficulty.easy:
-        // 쉬움: 총 1-2개 기물
-        pieceRanges = {
-          ChessPiece.king: [0, 1], // 킹 0-1개
-          ChessPiece.queen: [0, 0], // 퀸 0개
-          ChessPiece.bishop: [0, 1], // 비숍 0-1개
-          ChessPiece.knight: [1, 1], // 나이트 1개 (필수)
-          ChessPiece.rook: [0, 0] // 룩 0개
-        };
-        minPieces = 1;
-        maxPieces = 2;
-        break;
-      case Difficulty.medium:
-        // 보통: 총 2-3개 기물
-        pieceRanges = {
-          ChessPiece.king: [0, 1], // 킹 0-1개
-          ChessPiece.queen: [0, 1], // 퀸 0-1개
-          ChessPiece.bishop: [0, 1], // 비숍 0-1개
-          ChessPiece.knight: [1, 2], // 나이트 1-2개
-          ChessPiece.rook: [0, 1] // 룩 0-1개
-        };
-        minPieces = 2;
-        maxPieces = 3;
-        break;
-      case Difficulty.hard:
-        // 어려움: 총 3-5개 기물
-        pieceRanges = {
-          ChessPiece.king: [0, 1], // 킹 0-1개
-          ChessPiece.queen: [0, 2], // 퀸 0-2개
-          ChessPiece.bishop: [0, 2], // 비숍 0-2개
-          ChessPiece.knight: [1, 2], // 나이트 1-2개
-          ChessPiece.rook: [0, 1] // 룩 0-1개
-        };
-        minPieces = 3;
-        maxPieces = 5;
-        break;
-    }
-
-    // 총 기물 수 결정 (범위 내에서 랜덤)
-    int totalPieces = minPieces + random.nextInt(maxPieces - minPieces + 1);
-
-    // 각 기물 종류별 배치 수 결정
-    Map<ChessPiece, int> pieceCount = {};
-
-    // 나이트는 최소 1개 이상 보장
-    pieceCount[ChessPiece.knight] = pieceRanges[ChessPiece.knight]![0];
-    int remainingPieces = totalPieces - pieceCount[ChessPiece.knight]!;
-
-    // 나머지 기물 랜덤 배치
-    List<ChessPiece> availablePieces = [
-      ChessPiece.king,
-      ChessPiece.queen,
-      ChessPiece.bishop,
-      ChessPiece.knight, // 나이트 추가 배치 가능
-      ChessPiece.rook
-    ];
-
-    while (remainingPieces > 0 && availablePieces.isNotEmpty) {
-      // 랜덤하게 기물 선택
-      int pieceIndex = random.nextInt(availablePieces.length);
-      ChessPiece piece = availablePieces[pieceIndex];
-
-      // 현재 기물 수 확인 (초기값 0)
-      pieceCount[piece] ??= 0;
-
-      // 최대 제한에 도달했는지 확인
-      if (pieceCount[piece]! >= pieceRanges[piece]![1]) {
-        // 최대치 도달한 기물은 목록에서 제거
-        availablePieces.removeAt(pieceIndex);
-        continue;
-      }
-
-      // 기물 카운트 증가
-      pieceCount[piece] = pieceCount[piece]! + 1;
-      remainingPieces--;
-    }
-
-    // 각 기물을 보드에 배치
-    pieceCount.forEach((piece, count) {
-      for (int i = 0; i < count; i++) {
-        // 보드의 랜덤한 위치에 배치 (중복 방지)
-        bool placed = false;
-        while (!placed) {
-          final int row = random.nextInt(BOARD_SIZE);
-          final int col = random.nextInt(BOARD_SIZE);
-
-          // 이미 배치된 위치인지 확인
-          bool positionOccupied =
-              piecePositions.any((pos) => pos[1] == row && pos[2] == col);
-
-          if (!positionOccupied) {
-            piecePositions.add([piece, row, col]);
-            placed = true;
-          }
-        }
-      }
-    });
-
-    return piecePositions;
-  }
-
-  /// 체스도쿠 보드 생성 메인 메서드
-  List<List<CellContent>> generateBoard(Difficulty difficulty) {
-    // 최대 시도 횟수 증가
-    const int maxAttempts = 50;
-    int attempts = 0;
-
-    while (attempts < maxAttempts) {
-      try {
-        // 초기화
-        _board = List.generate(
-          BOARD_SIZE,
-          (_) => List.generate(
-            BOARD_SIZE,
-            (_) => const CellContent(isInitial: false),
-          ),
-        );
-
-        _piecePositions = {
-          ChessPiece.king: [],
-          ChessPiece.queen: [],
-          ChessPiece.bishop: [],
-          ChessPiece.knight: [],
-          ChessPiece.rook: []
-        };
-
-        _knightMoveNumbers = {};
-        _bishopDiagonals = {};
-        _kingAdjacentNumbers = {};
-        _queenMoveNumbers = {};
-
-        // 난이도별 기물 위치 랜덤 생성
-        final piecesToPlace = _generateRandomPiecePositions(difficulty);
-
-        // 체스 기물 배치
-        for (final piece in piecesToPlace) {
-          final pieceType = piece[0] as ChessPiece;
-          final row = piece[1] as int;
-          final col = piece[2] as int;
-          _placePiece(pieceType, row, col);
-        }
-
-        // 스도쿠 솔루션 생성
-        if (!_solveSudoku()) {
-          attempts++;
-          print('스도쿠 솔루션 생성 실패: 시도 $attempts/$maxAttempts');
-          continue;
-        }
-
-        return _board;
-      } catch (e) {
-        attempts++;
-        print('예외 발생: ${e.toString()}, 시도 $attempts/$maxAttempts');
-      }
-    }
-    throw Exception("체스도쿠 생성에 실패했습니다. 최대 시도 횟수 초과.");
+    // 제약 세트 복원
+    final boxIdx = (row ~/ 3) * 3 + (col ~/ 3);
+    _rowSets[row].remove(num);
+    _colSets[col].remove(num);
+    _boxSets[boxIdx].remove(num);
   }
 }

@@ -52,7 +52,7 @@ class PuzzleIntent {
     }
 
     // 저장된 상태가 없는 경우 새 게임 생성
-    const boardSize = ChessSudokuGenerator.BOARD_SIZE;
+    const boardSize = ChessSudokuGenerator.boardSize;
 
     // 체스도쿠 생성기를 사용하여 보드 생성
     final gameBoard = _generator.generateBoard(difficulty);
