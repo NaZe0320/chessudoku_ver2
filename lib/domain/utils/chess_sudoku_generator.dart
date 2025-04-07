@@ -458,6 +458,9 @@ class ChessSudokuGenerator {
     // 1-9를 랜덤하게 섞어서 시도
     final numbers = List<int>.generate(9, (i) => i + 1)..shuffle(_random);
 
+    // 체스 기물 제약 관련 실패 원인 추적
+    final failureReasons = <int, String>{};
+
     for (final num in numbers) {
       // 현재 숫자가 유효한지 확인
       if (_isValidNumber(row, col, num)) {
@@ -547,10 +550,167 @@ class ChessSudokuGenerator {
             }
           }
         }
+      } else {
+        // 유효하지 않은 숫자의 원인 파악 (기물 제약 조건만)
+        final reason = _getInvalidReason(row, col, num);
+        if (reason != null) {
+          failureReasons[num] = reason;
+        }
       }
     }
 
+    // 기물 제약 조건 관련 실패가 있는 경우에만 로그 출력
+    if (failureReasons.isNotEmpty) {
+      print('현재 보드 상태:');
+      _printBoard();
+
+      print('체스 기물 제약 조건 실패 원인:');
+      failureReasons.forEach((num, reason) {
+        print('숫자 $num: $reason');
+      });
+    }
+
     return false;
+  }
+
+  /// 특정 위치에 숫자가 유효하지 않은 이유를 반환 (기물 제약 조건만)
+  String? _getInvalidReason(int row, int col, int num) {
+    // 체스 기물 관련 실패 원인만 반환하도록 수정
+
+    // 나이트 이동 규칙 검사
+    for (final knightPos in _piecePositions[ChessPiece.knight]!) {
+      final posKey = '${knightPos[0]},${knightPos[1]}';
+      final knightMoves = _getKnightMoves(knightPos[0], knightPos[1]);
+
+      for (final move in knightMoves) {
+        if (move[0] == row && move[1] == col) {
+          if (_knightMoveNumbers[posKey]?.contains(num) ?? false) {
+            return "나이트(${knightPos[0]}, ${knightPos[1]})의 이동 범위에 이미 숫자 $num이 있음";
+          }
+        }
+      }
+    }
+
+    // 비숍 대각선 규칙 검사
+    for (final bishopPos in _piecePositions[ChessPiece.bishop]!) {
+      final posKey = '${bishopPos[0]},${bishopPos[1]}';
+      final diagonals = _getBishopDiagonals(bishopPos[0], bishopPos[1]);
+
+      // 메인 대각선 검사
+      for (final pos in diagonals['main']!) {
+        if (pos[0] == row && pos[1] == col) {
+          if (_bishopDiagonals[posKey]?['main']?.contains(num) ?? false) {
+            return "비숍(${bishopPos[0]}, ${bishopPos[1]})의 메인 대각선에 이미 숫자 $num이 있음";
+          }
+        }
+      }
+
+      // 반대 대각선 검사
+      for (final pos in diagonals['anti']!) {
+        if (pos[0] == row && pos[1] == col) {
+          if (_bishopDiagonals[posKey]?['anti']?.contains(num) ?? false) {
+            return "비숍(${bishopPos[0]}, ${bishopPos[1]})의 반대 대각선에 이미 숫자 $num이 있음";
+          }
+        }
+      }
+    }
+
+    // 킹 주변 규칙 검사
+    for (final kingPos in _piecePositions[ChessPiece.king]!) {
+      final posKey = '${kingPos[0]},${kingPos[1]}';
+      final kingMoves = _getKingMoves(kingPos[0], kingPos[1]);
+
+      for (final move in kingMoves) {
+        if (move[0] == row && move[1] == col) {
+          if (_kingAdjacentNumbers[posKey]?.contains(num) ?? false) {
+            return "킹(${kingPos[0]}, ${kingPos[1]})의 주변에 이미 숫자 $num이 있음";
+          }
+        }
+      }
+    }
+
+    // 퀸 이동 규칙 검사
+    for (final queenPos in _piecePositions[ChessPiece.queen]!) {
+      final posKey = '${queenPos[0]},${queenPos[1]}';
+      final queenMoves = _getQueenMoves(queenPos[0], queenPos[1]);
+
+      // 가로 방향 검사
+      for (final pos in queenMoves['row']!) {
+        if (pos[0] == row && pos[1] == col) {
+          if (_queenMoveNumbers[posKey]?['row']?.contains(num) ?? false) {
+            return "퀸(${queenPos[0]}, ${queenPos[1]})의 가로 방향에 이미 숫자 $num이 있음";
+          }
+        }
+      }
+
+      // 세로 방향 검사
+      for (final pos in queenMoves['col']!) {
+        if (pos[0] == row && pos[1] == col) {
+          if (_queenMoveNumbers[posKey]?['col']?.contains(num) ?? false) {
+            return "퀸(${queenPos[0]}, ${queenPos[1]})의 세로 방향에 이미 숫자 $num이 있음";
+          }
+        }
+      }
+
+      // 메인 대각선 검사
+      for (final pos in queenMoves['main']!) {
+        if (pos[0] == row && pos[1] == col) {
+          if (_queenMoveNumbers[posKey]?['main']?.contains(num) ?? false) {
+            return "퀸(${queenPos[0]}, ${queenPos[1]})의 메인 대각선에 이미 숫자 $num이 있음";
+          }
+        }
+      }
+
+      // 반대 대각선 검사
+      for (final pos in queenMoves['anti']!) {
+        if (pos[0] == row && pos[1] == col) {
+          if (_queenMoveNumbers[posKey]?['anti']?.contains(num) ?? false) {
+            return "퀸(${queenPos[0]}, ${queenPos[1]})의 반대 대각선에 이미 숫자 $num이 있음";
+          }
+        }
+      }
+    }
+
+    // 체스 기물 관련 제약 조건이 없는 경우 null 반환
+    return null;
+  }
+
+  /// 현재 보드 상태를 콘솔에 출력
+  void _printBoard() {
+    for (int i = 0; i < BOARD_SIZE; i++) {
+      String rowStr = '';
+      for (int j = 0; j < BOARD_SIZE; j++) {
+        if (_board[i][j].hasChessPiece) {
+          final piece = _board[i][j].chessPiece!;
+          String pieceSymbol = '';
+          switch (piece) {
+            case ChessPiece.king:
+              pieceSymbol = 'K';
+              break;
+            case ChessPiece.queen:
+              pieceSymbol = 'Q';
+              break;
+            case ChessPiece.bishop:
+              pieceSymbol = 'B';
+              break;
+            case ChessPiece.knight:
+              pieceSymbol = 'N';
+              break;
+            case ChessPiece.rook:
+              pieceSymbol = 'R';
+              break;
+            default:
+              pieceSymbol = '?';
+          }
+          rowStr += '[$pieceSymbol]';
+        } else if (_board[i][j].hasNumber) {
+          rowStr += '[${_board[i][j].number}]';
+        } else {
+          rowStr += '[ ]';
+        }
+      }
+      print('$i: $rowStr');
+    }
   }
 
   /// 난이도에 따라 체스 기물 배치를 랜덤하게 생성
@@ -609,12 +769,12 @@ class ChessSudokuGenerator {
           _placePiece(pieceType, row, col);
         }
 
-        // // 스도쿠 솔루션 생성
-        // if (!_solveSudoku()) {
-        //   attempts++;
-        //   print('스도쿠 솔루션 생성 실패: 시도 $attempts/$maxAttempts');
-        //   continue;
-        // }
+        // 스도쿠 솔루션 생성
+        if (!_solveSudoku()) {
+          attempts++;
+          print('스도쿠 솔루션 생성 실패: 시도 $attempts/$maxAttempts');
+          continue;
+        }
 
         return _board;
       } catch (e) {
