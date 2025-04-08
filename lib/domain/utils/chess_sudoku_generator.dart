@@ -182,21 +182,31 @@ class ChessSudokuGenerator {
 
     // 난이도별 기물 설정
     final config = _getDifficultyConfig(difficulty);
-    int totalPieces = config['minPieces']! +
-        _random.nextInt(config['maxPieces']! - config['minPieces']! + 1);
 
-    // 나이트는 최소 1개 이상 보장
-    pieceCount[ChessPiece.knight] = config['pieces']![ChessPiece.knight]![0];
-    int remainingPieces = totalPieces - pieceCount[ChessPiece.knight]!;
+    // 먼저 각 기물의 최소 개수를 적용
+    for (final piece in ChessPiece.values) {
+      int minCount = config['pieces']![piece]![0];
+      pieceCount[piece] = minCount;
+
+      // 최소 개수만큼 기물 배치를 미리 예약
+      for (int i = 0; i < minCount; i++) {
+        _placePieceRandomly(pieces, piece);
+      }
+    }
+
+    // 랜덤하게 추가 기물을 배치할 수 있는 범위 계산
+    int placedPieces =
+        pieceCount.values.fold<int>(0, (sum, count) => sum + count);
+    int maxAdditionalPieces = config['maxPieces']! - placedPieces;
+    int additionalPieces = _random.nextInt(maxAdditionalPieces + 1);
 
     // 나머지 기물 랜덤 배치
     List<ChessPiece> availablePieces = ChessPiece.values.toList();
+    int remainingPieces = additionalPieces;
 
     while (remainingPieces > 0 && availablePieces.isNotEmpty) {
       int pieceIndex = _random.nextInt(availablePieces.length);
       ChessPiece piece = availablePieces[pieceIndex];
-
-      pieceCount[piece] ??= 0;
 
       // 최대 제한 확인
       if (pieceCount[piece]! >= config['pieces']![piece]![1]) {
@@ -206,14 +216,10 @@ class ChessSudokuGenerator {
 
       pieceCount[piece] = pieceCount[piece]! + 1;
       remainingPieces--;
-    }
 
-    // 기물 보드에 배치
-    pieceCount.forEach((piece, count) {
-      for (int i = 0; i < count; i++) {
-        _placePieceRandomly(pieces, piece);
-      }
-    });
+      // 추가된 기물 랜덤 배치
+      _placePieceRandomly(pieces, piece);
+    }
 
     return pieces;
   }

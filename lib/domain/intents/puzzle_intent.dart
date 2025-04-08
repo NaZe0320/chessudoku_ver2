@@ -354,7 +354,7 @@ class PuzzleIntent {
     }
 
     // 상태 업데이트
-    _notifier.updateBoardWithState(newBoard, newState);
+    _notifier.updateBoard(newBoard, false);
   }
 
   // 특정 셀의 가능한 후보 숫자 계산
