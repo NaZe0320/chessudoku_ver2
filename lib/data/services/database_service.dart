@@ -34,15 +34,21 @@ class DatabaseService {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _dbName);
 
+    print('데이터베이스 초기화: $path (버전 $_dbVersion)');
+
     return await openDatabase(
       path,
       version: _dbVersion,
       onCreate: _createDB,
+      onOpen: (db) {
+        print('데이터베이스 열림: ${db.path}, 테이블: $tablePuzzleRecords');
+      },
     );
   }
 
   /// 데이터베이스 생성
   Future<void> _createDB(Database db, int version) async {
+    print('새 데이터베이스 생성 중... 버전: $version');
     // 퍼즐 기록 테이블 생성
     await db.execute('''
       CREATE TABLE $tablePuzzleRecords (
@@ -53,6 +59,7 @@ class DatabaseService {
         createdAt TEXT NOT NULL
       )
     ''');
+    print('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
   }
 
   /// 데이터베이스 닫기

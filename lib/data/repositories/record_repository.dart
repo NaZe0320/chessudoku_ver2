@@ -14,6 +14,12 @@ class RecordRepository {
   /// 완료된 퍼즐 기록 저장
   Future<bool> savePuzzleRecord(PuzzleState state) async {
     try {
+      print('RecordRepository: 퍼즐 기록 저장 시작');
+
+      // 데이터베이스 연결 확인
+      final db = await _databaseService.database;
+      print('RecordRepository: 데이터베이스 연결 상태: ${db.isOpen ? '열림' : '닫힘'}');
+
       // 퍼즐 상태를 레코드로 변환
       final record = PuzzleRecord(
         difficulty: state.difficulty,
@@ -22,15 +28,21 @@ class RecordRepository {
         createdAt: DateTime.now(),
       );
 
+      // 레코드 정보 출력
+      print(
+          'RecordRepository: 저장할 기록 - 난이도: ${record.difficulty.name}, 시간: ${record.formattedCompletionTime}');
+
       // 데이터베이스에 저장
       final id = await _databaseService.insert(
         DatabaseService.tablePuzzleRecords,
         record.toMap(),
       );
 
+      print('RecordRepository: 레코드 저장 완료. ID: $id');
       return id > 0;
-    } catch (e) {
-      print('퍼즐 기록 저장 중 오류 발생: $e');
+    } catch (e, stackTrace) {
+      print('RecordRepository: 퍼즐 기록 저장 중 오류 발생: $e');
+      print('StackTrace: $stackTrace');
       return false;
     }
   }

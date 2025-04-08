@@ -60,25 +60,41 @@ class PuzzleRecord {
 
   /// PuzzleRecord 객체를 Map으로 변환 (DB에 저장 시 사용)
   Map<String, dynamic> toMap() {
-    // 보드 데이터를 직렬화
-    final boardDataMap = boardData.map((row) {
-      return row.map((cell) {
-        return {
-          'number': cell.number,
-          'chessPiece': cell.chessPiece?.index,
-          'isInitial': cell.isInitial,
-          'notes': cell.notes.toList(),
-        };
-      }).toList();
-    }).toList();
+    try {
+      print('PuzzleRecord: toMap 변환 시작');
 
-    return {
-      'id': id,
-      'difficulty': difficulty.name,
-      'boardData': json.encode(boardDataMap),
-      'completionTime': completionTime.inSeconds,
-      'createdAt': createdAt.toIso8601String(),
-    };
+      // 보드 크기 확인
+      final boardSize = boardData.length;
+      print('PuzzleRecord: 보드 크기 - $boardSize x ${boardData[0].length}');
+
+      // 보드 데이터를 직렬화
+      final boardDataMap = boardData.map((row) {
+        return row.map((cell) {
+          return {
+            'number': cell.number,
+            'chessPiece': cell.chessPiece?.index,
+            'isInitial': cell.isInitial,
+            'notes': cell.notes.toList(),
+          };
+        }).toList();
+      }).toList();
+
+      final result = {
+        'id': id,
+        'difficulty': difficulty.name,
+        'boardData': json.encode(boardDataMap),
+        'completionTime': completionTime.inSeconds,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+      print(
+          'PuzzleRecord: toMap 변환 완료 - 크기: ${json.encode(result).length} 바이트');
+      return result;
+    } catch (e, stackTrace) {
+      print('PuzzleRecord: toMap 변환 중 오류 발생: $e');
+      print('StackTrace: $stackTrace');
+      rethrow; // 오류를 상위 호출자에게 전달
+    }
   }
 
   /// 포맷된 완료 시간 문자열 (mm:ss)

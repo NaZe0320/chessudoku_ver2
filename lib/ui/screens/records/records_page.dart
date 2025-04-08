@@ -36,6 +36,8 @@ class _RecordsPageState extends ConsumerState<RecordsPage>
     final intent = ref.read(recordsIntentProvider);
     intent.loadBestRecord();
     intent.loadRecords();
+
+    print('기록 불러옴!');
   }
 
   void _handleTabChange() {
