@@ -55,7 +55,7 @@ class PuzzleIntent {
     const boardSize = ChessSudokuGenerator.boardSize;
 
     // 체스도쿠 생성기를 사용하여 보드 생성
-    final gameBoard = _generator.generateBoard(difficulty);
+    final gameBoard = await _generator.generatePuzzle(difficulty);
 
     // 상태 업데이트
     _notifier.initializeGameWithBoard(

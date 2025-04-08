@@ -19,9 +19,9 @@ class ChessSudokuGenerator {
   // 난이도별 빈칸 설정 (최소, 최대, 배치크기)
   // 배치 있는 이유 (계산 횟수 감소 시키려고 batch 마다 검산 시도)
   final Map<Difficulty, Map<String, int>> _puzzleConfig = {
-    Difficulty.easy: {'minEmpty': 30, 'maxEmpty': 40, 'batchSize': 1},
-    Difficulty.medium: {'minEmpty': 41, 'maxEmpty': 50, 'batchSize': 1},
-    Difficulty.hard: {'minEmpty': 51, 'maxEmpty': 60, 'batchSize': 1},
+    Difficulty.easy: {'minEmpty': 25, 'maxEmpty': 35, 'batchSize': 1},
+    Difficulty.medium: {'minEmpty': 36, 'maxEmpty': 45, 'batchSize': 1},
+    Difficulty.hard: {'minEmpty': 46, 'maxEmpty': 60, 'batchSize': 1},
   };
 
   /// 체스도쿠 보드 생성
