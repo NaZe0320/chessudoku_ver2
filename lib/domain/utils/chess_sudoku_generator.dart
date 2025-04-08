@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/utils/chess_sudoku_solver.dart'; // ChessSudokuSolver 임포트
 
 /// 체스도쿠 퍼즐 생성기
 /// 체스도쿠 규칙에 맞는 유효한 퍼즐을 효율적으로 생성합니다.
@@ -52,7 +53,7 @@ class ChessSudokuGenerator {
 
   /// 체스도쿠 퍼즐 생성 (빈칸이 있는 문제)
   Future<List<List<CellContent>>> generatePuzzle(Difficulty difficulty) async {
-    // 3초 시간 제한 설정
+    // 시간 제한 설정
     final deadline = DateTime.now().add(const Duration(seconds: 10));
 
     while (DateTime.now().isBefore(deadline)) {
@@ -68,8 +69,14 @@ class ChessSudokuGenerator {
             await _digHoles(puzzleBoard, solutionBoard, difficulty, deadline);
 
         if (success) {
-          print('퍼즐 생성 성공');
-          return puzzleBoard;
+          // 퍼즐의 풀이 가능성 검증
+          if (_verifyPuzzleSolvability(puzzleBoard)) {
+            print('퍼즐 생성 성공 (풀이 가능성 검증 완료)');
+            return puzzleBoard;
+          } else {
+            print('풀이 불가능한 퍼즐 생성됨, 다시 시도합니다');
+            continue;
+          }
         }
       } catch (e) {
         print('퍼즐 생성 오류: $e');
@@ -77,6 +84,37 @@ class ChessSudokuGenerator {
     }
 
     throw Exception("시간 제한 내에 퍼즐 생성에 실패했습니다.");
+  }
+
+  /// 퍼즐의 풀이 가능성 검증
+  bool _verifyPuzzleSolvability(List<List<CellContent>> puzzleBoard) {
+    // 여러 번 풀이 시도하여 풀이 가능성 검증
+    const int solveAttempts = 10;
+    int successCount = 0;
+
+    for (int i = 0; i < solveAttempts; i++) {
+      // 퍼즐 복제 (원본 보존)
+      final testBoard = _cloneBoard(puzzleBoard);
+
+      // 체스도쿠 풀이기 생성 (각 시도마다 다른 랜덤 시드 사용)
+      final solver = ChessSudokuSolver(testBoard,
+          randomSeed: DateTime.now().millisecondsSinceEpoch + i,
+          useRandomOrder: true // 랜덤 순서 사용
+          );
+
+      // 풀이 시도
+      if (solver.solve()) {
+        successCount++;
+
+        // 최소 1번 성공하면 검증 통과 (더 엄격하게 하려면 숫자를 높일 수 있음)
+        if (successCount >= 1) {
+          return true;
+        }
+      }
+    }
+
+    // 모든 시도가 실패한 경우
+    return false;
   }
 
   /// 초기화
