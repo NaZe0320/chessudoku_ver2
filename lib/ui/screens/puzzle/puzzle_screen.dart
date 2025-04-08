@@ -132,7 +132,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
                         child: Column(
                           children: [
                             PuzzleBoard(),
-                            SizedBox(height: 12),
+                            SizedBox(height: 24),
                             // 난이도 선택 및 게임 제어 버튼
                             PuzzleControls(),
                             SizedBox(height: 12),
