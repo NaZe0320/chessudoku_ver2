@@ -76,7 +76,31 @@ class PuzzleControls extends ConsumerWidget {
                         : AppColors.neutral700,
                     size: 22,
                   ),
-                  onTap: () => intent.checkErrors(),
+                  onTap: () {
+                    intent.checkErrors();
+                    final errorCount = puzzleState.errorCells.length;
+                    if (errorCount > 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$errorCount개의 오류가 있습니다.'),
+                          backgroundColor: AppColors.error,
+                          behavior: SnackBarBehavior.floating,
+                          margin: const EdgeInsets.all(8),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('오류가 없습니다! 잘하고 있어요.'),
+                          backgroundColor: Color(0xFF4CAF50),
+                          behavior: SnackBarBehavior.floating,
+                          margin: EdgeInsets.all(8),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
                   type: NeomorphicButtonType.primary,
                   size: NeomorphicButtonSize.small,
                   borderRadius: 20,

@@ -146,12 +146,13 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
     resetTimer();
   }
 
-  void checkErrors() {
+  int checkErrors() {
     // 오류 셀을 업데이트
-    updateErrorCells();
+    final errorCount = updateErrorCells();
+    return errorCount;
   }
 
-  void updateErrorCells() {
+  int updateErrorCells() {
     final currentState = state;
     final board = currentState.board;
     final boardSize = currentState.boardSize;
@@ -189,6 +190,8 @@ class PuzzleNotifier extends StateNotifier<PuzzleState> {
     state = currentState.copyWith(
       errorCells: errorCells,
     );
+
+    return errorCells.length;
   }
 
   // 오류 검사를 위한 보조 메서드

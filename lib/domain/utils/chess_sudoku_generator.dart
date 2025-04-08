@@ -271,8 +271,8 @@ class ChessSudokuGenerator {
             ChessPiece.king: [0, 2],
             ChessPiece.queen: [0, 2],
             ChessPiece.bishop: [1, 4],
-            ChessPiece.knight: [2, 5],
-            ChessPiece.rook: [0, 3]
+            ChessPiece.knight: [2, 4],
+            ChessPiece.rook: [1, 3]
           },
           'minPieces': 5,
           'maxPieces': 8

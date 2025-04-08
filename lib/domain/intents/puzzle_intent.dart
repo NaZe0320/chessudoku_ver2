@@ -8,6 +8,7 @@ import 'package:chessudoku/domain/states/puzzle_state.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_generator.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_validator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 
 class PuzzleIntent {
   final Ref ref;
