@@ -22,12 +22,12 @@ class ChessSudokuGenerator {
   final Map<Difficulty, Map<String, int>> _puzzleConfig = {
     Difficulty.easy: {'minEmpty': 30, 'maxEmpty': 40, 'batchSize': 1},
     Difficulty.medium: {'minEmpty': 36, 'maxEmpty': 50, 'batchSize': 1},
-    Difficulty.hard: {'minEmpty': 46, 'maxEmpty': 60, 'batchSize': 1},
+    Difficulty.hard: {'minEmpty': 46, 'maxEmpty': 55, 'batchSize': 1},
   };
 
   /// 체스도쿠 보드 생성
   List<List<CellContent>> generateBoard(Difficulty difficulty) {
-    const int maxAttempts = 100000;
+    const int maxAttempts = 10000000;
 
     for (int attempts = 0; attempts < maxAttempts; attempts++) {
       try {
@@ -54,7 +54,7 @@ class ChessSudokuGenerator {
   /// 체스도쿠 퍼즐 생성 (빈칸이 있는 문제)
   Future<List<List<CellContent>>> generatePuzzle(Difficulty difficulty) async {
     // 시간 제한 설정
-    final deadline = DateTime.now().add(const Duration(seconds: 10));
+    final deadline = DateTime.now().add(const Duration(seconds: 100));
 
     while (DateTime.now().isBefore(deadline)) {
       try {
@@ -236,7 +236,16 @@ class ChessSudokuGenerator {
     int placedPieces =
         pieceCount.values.fold<int>(0, (sum, count) => sum + count);
     int maxAdditionalPieces = config['maxPieces']! - placedPieces;
-    int additionalPieces = _random.nextInt(maxAdditionalPieces + 1);
+
+    // 최소 필요 기물 수 계산
+    int minRequiredPieces = max(0, config['minPieces']! - placedPieces);
+
+    // 추가 기물 수를 최소 필요 수부터 최대 가능 수 사이로 계산
+    int additionalPieces = minRequiredPieces;
+    if (maxAdditionalPieces > minRequiredPieces) {
+      additionalPieces +=
+          _random.nextInt(maxAdditionalPieces - minRequiredPieces + 1);
+    }
 
     // 나머지 기물 랜덤 배치
     List<ChessPiece> availablePieces = ChessPiece.values.toList();
@@ -308,9 +317,9 @@ class ChessSudokuGenerator {
           'pieces': {
             ChessPiece.king: [0, 2],
             ChessPiece.queen: [0, 2],
-            ChessPiece.bishop: [1, 4],
-            ChessPiece.knight: [2, 4],
-            ChessPiece.rook: [1, 3]
+            ChessPiece.bishop: [1, 3],
+            ChessPiece.knight: [2, 3],
+            ChessPiece.rook: [0, 2]
           },
           'minPieces': 5,
           'maxPieces': 8
@@ -444,8 +453,7 @@ class ChessSudokuGenerator {
 
       while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
         attacks.add('$r,$c');
-        // 다른 기물에 막히면 중단
-        if (_board[r][c].hasChessPiece) break;
+        // 다른 기물이나 숫자에 의한 차단은 고려하지 않음
         r += dir[0];
         c += dir[1];
       }

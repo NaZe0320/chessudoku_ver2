@@ -86,7 +86,7 @@ void main() {
     final generationStopwatch = Stopwatch()..start();
 
     print('체스도쿠 생성 중...');
-    final puzzleBoard = await generator.generatePuzzle(Difficulty.medium);
+    final puzzleBoard = await generator.generatePuzzle(Difficulty.hard);
 
     // 퍼즐 생성 시간 측정 종료
     generationStopwatch.stop();

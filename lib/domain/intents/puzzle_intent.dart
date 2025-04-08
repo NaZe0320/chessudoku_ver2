@@ -399,22 +399,24 @@ class PuzzleIntent {
 
         // 현재 셀이 기물의 공격 범위에 있는지 확인
         if (_canPieceAttack(board[r][c].chessPiece!, r, c, row, col)) {
-          // 공격 범위에 있는 경우 해당 기물과 같은 숫자가 있는 다른 셀 찾기
-          for (int r2 = 0; r2 < boardSize; r2++) {
-            for (int c2 = 0; c2 < boardSize; c2++) {
-              // 자기 자신이거나 체스 기물이 있는 셀이면 건너뛰기
-              if ((r2 == row && c2 == col) || board[r2][c2].hasChessPiece)
-                continue;
+          // 각 방향을 독립적으로 고려하기 위해, 해당 방향의 셀들 수집
+          List<List<int>> attackedCells =
+              _getAttackedCells(board[r][c].chessPiece!, r, c, row, col);
 
-              // 숫자가 없으면 건너뛰기
-              if (!board[r2][c2].hasNumber) continue;
+          // 같은 방향/패턴에 있는 모든 셀을 순회
+          for (final cell in attackedCells) {
+            final r2 = cell[0];
+            final c2 = cell[1];
 
-              // 체스 기물이 두 셀을 모두 공격할 수 있는지 확인
-              if (_canPieceAttack(board[r][c].chessPiece!, r, c, r2, c2)) {
-                // 이 숫자는 현재 셀에 놓을 수 없음
-                usedNumbers.add(board[r2][c2].number!);
-              }
-            }
+            // 자기 자신이거나 체스 기물이 있는 셀이면 건너뛰기
+            if ((r2 == row && c2 == col) || board[r2][c2].hasChessPiece)
+              continue;
+
+            // 숫자가 없으면 건너뛰기
+            if (!board[r2][c2].hasNumber) continue;
+
+            // 이 숫자는 현재 셀에 놓을 수 없음
+            usedNumbers.add(board[r2][c2].number!);
           }
         }
       }
@@ -423,6 +425,134 @@ class PuzzleIntent {
     // 사용 가능한 숫자 계산
     allNumbers.removeAll(usedNumbers);
     return allNumbers;
+  }
+
+  // 기물의 특정 방향/패턴에 있는 모든 셀 반환
+  List<List<int>> _getAttackedCells(ChessPiece piece, int pieceRow,
+      int pieceCol, int targetRow, int targetCol) {
+    const boardSize = 9;
+    List<List<int>> attackedCells = [];
+
+    switch (piece) {
+      case ChessPiece.knight:
+        // 나이트는 L자 이동 패턴으로 공격하는 모든 셀 반환
+        for (int r = 0; r < boardSize; r++) {
+          for (int c = 0; c < boardSize; c++) {
+            if (_canPieceAttack(piece, pieceRow, pieceCol, r, c)) {
+              attackedCells.add([r, c]);
+            }
+          }
+        }
+        break;
+
+      case ChessPiece.rook:
+        // 룩은 같은 행/열에 있는 모든 셀 반환 (같은 방향만)
+        if (pieceRow == targetRow) {
+          // 같은 행의 셀들 (같은 방향만)
+          final direction = targetCol > pieceCol ? 1 : -1;
+          for (int c = 0; c < boardSize; c++) {
+            // 같은 방향인지 확인
+            if ((c - pieceCol) * direction > 0) {
+              attackedCells.add([pieceRow, c]);
+            }
+          }
+        } else if (pieceCol == targetCol) {
+          // 같은 열의 셀들 (같은 방향만)
+          final direction = targetRow > pieceRow ? 1 : -1;
+          for (int r = 0; r < boardSize; r++) {
+            // 같은 방향인지 확인
+            if ((r - pieceRow) * direction > 0) {
+              attackedCells.add([r, pieceCol]);
+            }
+          }
+        }
+        break;
+
+      case ChessPiece.bishop:
+        // 비숍은 같은 대각선에 있는 모든 셀 반환
+        final rowDiff = targetRow - pieceRow;
+        final colDiff = targetCol - pieceCol;
+
+        // 같은 대각선에 있는지 확인
+        if (rowDiff.abs() == colDiff.abs()) {
+          final rowDirection = rowDiff > 0 ? 1 : -1;
+          final colDirection = colDiff > 0 ? 1 : -1;
+
+          // 해당 대각선의 모든 셀 추가 (동일 방향만)
+          for (int r = 0; r < boardSize; r++) {
+            for (int c = 0; c < boardSize; c++) {
+              // 대각선에 있는지 확인 (같은 방향만)
+              if ((r - pieceRow) * (targetRow - pieceRow) > 0 && // 같은 방향
+                  (c - pieceCol) * (targetCol - pieceCol) > 0 && // 같은 방향
+                  (r - pieceRow).abs() == (c - pieceCol).abs()) {
+                // 대각선
+                attackedCells.add([r, c]);
+              }
+            }
+          }
+        }
+        break;
+
+      case ChessPiece.queen:
+        // 퀸은 룩 + 비숍의 공격 범위
+        // 같은 행/열 (룩)
+        if (pieceRow == targetRow) {
+          // 같은 행의 셀들 (같은 방향만)
+          final direction = targetCol > pieceCol ? 1 : -1;
+          for (int c = 0; c < boardSize; c++) {
+            // 같은 방향인지 확인
+            if ((c - pieceCol) * direction > 0) {
+              attackedCells.add([pieceRow, c]);
+            }
+          }
+        } else if (pieceCol == targetCol) {
+          // 같은 열의 셀들 (같은 방향만)
+          final direction = targetRow > pieceRow ? 1 : -1;
+          for (int r = 0; r < boardSize; r++) {
+            // 같은 방향인지 확인
+            if ((r - pieceRow) * direction > 0) {
+              attackedCells.add([r, pieceCol]);
+            }
+          }
+        }
+        // 같은 대각선 (비숍)
+        else {
+          final rowDiff = targetRow - pieceRow;
+          final colDiff = targetCol - pieceCol;
+          if (rowDiff.abs() == colDiff.abs()) {
+            // 해당 대각선의 모든 셀 추가 (동일 방향만)
+            for (int r = 0; r < boardSize; r++) {
+              for (int c = 0; c < boardSize; c++) {
+                // 대각선에 있는지 확인 (같은 방향만)
+                if ((r - pieceRow) * (targetRow - pieceRow) > 0 && // 같은 방향
+                    (c - pieceCol) * (targetCol - pieceCol) > 0 && // 같은 방향
+                    (r - pieceRow).abs() == (c - pieceCol).abs()) {
+                  // 대각선
+                  attackedCells.add([r, c]);
+                }
+              }
+            }
+          }
+        }
+        break;
+
+      case ChessPiece.king:
+        // 킹은 한 칸씩 모든 방향으로 이동 가능
+        // 주변 8개 셀의 좌표를 확인하여 유효한 셀 추가
+        for (int i = -1; i <= 1; i++) {
+          for (int j = -1; j <= 1; j++) {
+            if (i == 0 && j == 0) continue; // 자기 자신은 제외
+            final r = pieceRow + i;
+            final c = pieceCol + j;
+            if (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
+              attackedCells.add([r, c]);
+            }
+          }
+        }
+        break;
+    }
+
+    return attackedCells;
   }
 
   // 체스 기물이 특정 위치를 공격할 수 있는지 확인
@@ -436,11 +566,11 @@ class PuzzleIntent {
         return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
 
       case ChessPiece.rook:
-        // 룩의 수직/수평 이동
+        // 룩의 수직/수평 이동 (직선 단위로 고려)
         return pieceRow == targetRow || pieceCol == targetCol;
 
       case ChessPiece.bishop:
-        // 비숍의 대각선 이동
+        // 비숍의 대각선 이동 (직선 단위로 고려)
         final rowDiff = (pieceRow - targetRow).abs();
         final colDiff = (pieceCol - targetCol).abs();
         return rowDiff == colDiff;
