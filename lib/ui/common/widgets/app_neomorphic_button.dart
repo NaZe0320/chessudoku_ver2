@@ -89,7 +89,7 @@ class _AppNeomorphicButtonState extends State<AppNeomorphicButton> {
             children: [
               if (widget.prefixIcon != null) ...[
                 widget.prefixIcon!,
-                const SizedBox(width: 6),
+                if (widget.text.isNotEmpty) const SizedBox(width: 6),
               ],
               Text(
                 widget.text,
@@ -97,7 +97,7 @@ class _AppNeomorphicButtonState extends State<AppNeomorphicButton> {
               ),
               if (widget.suffixIcon != null) ...[
                 const SizedBox(width: 6),
-                widget.suffixIcon!,
+                if (widget.text.isNotEmpty) widget.suffixIcon!,
               ],
             ],
           ),

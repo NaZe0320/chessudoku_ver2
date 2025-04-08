@@ -14,7 +14,7 @@ class AppColors {
   // Semantic 색상 (벚꽃 테마와 어울리도록 약간 조정)
   static const Color success = Color(0xFF5CB176); // 연두색
   static const Color warning = Color(0xFFFFB547); // 주황색
-  static const Color error = Color(0xFFFF6B6B); // 연한 빨강
+  static const Color error = Color(0xFFE53935); // 연한 빨강
   static const Color info = Color(0xFF57BED0); // 하늘색
 
   // 중립 색상 (따뜻한 뉘앙스로 업데이트)

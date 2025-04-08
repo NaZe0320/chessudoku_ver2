@@ -46,6 +46,14 @@ class PuzzleCell extends ConsumerWidget {
       cellColor = AppColors.neutral100;
     }
 
+    // 오류 셀 표시
+    final isError = puzzleState.errorCells.contains('$row,$col');
+
+    // 오류가 있으면 빨간색 배경으로 표시
+    if (isError) {
+      cellColor = AppColors.error.withAlpha(70);
+    }
+
     return GestureDetector(
       onTap: () => intent.selectCell(row, col),
       child: AnimatedContainer(
@@ -73,15 +81,6 @@ class PuzzleCell extends ConsumerWidget {
               color: col == 0 ? AppColors.neutral700 : AppColors.neutral400,
             ),
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withAlpha(77),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                  )
-                ]
-              : null,
         ),
         alignment: Alignment.center,
         child: _buildCellContent(cell, intent),

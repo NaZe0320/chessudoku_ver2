@@ -29,7 +29,7 @@ class PuzzleControls extends ConsumerWidget {
 
               // 메모 모드 토글 버튼
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
+                margin: const EdgeInsets.symmetric(horizontal: 8),
                 child: AppNeomorphicButton(
                   text: '메모 모드',
                   prefixIcon: Icon(
@@ -44,6 +44,43 @@ class PuzzleControls extends ConsumerWidget {
                   size: NeomorphicButtonSize.medium,
                   borderRadius: 16,
                   isActive: puzzleState.isNoteMode,
+                ),
+              ),
+
+              // 메모 자동 채우기 버튼
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                child: AppNeomorphicButton(
+                  text: '',
+                  prefixIcon: const Icon(
+                    Icons.auto_fix_high,
+                    color: AppColors.neutral700,
+                    size: 22,
+                  ),
+                  onTap: () => intent.fillNotes(),
+                  type: NeomorphicButtonType.primary,
+                  size: NeomorphicButtonSize.small,
+                  borderRadius: 20,
+                ),
+              ),
+
+              // 오류 검사 버튼
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                child: AppNeomorphicButton(
+                  text: '',
+                  prefixIcon: Icon(
+                    Icons.check_circle_outline,
+                    color: puzzleState.errorCells.isNotEmpty
+                        ? AppColors.error
+                        : AppColors.neutral700,
+                    size: 22,
+                  ),
+                  onTap: () => intent.checkErrors(),
+                  type: NeomorphicButtonType.primary,
+                  size: NeomorphicButtonSize.small,
+                  borderRadius: 20,
+                  isActive: puzzleState.errorCells.isNotEmpty,
                 ),
               ),
 

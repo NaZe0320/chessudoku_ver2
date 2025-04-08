@@ -27,6 +27,7 @@ class PuzzleState {
   final bool isNoteMode; // 메모 모드 여부
   final List<PuzzleAction> history; // 동작 히스토리
   final int historyIndex; // 현재 히스토리 인덱스
+  final Set<String> errorCells; // 오류가 있는 셀 좌표 (row,col 형식)
 
   const PuzzleState({
     this.difficulty = Difficulty.easy,
@@ -40,6 +41,7 @@ class PuzzleState {
     this.isNoteMode = false,
     this.history = const [],
     this.historyIndex = -1,
+    this.errorCells = const {},
   });
 
   PuzzleState copyWith({
@@ -54,6 +56,7 @@ class PuzzleState {
     bool? isNoteMode,
     List<PuzzleAction>? history,
     int? historyIndex,
+    Set<String>? errorCells,
   }) {
     return PuzzleState(
       difficulty: difficulty ?? this.difficulty,
@@ -67,6 +70,7 @@ class PuzzleState {
       isNoteMode: isNoteMode ?? this.isNoteMode,
       history: history ?? this.history,
       historyIndex: historyIndex ?? this.historyIndex,
+      errorCells: errorCells ?? this.errorCells,
     );
   }
 
@@ -90,6 +94,12 @@ class PuzzleState {
   // 선택된 셀이 비어있는지 확인
   bool get isSelectedCellEmpty {
     return selectedCell?.isEmpty ?? true;
+  }
+
+  // 선택된 셀이 오류가 있는지 확인
+  bool get isSelectedCellError {
+    if (selectedRow == null || selectedCol == null) return false;
+    return errorCells.contains('$selectedRow,$selectedCol');
   }
 
   // 포맷된 타이머 시간 (mm:ss)
