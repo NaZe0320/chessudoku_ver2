@@ -36,8 +36,6 @@ class _RecordsPageState extends ConsumerState<RecordsPage>
     final intent = ref.read(recordsIntentProvider);
     intent.loadBestRecord();
     intent.loadRecords();
-
-    print('기록 불러옴!');
   }
 
   void _handleTabChange() {
@@ -62,9 +60,6 @@ class _RecordsPageState extends ConsumerState<RecordsPage>
 
   @override
   Widget build(BuildContext context) {
-    // 현재 상태 감시
-    final state = ref.watch(recordsProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('기록실'),
@@ -184,7 +179,8 @@ class _RecordsPageState extends ConsumerState<RecordsPage>
 
     return Container(
       padding: const EdgeInsets.all(16.0),
-      color: _getDifficultyColor(difficulty).withOpacity(0.1),
+      color: Color.alphaBlend(
+          _getDifficultyColor(difficulty).withAlpha(26), Colors.white),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
