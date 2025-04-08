@@ -8,7 +8,6 @@ class PuzzleKeypad extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final intent = ref.read(puzzleIntentProvider);
     final puzzleState = ref.watch(puzzleProvider);
 
     return Column(
@@ -19,17 +18,17 @@ class PuzzleKeypad extends ConsumerWidget {
           children: List.generate(5, (index) {
             final number = index + 1;
             bool isSelected = false;
-    
+
             final selectedCell = puzzleState.selectedCell;
             if (selectedCell != null && selectedCell.number == number) {
               isSelected = true;
             }
-    
+
             return Padding(
               padding: const EdgeInsets.all(4.0),
               child: _buildNumberKey(
                 number: number,
-                onTap: () => intent.enterNumber(number),
+                onTap: () => _handleNumberPressed(number, ref),
                 isSelected: isSelected,
               ),
             );
@@ -43,17 +42,17 @@ class PuzzleKeypad extends ConsumerWidget {
             ...List.generate(4, (index) {
               final number = index + 6;
               bool isSelected = false;
-    
+
               final selectedCell = puzzleState.selectedCell;
               if (selectedCell != null && selectedCell.number == number) {
                 isSelected = true;
               }
-    
+
               return Padding(
                 padding: const EdgeInsets.all(4.0),
                 child: _buildNumberKey(
                   number: number,
-                  onTap: () => intent.enterNumber(number),
+                  onTap: () => _handleNumberPressed(number, ref),
                   isSelected: isSelected,
                 ),
               );
@@ -61,7 +60,7 @@ class PuzzleKeypad extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.all(4.0),
               child: _buildClearKey(
-                onTap: () => intent.clearValue(),
+                onTap: () => ref.read(puzzleIntentProvider).clearValue(),
               ),
             ),
           ],
@@ -161,5 +160,19 @@ class PuzzleKeypad extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  // 숫자 입력 처리
+  void _handleNumberPressed(int number, WidgetRef ref) {
+    final intent = ref.read(puzzleIntentProvider);
+    final puzzleState = ref.read(puzzleProvider);
+
+    // 메모 모드가 아니면서 이미 완성된 경우 무시
+    if (!puzzleState.isNoteMode && puzzleState.isCompleted) {
+      return;
+    }
+
+    // 숫자 입력 실행
+    intent.enterNumber(number);
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/domain/states/puzzle_state.dart';
 import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_board.dart';
 import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_controls.dart';
 import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_header.dart';
@@ -55,55 +56,76 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
     }
   }
 
+  // 뒤로가기 버튼 처리를 위한 메소드
+  Future<bool> _onWillPop() async {
+    final puzzleIntent = ref.read(puzzleIntentProvider);
+    // 게임 상태 저장
+    puzzleIntent.pauseTimer();
+    puzzleIntent.saveGameState();
+    return true; // true를 반환하여 뒤로가기 허용
+  }
+
   @override
   Widget build(BuildContext context) {
     final puzzleState = ref.watch(puzzleProvider);
     final puzzleIntent = ref.read(puzzleIntentProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.neutral100,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.primary,
-        centerTitle: true,
-        title: const Text(
-          '체스도쿠',
-          style: TextStyle(
-            color: AppColors.neutral100,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.neutral100),
-          onPressed: () {
-            // 뒤로 가기 시 게임 상태 저장
-            puzzleIntent.saveGameState();
-            Navigator.pop(context);
-          },
-        ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: Center(
-              child: PuzzleTimer(),
+    // 상태 변경 리스너 추가 - build 메소드 내에서 ref.listen 사용
+    ref.listen<PuzzleState>(puzzleProvider, (previous, next) {
+      // 완료 상태로 변경되었을 때 대화상자 표시
+      if (previous != null &&
+          previous.isCompleted == false &&
+          next.isCompleted) {
+        _showCompletionDialog(next);
+      }
+    });
+
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: AppColors.neutral100,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: AppColors.primary,
+          centerTitle: true,
+          title: const Text(
+            '체스도쿠',
+            style: TextStyle(
+              color: AppColors.neutral100,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
             ),
           ),
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primary.withAlpha(13),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.neutral100),
+            onPressed: () {
+              // 뒤로 가기 시 게임 상태 저장
+              puzzleIntent.saveGameState();
+              Navigator.pop(context);
+            },
+          ),
+          actions: const [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Center(
+                child: PuzzleTimer(),
+              ),
+            ),
+          ],
         ),
-        child: Stack(
-          children: [
-            const SafeArea(
-              child: Column(
-                children: [
-                  // 헤더 - 난이도 및 완료 메시지
-                  PuzzleHeader(),
-                  Expanded(
-                    child: Center(
+        body: Container(
+          decoration: BoxDecoration(
+            color: AppColors.primary.withAlpha(13),
+          ),
+          child: Stack(
+            children: [
+              const SafeArea(
+                child: Column(
+                  children: [
+                    // 헤더 - 난이도 및 완료 메시지
+                    PuzzleHeader(),
+                    SizedBox(height: 24),
+                    Expanded(
                       child: SingleChildScrollView(
                         padding: EdgeInsets.symmetric(horizontal: 8.0),
                         physics: BouncingScrollPhysics(),
@@ -121,76 +143,124 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (!puzzleState.isTimerRunning && !puzzleState.isCompleted)
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: 0.98,
-                child: Container(
-                  color: AppColors.neutral900.withAlpha(230),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                    child: Center(
-                      child: Card(
-                        elevation: 8,
-                        shadowColor: AppColors.primary.withAlpha(153),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32.0,
-                            vertical: 24.0,
+              if (!puzzleState.isTimerRunning && !puzzleState.isCompleted)
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: 0.98,
+                  child: Container(
+                    color: AppColors.neutral900.withAlpha(230),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                      child: Center(
+                        child: Card(
+                          elevation: 8,
+                          shadowColor: AppColors.primary.withAlpha(153),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.pause_circle_filled,
-                                size: 48,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                '일시정지',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32.0,
+                              vertical: 24.0,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.pause_circle_filled,
+                                  size: 48,
                                   color: AppColors.primary,
                                 ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton.icon(
-                                onPressed: () => puzzleIntent.resumeTimer(),
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('게임 재개'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: AppColors.neutral100,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32,
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  '일시정지',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
                                   ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 24),
+                                ElevatedButton.icon(
+                                  onPressed: () => puzzleIntent.resumeTimer(),
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('게임 재개'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: AppColors.neutral100,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 32,
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  // 퍼즐 완료 대화상자 표시
+  void _showCompletionDialog(PuzzleState state) {
+    final time = state.formattedTime;
+    final difficulty = state.difficulty.name;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('축하합니다!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.emoji_events,
+                color: AppColors.primary,
+                size: 64,
+              ),
+              const SizedBox(height: 16),
+              const Text('체스도쿠를 성공적으로 해결했습니다!'),
+              const SizedBox(height: 16),
+              Text(
+                '난이도: ${difficulty.substring(0, 1).toUpperCase()}${difficulty.substring(1)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '소요 시간: $time',
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('확인'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: AppColors.neutral100,
+        );
+      },
     );
   }
 }
