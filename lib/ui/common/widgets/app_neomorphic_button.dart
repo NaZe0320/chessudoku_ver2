@@ -26,6 +26,7 @@ class AppNeomorphicButton extends StatefulWidget {
   final Widget? suffixIcon;
   final double borderRadius;
   final bool isActive;
+  final String? tooltip;
 
   const AppNeomorphicButton({
     super.key,
@@ -38,6 +39,7 @@ class AppNeomorphicButton extends StatefulWidget {
     this.suffixIcon,
     this.borderRadius = 12.0,
     this.isActive = false,
+    this.tooltip,
   });
 
   @override
@@ -49,7 +51,7 @@ class _AppNeomorphicButtonState extends State<AppNeomorphicButton> {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
+    final button = Opacity(
       opacity: widget.isDisabled ? 0.6 : 1.0,
       child: GestureDetector(
         onTapDown:
@@ -104,6 +106,13 @@ class _AppNeomorphicButtonState extends State<AppNeomorphicButton> {
         ),
       ),
     );
+
+    return widget.tooltip != null
+        ? Tooltip(
+            message: widget.tooltip!,
+            child: button,
+          )
+        : button;
   }
 
   Color _getBaseColor() {

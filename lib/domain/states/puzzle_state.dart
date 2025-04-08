@@ -28,6 +28,7 @@ class PuzzleState {
   final List<PuzzleAction> history; // 동작 히스토리
   final int historyIndex; // 현재 히스토리 인덱스
   final Set<String> errorCells; // 오류가 있는 셀 좌표 (row,col 형식)
+  final Map<int, SavedPuzzleState> savedStates; // 저장된 분기점 상태 (슬롯별)
 
   const PuzzleState({
     this.difficulty = Difficulty.easy,
@@ -42,6 +43,7 @@ class PuzzleState {
     this.history = const [],
     this.historyIndex = -1,
     this.errorCells = const {},
+    this.savedStates = const {},
   });
 
   PuzzleState copyWith({
@@ -57,6 +59,7 @@ class PuzzleState {
     List<PuzzleAction>? history,
     int? historyIndex,
     Set<String>? errorCells,
+    Map<int, SavedPuzzleState>? savedStates,
   }) {
     return PuzzleState(
       difficulty: difficulty ?? this.difficulty,
@@ -71,6 +74,7 @@ class PuzzleState {
       history: history ?? this.history,
       historyIndex: historyIndex ?? this.historyIndex,
       errorCells: errorCells ?? this.errorCells,
+      savedStates: savedStates ?? this.savedStates,
     );
   }
 
@@ -161,5 +165,80 @@ class PuzzleState {
   // 메모 모드 토글
   PuzzleState toggleNoteMode() {
     return copyWith(isNoteMode: !isNoteMode);
+  }
+
+  // 현재 상태를 특정 슬롯에 저장
+  PuzzleState saveToSlot(int slot) {
+    if (slot < 0 || slot > 2) return this; // 슬롯은 0-2까지만 허용
+
+    final savedState = SavedPuzzleState(
+      board: List.generate(
+        boardSize,
+        (row) => List.generate(
+          boardSize,
+          (col) => board[row][col].copyWith(),
+        ),
+      ),
+      isNoteMode: isNoteMode,
+      history: List.from(history),
+      historyIndex: historyIndex,
+      errorCells: Set.from(errorCells),
+    );
+
+    final newSavedStates = Map<int, SavedPuzzleState>.from(savedStates);
+    newSavedStates[slot] = savedState;
+
+    return copyWith(savedStates: newSavedStates);
+  }
+
+  // 특정 슬롯에서 상태 불러오기
+  PuzzleState loadFromSlot(int slot) {
+    if (slot < 0 || slot > 2) return this; // 슬롯은 0-2까지만 허용
+
+    final savedState = savedStates[slot];
+    if (savedState == null) return this;
+
+    return copyWith(
+      board: List.generate(
+        boardSize,
+        (row) => List.generate(
+          boardSize,
+          (col) => savedState.board[row][col].copyWith(),
+        ),
+      ),
+      isNoteMode: savedState.isNoteMode,
+      history: List.from(savedState.history),
+      historyIndex: savedState.historyIndex,
+      errorCells: Set.from(savedState.errorCells),
+    );
+  }
+
+  // 특정 슬롯에 저장된 상태가 있는지 확인
+  bool hasStateInSlot(int slot) {
+    return savedStates.containsKey(slot);
+  }
+}
+
+// 저장된 퍼즐 상태를 나타내는 클래스
+class SavedPuzzleState {
+  final DateTime createdAt;
+  final List<List<CellContent>> board;
+  final bool isNoteMode;
+  final List<PuzzleAction> history;
+  final int historyIndex;
+  final Set<String> errorCells;
+
+  SavedPuzzleState({
+    required this.board,
+    required this.isNoteMode,
+    required this.history,
+    required this.historyIndex,
+    required this.errorCells,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  // 저장된 시간을 포맷팅하여 반환
+  String get formattedCreatedAt {
+    return '${createdAt.month}월 ${createdAt.day}일 ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
   }
 }

@@ -18,7 +18,7 @@ class _RecordsPageState extends ConsumerState<RecordsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(_handleTabChange);
+    _tabController.addListener(_handleTabChange); 
 
     // 초기 데이터 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {

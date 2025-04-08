@@ -498,8 +498,7 @@ class PuzzleIntent {
             final c2 = cell[1];
 
             // 자기 자신이거나 체스 기물이 있는 셀이면 건너뛰기
-            if ((r2 == row && c2 == col) || board[r2][c2].hasChessPiece)
-              continue;
+            if ((r2 == row && c2 == col) || board[r2][c2].hasChessPiece) continue;
 
             // 숫자가 없으면 건너뛰기
             if (!board[r2][c2].hasNumber) continue;
@@ -675,5 +674,50 @@ class PuzzleIntent {
         final colDiff = (pieceCol - targetCol).abs();
         return rowDiff <= 1 && colDiff <= 1;
     }
+  }
+
+  // 특정 슬롯의 저장 시점 정보 가져오기
+  String? getSaveTimeInSlot(int slot) {
+    final state = ref.read(puzzleProvider);
+    if (!state.hasStateInSlot(slot)) return null;
+
+    return state.savedStates[slot]?.formattedCreatedAt;
+  }
+
+  // 현재 상태를 특정 슬롯에 저장
+  void saveToSlot(int slot) {
+    final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 저장하지 않음
+    if (state.isCompleted) return;
+
+    // 슬롯 범위 검사
+    if (slot < 0 || slot > 2) return;
+
+    final newState = state.saveToSlot(slot);
+    _notifier.updateState(newState);
+  }
+
+  // 특정 슬롯에서 상태 불러오기
+  void loadFromSlot(int slot) {
+    final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 불러오지 않음
+    if (state.isCompleted) return;
+
+    // 슬롯 범위 검사
+    if (slot < 0 || slot > 2) return;
+
+    // 해당 슬롯에 저장된 상태가 없으면 무시
+    if (!state.hasStateInSlot(slot)) return;
+
+    final newState = state.loadFromSlot(slot);
+    _notifier.updateState(newState);
+  }
+
+  // 특정 슬롯에 저장된 상태가 있는지 확인
+  bool hasStateInSlot(int slot) {
+    final state = ref.read(puzzleProvider);
+    return state.hasStateInSlot(slot);
   }
 }
