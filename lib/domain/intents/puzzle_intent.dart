@@ -1,6 +1,7 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/repositories/puzzle_repository.dart';
+import 'package:chessudoku/data/repositories/record_repository.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/notifiers/puzzle_notifier.dart';
@@ -8,7 +9,6 @@ import 'package:chessudoku/domain/states/puzzle_state.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_generator.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_validator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart';
 
 class PuzzleIntent {
   final Ref ref;
@@ -20,6 +20,9 @@ class PuzzleIntent {
 
   // 레포지토리에 대한 참조를 쉽게 얻기 위한 getter
   PuzzleRepository get _repository => ref.read(puzzleRepositoryProvider);
+
+  // 기록 레포지토리에 대한 참조를 쉽게 얻기 위한 getter
+  RecordRepository get _recordRepository => ref.read(recordRepositoryProvider);
 
   // 체스도쿠 생성기에 대한 참조
   ChessSudokuGenerator get _generator => ref.read(chessSudokuGeneratorProvider);
@@ -69,6 +72,10 @@ class PuzzleIntent {
   // 현재 게임 상태를 캐시에 저장
   Future<bool> saveGameState() async {
     final currentState = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 저장하지 않음
+    if (currentState.isCompleted) return false;
+
     return await _repository.savePuzzleState(currentState);
   }
 
@@ -102,6 +109,10 @@ class PuzzleIntent {
   // 선택된 셀에 숫자 입력
   void enterNumber(int number) {
     final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     if (state.selectedRow == null ||
         state.selectedCol == null ||
         state.isSelectedCellInitial ||
@@ -182,6 +193,8 @@ class PuzzleIntent {
 
         if (isCompleted) {
           _notifier.stopTimer();
+          // 퍼즐 완료 시 DB에 기록 저장
+          _savePuzzleRecord();
           // 게임 완료 시 저장된 상태 삭제
           clearSavedGameState();
         }
@@ -189,9 +202,28 @@ class PuzzleIntent {
     }
   }
 
+  // 퍼즐 완료 기록 저장
+  Future<bool> _savePuzzleRecord() async {
+    final state = ref.read(puzzleProvider);
+    if (!state.isCompleted) {
+      return false;
+    }
+
+    try {
+      return await _recordRepository.savePuzzleRecord(state);
+    } catch (e) {
+      print('퍼즐 기록 저장 중 오류 발생: $e');
+      return false;
+    }
+  }
+
   // 선택된 셀 값 삭제
   void clearValue() {
     final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     if (state.selectedRow == null ||
         state.selectedCol == null ||
         state.isSelectedCellInitial ||
@@ -223,17 +255,31 @@ class PuzzleIntent {
 
   // 메모 모드 토글
   void toggleNoteMode() {
+    final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     _notifier.toggleNoteMode();
   }
 
   // 오류 검사 모드 토글
   void checkErrors() {
+    final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     _notifier.checkErrors();
   }
 
   // 되돌리기 액션
   void undoAction() {
     final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     if (!state.canUndo) return;
 
     final newState = state.undo();
@@ -243,16 +289,45 @@ class PuzzleIntent {
   // 다시 실행 액션
   void redoAction() {
     final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     if (!state.canRedo) return;
 
     final newState = state.redo();
     _notifier.updateState(newState);
+  }
 
-    // 완료 여부 확인 후 처리
-    if (_checkCompletion(newState.board)) {
-      _notifier.stopTimer();
-      clearSavedGameState();
+  // 특정 난이도의 모든 퍼즐 기록 조회
+  Future<List<Map<String, dynamic>>> getRecordsByDifficulty(
+      Difficulty difficulty) async {
+    final records = await _recordRepository.getRecordsByDifficulty(difficulty);
+    return records
+        .map((record) => {
+              'id': record.id,
+              'difficulty': record.difficulty.name,
+              'completionTime': record.formattedCompletionTime,
+              'createdAt': record.createdAt.toString(),
+            })
+        .toList();
+  }
+
+  // 특정 난이도의 최고 기록 조회
+  Future<Map<String, dynamic>?> getBestRecordByDifficulty(
+      Difficulty difficulty) async {
+    final record =
+        await _recordRepository.getBestRecordByDifficulty(difficulty);
+    if (record == null) {
+      return null;
     }
+
+    return {
+      'id': record.id,
+      'difficulty': record.difficulty.name,
+      'completionTime': record.formattedCompletionTime,
+      'createdAt': record.createdAt.toString(),
+    };
   }
 
   // 보드의 깊은 복사 생성
@@ -289,17 +364,31 @@ class PuzzleIntent {
 
   // 타이머 일시정지
   void pauseTimer() {
+    final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     _notifier.pauseTimer();
   }
 
   // 타이머 재개
   void resumeTimer() {
+    final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     _notifier.resumeTimer();
   }
 
   // 메모 자동 채우기
   void fillNotes() {
     final state = ref.read(puzzleProvider);
+
+    // 이미 완료된 퍼즐이면 작동하지 않음
+    if (state.isCompleted) return;
+
     final boardSize = state.boardSize;
     final board = state.board;
 
@@ -475,9 +564,6 @@ class PuzzleIntent {
 
         // 같은 대각선에 있는지 확인
         if (rowDiff.abs() == colDiff.abs()) {
-          final rowDirection = rowDiff > 0 ? 1 : -1;
-          final colDirection = colDiff > 0 ? 1 : -1;
-
           // 해당 대각선의 모든 셀 추가 (동일 방향만)
           for (int r = 0; r < boardSize; r++) {
             for (int c = 0; c < boardSize; c++) {

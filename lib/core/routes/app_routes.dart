@@ -4,6 +4,7 @@ import 'package:chessudoku/ui/screens/home/home_page.dart';
 import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:chessudoku/ui/screens/puzzle/puzzle_page.dart';
 import 'package:chessudoku/ui/screens/puzzle/puzzle_screen.dart';
+import 'package:chessudoku/ui/screens/records/records_page.dart';
 import 'package:chessudoku/ui/screens/test/test_page.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String puzzle = '/puzzle';
   static const String puzzleGame = '/puzzle/game';
+  static const String records = '/records';
   static const String social = '/social';
   static const String profile = '/profile';
   static const String store = '/store';
@@ -51,11 +53,17 @@ class AppRoutes {
     );
   }
 
+  // 기록실 화면으로 이동
+  static void navigateToRecordsPage(BuildContext context) {
+    Navigator.pushNamed(context, records);
+  }
+
   static Map<String, WidgetBuilder> get routes => {
         main: (context) => const MainScreen(),
         home: (context) => const HomePage(),
         puzzle: (context) => const PuzzlePage(),
         puzzleGame: (context) => const PuzzleScreen(),
+        records: (context) => const RecordsPage(),
         social: (context) => const ButtonExample(),
         profile: (context) => const TestPage(),
         store: (context) => const TestPage(),

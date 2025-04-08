@@ -1,5 +1,6 @@
 import 'package:chessudoku/core/routes/app_routes.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
+import 'package:chessudoku/data/services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,9 @@ void main() async {
 
   // 캐시 서비스 초기화
   await CacheService().init();
+
+  // 데이터베이스 서비스 초기화 (첫 액세스만 해도 초기화됨)
+  await DatabaseService().database;
 
   runApp(const ProviderScope(child: MainApp()));
 }

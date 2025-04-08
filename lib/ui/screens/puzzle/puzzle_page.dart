@@ -74,6 +74,14 @@ class PuzzlePage extends ConsumerWidget {
               onPressed: () => handleStartGame(Difficulty.hard),
               child: const Text('어려움'),
             ),
+            const SizedBox(height: 40),
+            OutlinedButton.icon(
+              onPressed: () {
+                AppRoutes.navigateToRecordsPage(context);
+              },
+              icon: const Icon(Icons.history),
+              label: const Text('기록실'),
+            ),
           ],
         ),
       ),
