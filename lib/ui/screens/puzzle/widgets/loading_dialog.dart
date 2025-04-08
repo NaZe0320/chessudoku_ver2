@@ -44,8 +44,7 @@ class LoadingDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Color.alphaBlend(
-                  AppColors.neutral700.withAlpha(26), Colors.transparent),
+              color: AppColors.neutral700.withAlpha(26),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

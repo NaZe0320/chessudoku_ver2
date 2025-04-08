@@ -179,8 +179,7 @@ class _RecordsPageState extends ConsumerState<RecordsPage>
 
     return Container(
       padding: const EdgeInsets.all(16.0),
-      color: Color.alphaBlend(
-          _getDifficultyColor(difficulty).withAlpha(26), Colors.white),
+      color: _getDifficultyColor(difficulty).withAlpha(26),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -16,6 +16,9 @@ class PuzzlePage extends ConsumerWidget {
 
     // 난이도별 게임 시작 핸들러
     Future<void> handleStartGame(Difficulty difficulty) async {
+      if (!context.mounted) return;
+      final navigationContext = context;
+
       // 난이도 변경
       intent.changeDifficulty(difficulty);
 
@@ -24,34 +27,42 @@ class PuzzlePage extends ConsumerWidget {
 
       if (hasSavedGame) {
         // 저장된 게임이 있으면 다이얼로그 표시
+        if (!navigationContext.mounted) return;
         final shouldContinue =
-            await ContinueGameDialog.show(context, difficulty);
+            await ContinueGameDialog.show(navigationContext, difficulty);
 
         if (shouldContinue == true) {
           // 이어하기 선택 - 저장된 데이터 사용
           // 이어하기는 PuzzleScreen에서 자동으로 처리됨
-          LoadingDialog.show(context, message: '게임을 불러오는 중...');
+          if (!navigationContext.mounted) return;
+          LoadingDialog.show(navigationContext, message: '게임을 불러오는 중...');
           await Future.delayed(
               const Duration(milliseconds: 300)); // UI 업데이트를 위한 지연
-          LoadingDialog.hide(context);
-          AppRoutes.navigateToPuzzleScreen(context, difficulty);
+          if (!navigationContext.mounted) return;
+          LoadingDialog.hide(navigationContext);
+          AppRoutes.navigateToPuzzleScreen(navigationContext, difficulty);
         } else if (shouldContinue == false) {
           // 새로 시작 선택 - 저장된 데이터 삭제 후 시작
-          LoadingDialog.show(context, message: '새 게임을 준비하는 중...');
+          if (!navigationContext.mounted) return;
+          LoadingDialog.show(navigationContext, message: '새 게임을 준비하는 중...');
           await intent.clearSavedGameState(difficulty);
 
           // 퍼즐 생성 및 게임 초기화 (PuzzleScreen으로 이동하기 전)
           await intent.initializeGame();
-          LoadingDialog.hide(context);
-          AppRoutes.navigateToPuzzleScreen(context, difficulty);
+          if (!navigationContext.mounted) return;
+          LoadingDialog.hide(navigationContext);
+          AppRoutes.navigateToPuzzleScreen(navigationContext, difficulty);
         }
         // shouldContinue가 null이면 취소된 것이므로 아무 동작 없음
       } else {
         // 저장된 게임이 없으면 퍼즐 생성 후 게임 화면으로 이동
-        LoadingDialog.show(context, message: '퍼즐을 생성하는 중...');
+        if (!navigationContext.mounted) return;
+        LoadingDialog.show(navigationContext, message: '퍼즐을 생성하는 중...');
         await intent.initializeGame(); // 퍼즐 생성 및 게임 초기화
-        LoadingDialog.hide(context);
-        AppRoutes.navigateToPuzzleScreen(context, difficulty);
+
+        if (!navigationContext.mounted) return;
+        LoadingDialog.hide(navigationContext);
+        AppRoutes.navigateToPuzzleScreen(navigationContext, difficulty);
       }
     }
 
