@@ -1,19 +1,7 @@
 import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/data/models/puzzle_action.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-
-class PuzzleAction {
-  final int row;
-  final int col;
-  final CellContent oldContent;
-  final CellContent newContent;
-
-  PuzzleAction({
-    required this.row,
-    required this.col,
-    required this.oldContent,
-    required this.newContent,
-  });
-}
+import 'package:chessudoku/domain/states/saved_puzzle_state.dart';
 
 class PuzzleState {
   final Difficulty difficulty;
@@ -216,29 +204,5 @@ class PuzzleState {
   // 특정 슬롯에 저장된 상태가 있는지 확인
   bool hasStateInSlot(int slot) {
     return savedStates.containsKey(slot);
-  }
-}
-
-// 저장된 퍼즐 상태를 나타내는 클래스
-class SavedPuzzleState {
-  final DateTime createdAt;
-  final List<List<CellContent>> board;
-  final bool isNoteMode;
-  final List<PuzzleAction> history;
-  final int historyIndex;
-  final Set<String> errorCells;
-
-  SavedPuzzleState({
-    required this.board,
-    required this.isNoteMode,
-    required this.history,
-    required this.historyIndex,
-    required this.errorCells,
-    DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
-
-  // 저장된 시간을 포맷팅하여 반환
-  String get formattedCreatedAt {
-    return '${createdAt.month}월 ${createdAt.day}일 ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
   }
 }

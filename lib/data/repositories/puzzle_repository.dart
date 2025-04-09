@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/data/models/puzzle_action.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';

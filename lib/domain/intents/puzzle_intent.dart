@@ -1,5 +1,6 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/data/models/puzzle_action.dart';
 import 'package:chessudoku/data/repositories/puzzle_repository.dart';
 import 'package:chessudoku/data/repositories/record_repository.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
