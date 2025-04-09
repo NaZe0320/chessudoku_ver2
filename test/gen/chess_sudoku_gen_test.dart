@@ -1,5 +1,3 @@
-import 'package:chessudoku/data/models/cell_content.dart';
-import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_generator.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_solver.dart'; // 외부 ChessSudokuSolver 클래스 가져오기

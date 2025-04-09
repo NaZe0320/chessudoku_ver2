@@ -499,8 +499,9 @@ class PuzzleIntent {
             final c2 = cell[1];
 
             // 자기 자신이거나 체스 기물이 있는 셀이면 건너뛰기
-            if ((r2 == row && c2 == col) || board[r2][c2].hasChessPiece)
+            if ((r2 == row && c2 == col) || board[r2][c2].hasChessPiece) {
               continue;
+            }
 
             // 숫자가 없으면 건너뛰기
             if (!board[r2][c2].hasNumber) continue;

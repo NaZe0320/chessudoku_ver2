@@ -352,12 +352,15 @@ bool _cellsEqual(CellContent cell1, CellContent cell2) {
   if (cell1.hasChessPiece != cell2.hasChessPiece) return false;
   if (cell1.hasChessPiece &&
       cell2.hasChessPiece &&
-      cell1.chessPiece != cell2.chessPiece) return false;
+      cell1.chessPiece != cell2.chessPiece) {
+    return false;
+  }
 
   // 숫자 확인
   if (cell1.hasNumber != cell2.hasNumber) return false;
-  if (cell1.hasNumber && cell2.hasNumber && cell1.number != cell2.number)
+  if (cell1.hasNumber && cell2.hasNumber && cell1.number != cell2.number) {
     return false;
+  }
 
   return true;
 }
