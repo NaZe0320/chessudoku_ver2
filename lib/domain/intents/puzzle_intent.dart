@@ -97,13 +97,6 @@ class PuzzleIntent {
 
   // 셀 선택
   void selectCell(int row, int col) {
-    final state = ref.read(puzzleProvider);
-    if (row < 0 ||
-        row >= state.boardSize ||
-        col < 0 ||
-        col >= state.boardSize) {
-      return;
-    }
     _notifier.selectCell(row, col);
   }
 

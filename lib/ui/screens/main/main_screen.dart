@@ -1,31 +1,48 @@
 import 'package:chessudoku/core/di/providers.dart';
-import 'package:chessudoku/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chessudoku/core/routes/app_routes.dart';
+import 'package:chessudoku/data/models/user.dart';
 
 class MainScreen extends ConsumerWidget {
-  const MainScreen({super.key});
+  final User user;
+
+  const MainScreen(this.user, {super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final navigationState = ref.watch(navigationProvider);
-    final navigationIntent = ref.read(navigationIntentProvider);
+    final selectedIndex = ref.watch(navigationNotifierProvider).selectedIndex;
 
     return Scaffold(
-      body: AppRoutes.navigationPages[navigationState.selectedIndex],
+      body: IndexedStack(
+        index: selectedIndex,
+        children: AppRoutes.navigationPages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navigationState.selectedIndex,
-        onTap: (index) {
-          navigationIntent.selectTab(index);
-        },
         type: BottomNavigationBarType.fixed,
+        currentIndex: selectedIndex,
+        onTap: (index) {
+          ref.read(navigationNotifierProvider.notifier).selectTab(index);
+        },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.gamepad), label: '퍼즐'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: '소셜'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
+            icon: Icon(Icons.home),
+            label: '홈',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.grid_4x4),
+            label: '퍼즐',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: '소셜',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: '프로필',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.store),
             label: '상점',
           ),
         ],
