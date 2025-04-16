@@ -1,4 +1,4 @@
-import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:chessudoku/ui/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
@@ -33,8 +33,8 @@ class PuzzleCell extends ConsumerWidget {
         puzzleState.selectedRow == row && puzzleState.selectedCol == col;
 
     // 3x3 박스 경계 처리
-    final isRightBorder = (col + 1) % 3 == 0 && col <= boardSize - 1;
-    final isBottomBorder = (row + 1) % 3 == 0 && row <= boardSize - 1;
+    const borderSide = BorderSide(color: AppColors.neutral400, width: 0.5);
+    const boldBorderSide = BorderSide(color: AppColors.neutral400, width: 2.0);
 
     // 셀 배경색 결정
     Color cellColor;
@@ -62,37 +62,23 @@ class PuzzleCell extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cellColor,
           border: Border(
-            right: BorderSide(
-              width: isRightBorder ? 2 : 0.5,
-              color:
-                  isRightBorder ? AppColors.neutral700 : AppColors.neutral400,
-            ),
-            bottom: BorderSide(
-              width: isBottomBorder ? 2 : 0.5,
-              color:
-                  isBottomBorder ? AppColors.neutral700 : AppColors.neutral400,
-            ),
-            top: BorderSide(
-              width: row == 0 ? 2 : 0.5,
-              color: row == 0 ? AppColors.neutral700 : AppColors.neutral400,
-            ),
-            left: BorderSide(
-              width: col == 0 ? 2 : 0.5,
-              color: col == 0 ? AppColors.neutral700 : AppColors.neutral400,
-            ),
+            top: row % 3 == 0 ? boldBorderSide : borderSide,
+            left: col % 3 == 0 ? boldBorderSide : borderSide,
+            right: col == 8 ? boldBorderSide : BorderSide.none,
+            bottom: row == 8 ? boldBorderSide : BorderSide.none,
           ),
         ),
         alignment: Alignment.center,
-        child: _buildCellContent(cell, intent),
+        child: _buildCellContent(cell),
       ),
     );
   }
 
-  Widget _buildCellContent(cell, intent) {
+  Widget _buildCellContent(cell) {
     // 체스 기물이 있는 경우
     if (cell.hasChessPiece) {
       return Text(
-        intent.getChessPieceSymbol(cell.chessPiece!),
+        cell.chessPiece!.symbol,
         style: TextStyle(
           fontSize: cellSize * 0.5,
           color: AppColors.neutral900,
@@ -119,32 +105,29 @@ class PuzzleCell extends ConsumerWidget {
   }
 
   Widget _buildNotesGrid(cell) {
-    return Padding(
-      padding: const EdgeInsets.all(2.0),
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 1,
-        ),
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 9,
-        itemBuilder: (context, index) {
-          final number = index + 1;
-          final hasNote = cell.hasNote(number);
-
-          return hasNote
-              ? Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    number.toString(),
-                    style: AppTextStyles.cellNote,
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              : const SizedBox();
-        },
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1,
       ),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 9,
+      itemBuilder: (context, index) {
+        final number = index + 1;
+        final hasNote = cell.hasNote(number);
+
+        return hasNote
+            ? Container(
+                alignment: Alignment.center,
+                child: Text(
+                  number.toString(),
+                  style: AppTextStyles.cellNote,
+                  textAlign: TextAlign.center,
+                ),
+              )
+            : const SizedBox();
+      },
     );
   }
 }

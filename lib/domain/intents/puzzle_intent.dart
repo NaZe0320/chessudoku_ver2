@@ -1,4 +1,5 @@
 import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/models/puzzle_action.dart';
 import 'package:chessudoku/data/repositories/puzzle_repository.dart';
@@ -95,7 +96,7 @@ class PuzzleIntent {
     return _repository.hasCachedPuzzleState(difficulty);
   }
 
-  // 셀 선택
+  // 셀 선택 (검토 완료료)
   void selectCell(int row, int col) {
     _notifier.selectCell(row, col);
   }
@@ -340,21 +341,7 @@ class PuzzleIntent {
     return ChessSudokuValidator.isValidBoard(board);
   }
 
-  // 체스 기물을 문자로 변환 (UI 표시용)
-  String getChessPieceSymbol(ChessPiece piece) {
-    switch (piece) {
-      case ChessPiece.king:
-        return '♚';
-      case ChessPiece.queen:
-        return '♛';
-      case ChessPiece.rook:
-        return '♜';
-      case ChessPiece.bishop:
-        return '♝';
-      case ChessPiece.knight:
-        return '♞';
-    }
-  }
+
 
   // 타이머 일시정지
   void pauseTimer() {

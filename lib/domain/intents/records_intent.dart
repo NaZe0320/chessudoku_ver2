@@ -1,4 +1,5 @@
 import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/notifiers/records_notifier.dart';
 import 'package:chessudoku/domain/states/records_state.dart';
