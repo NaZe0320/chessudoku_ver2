@@ -7,8 +7,6 @@ import 'package:chessudoku/ui/screens/puzzle/puzzle_screen.dart';
 import 'package:chessudoku/ui/screens/records/records_page.dart';
 import 'package:chessudoku/ui/screens/test/test_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:chessudoku/core/di/auth_providers.dart';
 
 class AppRoutes {
   static const String main = '/';
@@ -62,12 +60,7 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
-      main: (context) => Consumer(
-            builder: (context, ref, _) {
-              final user = ref.watch(authProvider).value;
-              return MainScreen(user!);
-            },
-          ),
+      main: (context) => const MainScreen(),
       home: (context) => const HomePage(),
       puzzle: (context) => const PuzzlePage(),
       puzzleGame: (context) => const PuzzleScreen(),

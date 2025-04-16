@@ -2,12 +2,9 @@ import 'package:chessudoku/core/di/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chessudoku/core/routes/app_routes.dart';
-import 'package:chessudoku/data/models/user.dart';
 
 class MainScreen extends ConsumerWidget {
-  final User user;
-
-  const MainScreen(this.user, {super.key});
+  const MainScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
