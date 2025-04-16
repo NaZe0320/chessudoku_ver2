@@ -1,4 +1,4 @@
-import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/core/routes/app_routes.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/ui/screens/puzzle/widgets/continue_game_dialog.dart';

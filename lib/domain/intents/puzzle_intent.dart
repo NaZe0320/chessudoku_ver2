@@ -96,7 +96,7 @@ class PuzzleIntent {
     return _repository.hasCachedPuzzleState(difficulty);
   }
 
-  // 셀 선택 (검토 완료료)
+  // 셀 선택
   void selectCell(int row, int col) {
     _notifier.selectCell(row, col);
   }
@@ -107,7 +107,7 @@ class PuzzleIntent {
 
     // 이미 완료된 퍼즐이면 작동하지 않음
     if (state.isCompleted) return;
-
+    
     if (state.selectedRow == null ||
         state.selectedCol == null ||
         state.isSelectedCellInitial ||
@@ -340,8 +340,6 @@ class PuzzleIntent {
   bool _checkCompletion(List<List<CellContent>> board) {
     return ChessSudokuValidator.isValidBoard(board);
   }
-
-
 
   // 타이머 일시정지
   void pauseTimer() {

@@ -1,5 +1,6 @@
 import 'dart:ui';
-import 'package:chessudoku/core/di/providers.dart';
+
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/domain/states/puzzle_state.dart';
 import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_board.dart';
 import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_controls.dart';
