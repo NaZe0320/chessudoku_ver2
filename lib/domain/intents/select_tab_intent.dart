@@ -1,4 +1,4 @@
-import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/nav_provider.dart';
 import 'package:chessudoku/domain/notifiers/navigation_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -4,32 +4,15 @@ import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/domain/intents/puzzle_intent.dart';
 import 'package:chessudoku/domain/intents/records_intent.dart';
-import 'package:chessudoku/domain/intents/select_tab_intent.dart';
-import 'package:chessudoku/domain/notifiers/navigation_notifier.dart';
 import 'package:chessudoku/domain/notifiers/puzzle_notifier.dart';
 import 'package:chessudoku/domain/notifiers/records_notifier.dart';
-import 'package:chessudoku/domain/states/navigation_state.dart';
 import 'package:chessudoku/domain/states/puzzle_state.dart';
 import 'package:chessudoku/domain/states/records_state.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_generator.dart';
 import 'package:chessudoku/domain/utils/chess_sudoku_validator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// 네비게이션 관련 프로바이더
-final navigationNotifierProvider =
-    StateNotifierProvider<NavigationNotifier, NavigationState>(
-  (ref) => NavigationNotifier(),
-);
 
-// 네비게이션 상태 프로바이더 (읽기 전용)
-final navigationProvider = Provider<NavigationState>(
-  (ref) => ref.watch(navigationNotifierProvider),
-);
-
-// 네비게이션 인텐트 프로바이더
-final navigationIntentProvider = Provider<SelectTabIntent>(
-  (ref) => SelectTabIntent(ref),
-);
 
 // 퍼즐 관련 프로바이더
 final puzzleNotifierProvider =
