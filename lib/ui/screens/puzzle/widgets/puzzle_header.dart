@@ -1,4 +1,4 @@
-import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:chessudoku/ui/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';

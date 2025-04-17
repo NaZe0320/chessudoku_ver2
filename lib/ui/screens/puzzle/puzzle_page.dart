@@ -1,4 +1,4 @@
-import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/core/routes/app_routes.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/ui/screens/puzzle/widgets/continue_game_dialog.dart';
@@ -7,12 +7,13 @@ import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PuzzlePage extends ConsumerWidget {
+class PuzzlePage extends StatelessWidget {
   const PuzzlePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final intent = ref.read(puzzleIntentProvider);
+  Widget build(BuildContext context) {
+    final intent =
+        ProviderScope.containerOf(context).read(puzzleIntentProvider);
 
     // 난이도별 게임 시작 핸들러
     Future<void> handleStartGame(Difficulty difficulty) async {
@@ -32,7 +33,7 @@ class PuzzlePage extends ConsumerWidget {
             await ContinueGameDialog.show(navigationContext, difficulty);
 
         if (shouldContinue == true) {
-          // 이어하기 선택 - 저장된 데이터 사용
+          // 이어하기 선택 - 저장된   데이터 사용
           // 이어하기는 PuzzleScreen에서 자동으로 처리됨
           if (!navigationContext.mounted) return;
           LoadingDialog.show(navigationContext, message: '게임을 불러오는 중...');

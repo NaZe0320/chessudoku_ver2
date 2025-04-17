@@ -1,4 +1,4 @@
-import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_cell.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +27,7 @@ class PuzzleBoard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.neutral200,
         border: Border.all(
-          color: AppColors.neutral600,
+          color: AppColors.neutral400,
           width: 1.5,
         ),
         boxShadow: [

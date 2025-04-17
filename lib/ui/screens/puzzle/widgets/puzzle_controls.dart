@@ -1,4 +1,4 @@
-import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/ui/common/widgets/app_neomorphic_button.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:flutter/material.dart';

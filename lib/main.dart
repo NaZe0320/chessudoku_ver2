@@ -15,7 +15,7 @@ void main() async {
 
   // 데이터베이스 서비스 초기화 (첫 액세스만 해도 초기화됨)
   await DatabaseService().database;
-  
+
   runApp(
     const ProviderScope(
       child: MainApp(),
@@ -34,7 +34,7 @@ class MainApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MainScreen(),
+      initialRoute: AppRoutes.main,
       routes: AppRoutes.getRoutes(),
     );
   }

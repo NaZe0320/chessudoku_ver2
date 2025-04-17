@@ -1,4 +1,4 @@
-import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/puzzle_provider.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +9,7 @@ class PuzzleKeypad extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final puzzleState = ref.watch(puzzleProvider);
+    final puzzleIntent = ref.read(puzzleIntentProvider);
 
     return Column(
       children: [
@@ -60,7 +61,7 @@ class PuzzleKeypad extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.all(4.0),
               child: _buildClearKey(
-                onTap: () => ref.read(puzzleIntentProvider).clearValue(),
+                onTap: () => puzzleIntent.clearValue(),
               ),
             ),
           ],
@@ -165,7 +166,7 @@ class PuzzleKeypad extends ConsumerWidget {
   // 숫자 입력 처리
   void _handleNumberPressed(int number, WidgetRef ref) {
     final intent = ref.read(puzzleIntentProvider);
-    final puzzleState = ref.read(puzzleProvider);
+    final puzzleState = ref.watch(puzzleProvider);
 
     // 메모 모드가 아니면서 이미 완성된 경우 무시
     if (!puzzleState.isNoteMode && puzzleState.isCompleted) {
