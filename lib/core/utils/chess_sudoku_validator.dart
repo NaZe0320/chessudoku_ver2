@@ -8,8 +8,7 @@ class ChessSudokuValidator {
   static const int BOARD_SIZE = 9;
 
   /// 현재 셀에 숫자를 놓는 것이 유효한지 검사
-  static bool isValidMove(List<List<int>> board,
-      List<List<CellContent>> chessPieces, int row, int col) {
+  static bool isValidMove(List<List<int>> board, List<List<CellContent>> chessPieces, int row, int col) {
     final number = board[row][col];
     if (number == 0) return false;
 
@@ -98,8 +97,7 @@ class ChessSudokuValidator {
   }
 
   /// 체스 기물이 특정 위치를 공격할 수 있는지 확인
-  static bool _canPieceAttack(ChessPiece piece, int pieceRow, int pieceCol,
-      int targetRow, int targetCol) {
+  static bool canPieceAttack(ChessPiece piece, int pieceRow, int pieceCol, int targetRow, int targetCol) {
     switch (piece) {
       case ChessPiece.knight:
         // 나이트의 L자 이동 (8개의 위치 고려)
@@ -124,9 +122,7 @@ class ChessSudokuValidator {
         // 다른 기물이나 숫자에 의한 경로 차단은 고려하지 않음
         final rowDiff = (pieceRow - targetRow).abs();
         final colDiff = (pieceCol - targetCol).abs();
-        return pieceRow == targetRow ||
-            pieceCol == targetCol ||
-            rowDiff == colDiff;
+        return pieceRow == targetRow || pieceCol == targetCol || rowDiff == colDiff;
 
       case ChessPiece.king:
         // 킹의 한 칸 이동 (모든 방향)
@@ -137,8 +133,8 @@ class ChessSudokuValidator {
   }
 
   /// 체스 기물 규칙 검증 (한 셀에 대해)
-  static bool _isValidChessPiecePlacement(List<List<int>> board,
-      List<List<CellContent>> chessPieces, int row, int col) {
+  static bool _isValidChessPiecePlacement(
+      List<List<int>> board, List<List<CellContent>> chessPieces, int row, int col) {
     final number = board[row][col];
 
     // 체스 기물 규칙 검증
@@ -153,7 +149,7 @@ class ChessSudokuValidator {
         final chessPiece = chessPieces[r][c].chessPiece!;
 
         // 기물의 특성에 따라 해당 위치에서 이동 가능한 모든 셀 검사
-        if (_canPieceAttack(chessPiece, r, c, row, col)) {
+        if (canPieceAttack(chessPiece, r, c, row, col)) {
           // 공격 가능한 위치에 같은 숫자가 있는지 확인
           if (board[r][c] == number) {
             return false;
@@ -238,7 +234,7 @@ class ChessSudokuValidator {
             }
 
             // 첫 번째 셀이 기물의 공격 범위에 있는지 확인
-            if (!_canPieceAttack(chessPiece, pieceRow, pieceCol, row1, col1)) {
+            if (!canPieceAttack(chessPiece, pieceRow, pieceCol, row1, col1)) {
               continue;
             }
 
@@ -251,14 +247,12 @@ class ChessSudokuValidator {
             for (int row2 = 0; row2 < BOARD_SIZE; row2++) {
               for (int col2 = 0; col2 < BOARD_SIZE; col2++) {
                 // 같은 셀이거나 체스 기물이면 건너뜀
-                if ((row1 == row2 && col1 == col2) ||
-                    board[row2][col2].hasChessPiece) {
+                if ((row1 == row2 && col1 == col2) || board[row2][col2].hasChessPiece) {
                   continue;
                 }
 
                 // 두 번째 셀도 기물의 공격 범위에 있는지 확인
-                if (!_canPieceAttack(
-                    chessPiece, pieceRow, pieceCol, row2, col2)) {
+                if (!canPieceAttack(chessPiece, pieceRow, pieceCol, row2, col2)) {
                   continue;
                 }
 

@@ -3,7 +3,8 @@ import 'dart:math';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/core/utils/chess_sudoku_solver.dart'; // ChessSudokuSolver 임포트
+import 'package:chessudoku/core/utils/chess_sudoku_solver.dart';
+import 'package:chessudoku/core/utils/chess_sudoku_validator.dart';
 
 /// 체스도쿠 퍼즐 생성기
 /// 체스도쿠 규칙에 맞는 유효한 퍼즐을 효율적으로 생성합니다.
@@ -65,8 +66,7 @@ class ChessSudokuGenerator {
         final puzzleBoard = _cloneBoard(solutionBoard);
 
         // 빈칸 뚫기
-        final success =
-            await _digHoles(puzzleBoard, solutionBoard, difficulty, deadline);
+        final success = await _digHoles(puzzleBoard, solutionBoard, difficulty, deadline);
 
         if (success) {
           // 퍼즐의 풀이 가능성 검증
@@ -98,8 +98,7 @@ class ChessSudokuGenerator {
 
       // 체스도쿠 풀이기 생성 (각 시도마다 다른 랜덤 시드 사용)
       final solver = ChessSudokuSolver(testBoard,
-          randomSeed: DateTime.now().millisecondsSinceEpoch + i,
-          useRandomOrder: true // 랜덤 순서 사용
+          randomSeed: DateTime.now().millisecondsSinceEpoch + i, useRandomOrder: true // 랜덤 순서 사용
           );
 
       // 풀이 시도
@@ -147,11 +146,8 @@ class ChessSudokuGenerator {
   }
 
   /// 빈칸 뚫기 알고리즘
-  Future<bool> _digHoles(
-      List<List<CellContent>> puzzleBoard,
-      List<List<CellContent>> solutionBoard,
-      Difficulty difficulty,
-      DateTime deadline) async {
+  Future<bool> _digHoles(List<List<CellContent>> puzzleBoard, List<List<CellContent>> solutionBoard,
+      Difficulty difficulty, DateTime deadline) async {
     // 난이도별 설정 가져오기
     final config = _puzzleConfig[difficulty]!;
 
@@ -169,16 +165,13 @@ class ChessSudokuGenerator {
     cellsWithNumbers.shuffle(_random);
 
     // 목표 빈칸 수 계산
-    final targetEmpty = config['minEmpty']! +
-        _random.nextInt(config['maxEmpty']! - config['minEmpty']! + 1);
+    final targetEmpty = config['minEmpty']! + _random.nextInt(config['maxEmpty']! - config['minEmpty']! + 1);
 
     int emptyCellCount = 0;
     int batchSize = config['batchSize']!;
 
     // 배치 단위로 효율적으로 처리
-    while (emptyCellCount < targetEmpty &&
-        cellsWithNumbers.isNotEmpty &&
-        DateTime.now().isBefore(deadline)) {
+    while (emptyCellCount < targetEmpty && cellsWithNumbers.isNotEmpty && DateTime.now().isBefore(deadline)) {
       // 배치 선택
       final batch = <List<int>>[];
       final int batchCount = min(batchSize, cellsWithNumbers.length);
@@ -233,8 +226,7 @@ class ChessSudokuGenerator {
     }
 
     // 랜덤하게 추가 기물을 배치할 수 있는 범위 계산
-    int placedPieces =
-        pieceCount.values.fold<int>(0, (sum, count) => sum + count);
+    int placedPieces = pieceCount.values.fold<int>(0, (sum, count) => sum + count);
     int maxAdditionalPieces = config['maxPieces']! - placedPieces;
 
     // 최소 필요 기물 수 계산
@@ -243,8 +235,7 @@ class ChessSudokuGenerator {
     // 추가 기물 수를 최소 필요 수부터 최대 가능 수 사이로 계산
     int additionalPieces = minRequiredPieces;
     if (maxAdditionalPieces > minRequiredPieces) {
-      additionalPieces +=
-          _random.nextInt(maxAdditionalPieces - minRequiredPieces + 1);
+      additionalPieces += _random.nextInt(maxAdditionalPieces - minRequiredPieces + 1);
     }
 
     // 나머지 기물 랜덤 배치
@@ -354,108 +345,14 @@ class ChessSudokuGenerator {
 
   /// 기물 타입별 공격 범위 반환
   Set<String> _getAttacks(ChessPiece type, int row, int col) {
-    switch (type) {
-      case ChessPiece.knight:
-        return _getKnightAttacks(row, col);
-      case ChessPiece.bishop:
-        return _getBishopAttacks(row, col);
-      case ChessPiece.king:
-        return _getKingAttacks(row, col);
-      case ChessPiece.queen:
-        return _getQueenAttacks(row, col);
-      case ChessPiece.rook:
-        return _getRookAttacks(row, col);
-    }
-  }
-
-  /// 나이트 공격 범위
-  Set<String> _getKnightAttacks(int row, int col) {
-    final moves = [
-      [-2, -1],
-      [-2, 1],
-      [-1, -2],
-      [-1, 2],
-      [1, -2],
-      [1, 2],
-      [2, -1],
-      [2, 1]
-    ];
-
-    return _getValidPositions(row, col, moves);
-  }
-
-  /// 킹 공격 범위
-  Set<String> _getKingAttacks(int row, int col) {
-    final moves = [
-      [-1, -1],
-      [-1, 0],
-      [-1, 1],
-      [0, -1],
-      [0, 1],
-      [1, -1],
-      [1, 0],
-      [1, 1]
-    ];
-
-    return _getValidPositions(row, col, moves);
-  }
-
-  /// 유효한 위치 계산 (나이트, 킹 공통)
-  Set<String> _getValidPositions(int row, int col, List<List<int>> moves) {
-    return moves
-        .map((dir) => [row + dir[0], col + dir[1]])
-        .where((pos) =>
-            pos[0] >= 0 &&
-            pos[0] < boardSize &&
-            pos[1] >= 0 &&
-            pos[1] < boardSize)
-        .map((pos) => '${pos[0]},${pos[1]}')
-        .toSet();
-  }
-
-  /// 비숍 공격 범위
-  Set<String> _getBishopAttacks(int row, int col) {
-    // 대각선 방향
-    final directions = [
-      [-1, 1],
-      [1, 1],
-      [1, -1],
-      [-1, -1]
-    ];
-    return _getSlidingAttacks(row, col, directions);
-  }
-
-  /// 룩 공격 범위
-  Set<String> _getRookAttacks(int row, int col) {
-    // 가로 세로 방향
-    final directions = [
-      [0, 1],
-      [1, 0],
-      [0, -1],
-      [-1, 0]
-    ];
-    return _getSlidingAttacks(row, col, directions);
-  }
-
-  /// 퀸 공격 범위
-  Set<String> _getQueenAttacks(int row, int col) {
-    // 비숍 + 룩 공격 범위
-    return _getBishopAttacks(row, col).union(_getRookAttacks(row, col));
-  }
-
-  /// 슬라이딩 기물(비숍, 룩, 퀸)용 공격 범위 계산
-  Set<String> _getSlidingAttacks(int row, int col, List<List<int>> directions) {
     Set<String> attacks = <String>{};
 
-    for (final dir in directions) {
-      int r = row + dir[0];
-      int c = col + dir[1];
-
-      while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
-        attacks.add('$r,$c');
-        // 다른 기물이나 숫자에 의한 차단은 고려하지 않음
-        r += dir[0];
-        c += dir[1];
+    // 보드의 모든 셀에 대해 공격 가능 여부 확인
+    for (int r = 0; r < boardSize; r++) {
+      for (int c = 0; c < boardSize; c++) {
+        if (ChessSudokuValidator.canPieceAttack(type, row, col, r, c)) {
+          attacks.add('$r,$c');
+        }
       }
     }
 
@@ -523,9 +420,7 @@ class ChessSudokuGenerator {
 
     // 행, 열, 박스 제약 확인
     final boxIdx = (row ~/ 3) * 3 + (col ~/ 3);
-    if (_rowSets[row].contains(num) ||
-        _colSets[col].contains(num) ||
-        _boxSets[boxIdx].contains(num)) {
+    if (_rowSets[row].contains(num) || _colSets[col].contains(num) || _boxSets[boxIdx].contains(num)) {
       return false;
     }
 
@@ -591,8 +486,7 @@ class ChessSudokuGenerator {
   }
 
   /// 제약 전파 복원 (백트래킹용)
-  void _restoreCandidates(
-      int row, int col, int num, Set<int> originalCandidates) {
+  void _restoreCandidates(int row, int col, int num, Set<int> originalCandidates) {
     _candidates[row][col] = Set<int>.from(originalCandidates);
 
     // 제약 세트 복원

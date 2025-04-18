@@ -54,9 +54,3 @@ final recordRepositoryProvider = Provider<RecordRepository>(
 final chessSudokuGeneratorProvider = Provider<ChessSudokuGenerator>(
   (ref) => ChessSudokuGenerator(),
 );
-
-// 체스도쿠 검증 유틸리티 (싱글톤은 아니지만, 정적 메서드를 사용하므로 실제 인스턴스는 필요 없음)
-final chessSudokuValidatorProvider = Provider<ChessSudokuValidator>(
-  (ref) => throw UnimplementedError(
-      'This provider is not meant to be used directly, use static methods instead'),
-);

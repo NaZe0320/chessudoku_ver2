@@ -612,35 +612,7 @@ class PuzzleIntent {
 
   // 체스 기물이 특정 위치를 공격할 수 있는지 확인
   bool _canPieceAttack(ChessPiece piece, int pieceRow, int pieceCol, int targetRow, int targetCol) {
-    switch (piece) {
-      case ChessPiece.knight:
-        // 나이트의 L자 이동
-        final rowDiff = (pieceRow - targetRow).abs();
-        final colDiff = (pieceCol - targetCol).abs();
-        return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
-
-      case ChessPiece.rook:
-        // 룩의 수직/수평 이동 (직선 단위로 고려)
-        return pieceRow == targetRow || pieceCol == targetCol;
-
-      case ChessPiece.bishop:
-        // 비숍의 대각선 이동 (직선 단위로 고려)
-        final rowDiff = (pieceRow - targetRow).abs();
-        final colDiff = (pieceCol - targetCol).abs();
-        return rowDiff == colDiff;
-
-      case ChessPiece.queen:
-        // 퀸의 모든 방향 이동 (룩 + 비숍)
-        final rowDiff = (pieceRow - targetRow).abs();
-        final colDiff = (pieceCol - targetCol).abs();
-        return pieceRow == targetRow || pieceCol == targetCol || rowDiff == colDiff;
-
-      case ChessPiece.king:
-        // 킹의 한 칸 이동 (모든 방향)
-        final rowDiff = (pieceRow - targetRow).abs();
-        final colDiff = (pieceCol - targetCol).abs();
-        return rowDiff <= 1 && colDiff <= 1;
-    }
+    return ChessSudokuValidator.canPieceAttack(piece, pieceRow, pieceCol, targetRow, targetCol);
   }
 
   // 특정 슬롯의 저장 시점 정보 가져오기
