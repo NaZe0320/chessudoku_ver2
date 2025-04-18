@@ -8,6 +8,7 @@ class LoadingManager {
       GlobalKey<NavigatorState>();
   static OverlayEntry? _overlayEntry;
 
+
   static void showLoading({String? message}) {
     final context = navigatorKey.currentContext;
     if (context == null) return;
@@ -15,7 +16,12 @@ class LoadingManager {
     // Overlay가 있는지 확인
     if (!_hasOverlayContext(context)) return;
 
+
+    // Overlay가 있는지 확인
+    if (!_hasOverlayContext(context)) return;
+
     hideLoading(); // 이미 표시된 로딩이 있다면 제거
+
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Material(
@@ -31,10 +37,14 @@ class LoadingManager {
                   const CircularProgressIndicator(
                     valueColor:
                         AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                   if (message != null) ...[
                     const SizedBox(height: 16),
                     Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 16),
                       decoration: BoxDecoration(
@@ -68,7 +78,17 @@ class LoadingManager {
     } catch (e) {
       debugPrint('로딩 표시 중 오류 발생: $e');
     }
+
+    try {
+      final overlay = Overlay.of(context);
+      if (_overlayEntry != null) {
+        overlay.insert(_overlayEntry!);
+      }
+    } catch (e) {
+      debugPrint('로딩 표시 중 오류 발생: $e');
+    }
   }
+
 
   static void hideLoading() {
     _overlayEntry?.remove();
@@ -79,6 +99,16 @@ class LoadingManager {
     try {
       Overlay.of(context);
       return true;
+    } catch (e) {
+      return false;
+    }
+  }
+}
+
+
+  static bool _hasOverlayContext(BuildContext context) {
+    try {
+      return Overlay.of(context) != null;
     } catch (e) {
       return false;
     }
