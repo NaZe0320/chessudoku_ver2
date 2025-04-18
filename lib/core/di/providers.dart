@@ -8,7 +8,6 @@ import 'package:chessudoku/domain/notifiers/records_notifier.dart';
 import 'package:chessudoku/domain/states/loading_state.dart';
 import 'package:chessudoku/domain/states/records_state.dart';
 import 'package:chessudoku/core/utils/chess_sudoku_generator.dart';
-import 'package:chessudoku/core/utils/chess_sudoku_validator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // 로딩 상태 관리를 위한 Provider

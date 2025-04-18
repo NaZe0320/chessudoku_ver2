@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
+import 'package:chessudoku/core/utils/chess_sudoku_validator.dart';
 
 /// 체스도쿠 퍼즐 풀이기
 class ChessSudokuSolver {
@@ -84,109 +85,29 @@ class ChessSudokuSolver {
 
   /// 기물 타입별 공격 범위 반환
   Set<String> _getAttacks(ChessPiece type, int row, int col) {
-    switch (type) {
-      case ChessPiece.knight:
-        return _getKnightAttacks(row, col);
-      case ChessPiece.bishop:
-        return _getBishopAttacks(row, col);
-      case ChessPiece.king:
-        return _getKingAttacks(row, col);
-      case ChessPiece.queen:
-        return _getQueenAttacks(row, col);
-      case ChessPiece.rook:
-        return _getRookAttacks(row, col);
-    }
-  }
-
-  /// 나이트 공격 범위
-  Set<String> _getKnightAttacks(int row, int col) {
-    final moves = [
-      [-2, -1],
-      [-2, 1],
-      [-1, -2],
-      [-1, 2],
-      [1, -2],
-      [1, 2],
-      [2, -1],
-      [2, 1]
-    ];
-
-    return _getValidPositions(row, col, moves);
-  }
-
-  /// 킹 공격 범위
-  Set<String> _getKingAttacks(int row, int col) {
-    final moves = [
-      [-1, -1],
-      [-1, 0],
-      [-1, 1],
-      [0, -1],
-      [0, 1],
-      [1, -1],
-      [1, 0],
-      [1, 1]
-    ];
-
-    return _getValidPositions(row, col, moves);
-  }
-
-  /// 유효한 위치 계산 (나이트, 킹 공통)
-  Set<String> _getValidPositions(int row, int col, List<List<int>> moves) {
-    return moves
-        .map((dir) => [row + dir[0], col + dir[1]])
-        .where((pos) =>
-            pos[0] >= 0 &&
-            pos[0] < boardSize &&
-            pos[1] >= 0 &&
-            pos[1] < boardSize)
-        .map((pos) => '${pos[0]},${pos[1]}')
-        .toSet();
-  }
-
-  /// 비숍 공격 범위
-  Set<String> _getBishopAttacks(int row, int col) {
-    // 대각선 방향
-    final directions = [
-      [-1, 1],
-      [1, 1],
-      [1, -1],
-      [-1, -1]
-    ];
-    return _getSlidingAttacks(row, col, directions);
-  }
-
-  /// 룩 공격 범위
-  Set<String> _getRookAttacks(int row, int col) {
-    // 가로 세로 방향
-    final directions = [
-      [0, 1],
-      [1, 0],
-      [0, -1],
-      [-1, 0]
-    ];
-    return _getSlidingAttacks(row, col, directions);
-  }
-
-  /// 퀸 공격 범위
-  Set<String> _getQueenAttacks(int row, int col) {
-    // 비숍 + 룩 공격 범위
-    return _getBishopAttacks(row, col).union(_getRookAttacks(row, col));
-  }
-
-  /// 슬라이딩 기물(비숍, 룩, 퀸)용 공격 범위 계산
-  Set<String> _getSlidingAttacks(int row, int col, List<List<int>> directions) {
     Set<String> attacks = <String>{};
 
-    for (final dir in directions) {
-      int r = row + dir[0];
-      int c = col + dir[1];
-
-      while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
-        attacks.add('$r,$c');
-        // 다른 기물에 막히면 중단
-        if (board[r][c].hasChessPiece) break;
-        r += dir[0];
-        c += dir[1];
+    // 보드의 모든 셀에 대해 공격 가능 여부 확인
+    for (int r = 0; r < boardSize; r++) {
+      for (int c = 0; c < boardSize; c++) {
+        if (ChessSudokuValidator.canPieceAttack(type, row, col, r, c)) {
+          attacks.add('$r,$c');
+          // 다른 기물에 막히면 해당 방향 중단
+          if (board[r][c].hasChessPiece) {
+            // 슬라이딩 기물(비숍, 룩, 퀸)의 경우에만 방향 차단 적용
+            if (type == ChessPiece.bishop || type == ChessPiece.rook || type == ChessPiece.queen) {
+              // 방향 벡터 계산
+              final rowDir = r - row != 0 ? (r - row) ~/ (r - row).abs() : 0;
+              final colDir = c - col != 0 ? (c - col) ~/ (c - col).abs() : 0;
+              // 같은 방향의 다음 셀들은 제외
+              for (int i = r + rowDir, j = c + colDir;
+                  i >= 0 && i < boardSize && j >= 0 && j < boardSize;
+                  i += rowDir, j += colDir) {
+                attacks.remove('$i,$j');
+              }
+            }
+          }
+        }
       }
     }
 
@@ -312,9 +233,7 @@ class ChessSudokuSolver {
       // 영향받는 셀들의 후보 목록 업데이트
       for (int i = 0; i < boardSize; i++) {
         // 같은 행
-        if (i != col &&
-            !board[row][i].hasNumber &&
-            !board[row][i].hasChessPiece) {
+        if (i != col && !board[row][i].hasNumber && !board[row][i].hasChessPiece) {
           savedCandidates['$row,$i'] = Set<int>.from(candidates[row][i]);
           candidates[row][i].remove(num);
           if (candidates[row][i].isEmpty) {
@@ -324,9 +243,7 @@ class ChessSudokuSolver {
         }
 
         // 같은 열
-        if (i != row &&
-            !board[i][col].hasNumber &&
-            !board[i][col].hasChessPiece) {
+        if (i != row && !board[i][col].hasNumber && !board[i][col].hasChessPiece) {
           savedCandidates['$i,$col'] = Set<int>.from(candidates[i][col]);
           candidates[i][col].remove(num);
           if (candidates[i][col].isEmpty) {
@@ -341,8 +258,7 @@ class ChessSudokuSolver {
         if ((boxRow != row || boxCol != col) &&
             !board[boxRow][boxCol].hasNumber &&
             !board[boxRow][boxCol].hasChessPiece) {
-          savedCandidates['$boxRow,$boxCol'] =
-              Set<int>.from(candidates[boxRow][boxCol]);
+          savedCandidates['$boxRow,$boxCol'] = Set<int>.from(candidates[boxRow][boxCol]);
           candidates[boxRow][boxCol].remove(num);
           if (candidates[boxRow][boxCol].isEmpty) {
             invalid = true;
