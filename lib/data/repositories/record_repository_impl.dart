@@ -1,17 +1,19 @@
 import 'package:chessudoku/data/models/puzzle_record.dart';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/repositories/record_repository.dart';
 import 'package:chessudoku/domain/states/puzzle_state.dart';
 
-/// 퍼즐 기록 관리를 담당하는 저장소
-class RecordRepository {
+/// 퍼즐 기록 관리를 담당하는 저장소 구현체
+class RecordRepositoryImpl implements RecordRepository {
   // 의존성 주입
   final DatabaseService _databaseService;
 
   // 생성자
-  RecordRepository(this._databaseService);
+  RecordRepositoryImpl(this._databaseService);
 
   /// 완료된 퍼즐 기록 저장
+  @override
   Future<bool> savePuzzleRecord(PuzzleState state) async {
     try {
       print('RecordRepository: 퍼즐 기록 저장 시작');
@@ -29,8 +31,7 @@ class RecordRepository {
       );
 
       // 레코드 정보 출력
-      print(
-          'RecordRepository: 저장할 기록 - 난이도: ${record.difficulty.name}, 시간: ${record.formattedCompletionTime}');
+      print('RecordRepository: 저장할 기록 - 난이도: ${record.difficulty.name}, 시간: ${record.formattedCompletionTime}');
 
       // 데이터베이스에 저장
       final id = await _databaseService.insert(
@@ -48,8 +49,8 @@ class RecordRepository {
   }
 
   /// 특정 난이도의 모든 퍼즐 기록 조회
-  Future<List<PuzzleRecord>> getRecordsByDifficulty(
-      Difficulty difficulty) async {
+  @override
+  Future<List<PuzzleRecord>> getRecordsByDifficulty(Difficulty difficulty) async {
     try {
       final records = await _databaseService.query(
         DatabaseService.tablePuzzleRecords,
@@ -66,6 +67,7 @@ class RecordRepository {
   }
 
   /// 모든 퍼즐 기록 조회
+  @override
   Future<List<PuzzleRecord>> getAllRecords() async {
     try {
       final records = await _databaseService.query(
@@ -81,6 +83,7 @@ class RecordRepository {
   }
 
   /// 특정 난이도의 최고 기록 조회
+  @override
   Future<PuzzleRecord?> getBestRecordByDifficulty(Difficulty difficulty) async {
     try {
       final records = await _databaseService.query(
@@ -103,6 +106,7 @@ class RecordRepository {
   }
 
   /// 퍼즐 기록 삭제
+  @override
   Future<bool> deleteRecord(int id) async {
     try {
       final count = await _databaseService.delete(
@@ -119,6 +123,7 @@ class RecordRepository {
   }
 
   /// 특정 난이도의 모든 퍼즐 기록 삭제
+  @override
   Future<bool> deleteRecordsByDifficulty(Difficulty difficulty) async {
     try {
       final count = await _databaseService.delete(
@@ -135,6 +140,7 @@ class RecordRepository {
   }
 
   /// 모든 퍼즐 기록 삭제
+  @override
   Future<bool> clearAllRecords() async {
     try {
       await _databaseService.delete(DatabaseService.tablePuzzleRecords);

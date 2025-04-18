@@ -5,10 +5,11 @@ import 'package:chessudoku/data/models/puzzle_action.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
 import 'package:chessudoku/domain/states/puzzle_state.dart';
 
-/// 퍼즐 데이터 처리를 담당하는 저장소
-class PuzzleRepository {
+/// 퍼즐 데이터 처리를 담당하는 저장소 구현체
+class PuzzleRepositoryImpl implements PuzzleRepository {
   // 의존성 주입
   final CacheService _cacheService;
 
@@ -16,7 +17,7 @@ class PuzzleRepository {
   static const String _puzzleStateKeyPrefix = 'cached_puzzle_state';
 
   // 생성자
-  PuzzleRepository(this._cacheService);
+  PuzzleRepositoryImpl(this._cacheService);
 
   // 난이도에 따른 캐시 키 생성
   String _getPuzzleStateKey([Difficulty? difficulty]) {
@@ -27,6 +28,7 @@ class PuzzleRepository {
   }
 
   /// 퍼즐 상태를 캐시에 저장
+  @override
   Future<bool> savePuzzleState(PuzzleState state) async {
     try {
       final stateMap = _puzzleStateToMap(state);
@@ -40,6 +42,7 @@ class PuzzleRepository {
   }
 
   /// 캐시에서 퍼즐 상태 불러오기
+  @override
   Future<PuzzleState?> loadPuzzleState([Difficulty? difficulty]) async {
     try {
       final key = _getPuzzleStateKey(difficulty);
@@ -58,6 +61,7 @@ class PuzzleRepository {
   }
 
   /// 캐시에서 퍼즐 상태 삭제
+  @override
   Future<bool> clearPuzzleState([Difficulty? difficulty]) async {
     try {
       final key = _getPuzzleStateKey(difficulty);
@@ -69,6 +73,7 @@ class PuzzleRepository {
   }
 
   /// 캐시된 퍼즐 상태 존재 여부 확인
+  @override
   bool hasCachedPuzzleState([Difficulty? difficulty]) {
     try {
       final key = _getPuzzleStateKey(difficulty);
@@ -136,8 +141,7 @@ class PuzzleRepository {
         final notes = notesData.map((n) => n as int).toSet();
 
         final chessPieceIndex = cellMap['chessPiece'] as int?;
-        final chessPiece =
-            chessPieceIndex != null ? ChessPiece.values[chessPieceIndex] : null;
+        final chessPiece = chessPieceIndex != null ? ChessPiece.values[chessPieceIndex] : null;
 
         return CellContent(
           number: cellMap['number'] as int?,
@@ -161,14 +165,10 @@ class PuzzleRepository {
       final newNotes = newNotesData.map((n) => n as int).toSet();
 
       final oldChessPieceIndex = oldContentData['chessPiece'] as int?;
-      final oldChessPiece = oldChessPieceIndex != null
-          ? ChessPiece.values[oldChessPieceIndex]
-          : null;
+      final oldChessPiece = oldChessPieceIndex != null ? ChessPiece.values[oldChessPieceIndex] : null;
 
       final newChessPieceIndex = newContentData['chessPiece'] as int?;
-      final newChessPiece = newChessPieceIndex != null
-          ? ChessPiece.values[newChessPieceIndex]
-          : null;
+      final newChessPiece = newChessPieceIndex != null ? ChessPiece.values[newChessPieceIndex] : null;
 
       return PuzzleAction(
         row: action['row'] as int,
