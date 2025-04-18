@@ -70,14 +70,7 @@ class PuzzlePage extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 30),
-                Image.asset(
-                  'assets/images/logo.png', // 로고 이미지가 있다고 가정
-                  height: 100,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.extension,
-                      size: 80,
-                      color: AppColors.primary),
-                ),
+                const Icon(Icons.extension, size: 80, color: AppColors.primary),
                 const SizedBox(height: 20),
                 const Text(
                   '난이도를 선택하세요',
