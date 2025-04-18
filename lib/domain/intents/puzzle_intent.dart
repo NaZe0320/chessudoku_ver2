@@ -8,8 +8,8 @@ import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/notifiers/puzzle_notifier.dart';
 import 'package:chessudoku/domain/states/puzzle_state.dart';
-import 'package:chessudoku/domain/utils/chess_sudoku_generator.dart';
-import 'package:chessudoku/domain/utils/chess_sudoku_validator.dart';
+import 'package:chessudoku/core/utils/chess_sudoku_generator.dart';
+import 'package:chessudoku/core/utils/chess_sudoku_validator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PuzzleIntent {
@@ -34,19 +34,13 @@ class PuzzleIntent {
     _notifier.changeDifficulty(difficulty);
   }
 
-  // 새 게임 초기화
-  Future<void> initializeGame() async {
+  // 게임 초기화 (새 게임 또는 저장된 게임)
+  Future<void> initializeGame(Difficulty difficulty, {bool useSavedState = false}) async {
     // 타이머 중지
     _notifier.stopTimer();
 
-    final state = ref.read(puzzleProvider);
-    final difficulty = state.difficulty;
-
-    // 저장된 게임 상태가 있는지 확인
-    final hasSavedState = _repository.hasCachedPuzzleState(difficulty);
-
-    if (hasSavedState) {
-      // 저장된 게임 상태 불러오기
+    // useSavedState가 true이고 저장된 상태가 있는 경우에만 저장된 상태 불러오기
+    if (useSavedState && _repository.hasCachedPuzzleState(difficulty)) {
       final savedState = await _repository.loadPuzzleState(difficulty);
       if (savedState != null) {
         // 저장된 상태로 초기화
@@ -57,7 +51,7 @@ class PuzzleIntent {
       }
     }
 
-    // 저장된 상태가 없는 경우 새 게임 생성
+    // 저장된 상태가 없거나 새 게임을 시작하는 경우
     const boardSize = ChessSudokuGenerator.boardSize;
 
     // 체스도쿠 생성기를 사용하여 보드 생성
@@ -107,7 +101,7 @@ class PuzzleIntent {
 
     // 이미 완료된 퍼즐이면 작동하지 않음
     if (state.isCompleted) return;
-    
+
     if (state.selectedRow == null ||
         state.selectedCol == null ||
         state.isSelectedCellInitial ||
@@ -700,5 +694,35 @@ class PuzzleIntent {
   bool hasStateInSlot(int slot) {
     final state = ref.read(puzzleProvider);
     return state.hasStateInSlot(slot);
+  }
+
+  // 게임 시작 처리
+  Future<bool?> handleStartGame(Difficulty difficulty) async {
+    // 난이도 변경
+    changeDifficulty(difficulty);
+
+    // 선택한 난이도의 저장된 게임이 있는지 확인
+    final hasSavedGame = this.hasSavedGame(difficulty);
+
+    if (hasSavedGame) {
+      return null; // UI에서 다이얼로그를 표시하도록 null 반환
+    } else {
+      // 저장된 게임이 없으면 새 게임 초기화
+      await initializeGame(difficulty, useSavedState: false);
+      return true; // 게임 화면으로 이동
+    }
+  }
+
+  // 게임 이어하기 또는 새로 시작
+  Future<void> continueOrStartNewGame(
+      Difficulty difficulty, bool shouldContinue) async {
+    if (shouldContinue) {
+      // 이어하기 선택 - 저장된 데이터 사용
+      await initializeGame(difficulty, useSavedState: true);
+    } else {
+      // 새로 시작 선택 - 저장된 데이터 삭제 후 시작
+      await clearSavedGameState(difficulty);
+      await initializeGame(difficulty, useSavedState: false);
+    }
   }
 }

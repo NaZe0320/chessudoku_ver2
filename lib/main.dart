@@ -1,10 +1,9 @@
 import 'package:chessudoku/core/routes/app_routes.dart';
+import 'package:chessudoku/core/utils/loading_manager.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chessudoku/ui/screens/main/main_screen.dart';
 
 void main() async {
   // Flutter 엔진 초기화
@@ -29,7 +28,8 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Chess Sudoku',
+      title: 'ChesSudoku',
+      navigatorKey: LoadingManager.navigatorKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

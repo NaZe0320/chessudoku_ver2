@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/utils/chess_sudoku_solver.dart'; // ChessSudokuSolver 임포트
+import 'package:chessudoku/core/utils/chess_sudoku_solver.dart'; // ChessSudokuSolver 임포트
 
 /// 체스도쿠 퍼즐 생성기
 /// 체스도쿠 규칙에 맞는 유효한 퍼즐을 효율적으로 생성합니다.
