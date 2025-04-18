@@ -36,15 +36,11 @@ class LoadingManager {
                 children: [
                   const CircularProgressIndicator(
                     valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        AlwaysStoppedAnimation<Color>(AppColors.primary), 
                   ),
                   if (message != null) ...[
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 16),
                       decoration: BoxDecoration(
@@ -78,17 +74,7 @@ class LoadingManager {
     } catch (e) {
       debugPrint('로딩 표시 중 오류 발생: $e');
     }
-
-    try {
-      final overlay = Overlay.of(context);
-      if (_overlayEntry != null) {
-        overlay.insert(_overlayEntry!);
-      }
-    } catch (e) {
-      debugPrint('로딩 표시 중 오류 발생: $e');
-    }
   }
-
 
   static void hideLoading() {
     _overlayEntry?.remove();
@@ -99,16 +85,6 @@ class LoadingManager {
     try {
       Overlay.of(context);
       return true;
-    } catch (e) {
-      return false;
-    }
-  }
-}
-
-
-  static bool _hasOverlayContext(BuildContext context) {
-    try {
-      return Overlay.of(context) != null;
     } catch (e) {
       return false;
     }

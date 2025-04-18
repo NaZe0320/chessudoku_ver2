@@ -35,8 +35,7 @@ class PuzzleIntent {
   }
 
   // 게임 초기화 (새 게임 또는 저장된 게임)
-  Future<void> initializeGame(Difficulty difficulty,
-      {bool useSavedState = false}) async {
+  Future<void> initializeGame(Difficulty difficulty, {bool useSavedState = false}) async {
     // 타이머 중지
     _notifier.stopTimer();
 
@@ -56,15 +55,12 @@ class PuzzleIntent {
     const boardSize = ChessSudokuGenerator.boardSize;
 
     // 로딩 화면 실행행
-    ref 
-        .read(loadingNotifierProvider.notifier)
-        .showLoading(message: '게임을 생성하는 중...');
+    ref.read(loadingNotifierProvider.notifier).showLoading(message: '게임을 생성하는 중...');
     // 체스도쿠 생성기를 사용하여 보드 생성
     final gameBoard = await _generator.generatePuzzle(difficulty);
 
     // 상태 업데이트
-    _notifier.initializeGameWithBoard(
-        gameBoard: gameBoard, boardSize: boardSize);
+    _notifier.initializeGameWithBoard(gameBoard: gameBoard, boardSize: boardSize);
 
     // 로딩 화면 종료료
     ref.read(loadingNotifierProvider.notifier).hideLoading();
@@ -185,8 +181,7 @@ class PuzzleIntent {
 
         final isCompleted = _checkCompletion(newBoard);
 
-        _notifier.updateBoardWithState(newBoard, newState,
-            isCompleted: isCompleted);
+        _notifier.updateBoardWithState(newBoard, newState, isCompleted: isCompleted);
 
         if (isCompleted) {
           _notifier.stopTimer();
@@ -297,8 +292,7 @@ class PuzzleIntent {
   }
 
   // 특정 난이도의 모든 퍼즐 기록 조회
-  Future<List<Map<String, dynamic>>> getRecordsByDifficulty(
-      Difficulty difficulty) async {
+  Future<List<Map<String, dynamic>>> getRecordsByDifficulty(Difficulty difficulty) async {
     final records = await _recordRepository.getRecordsByDifficulty(difficulty);
     return records
         .map((record) => {
@@ -311,10 +305,8 @@ class PuzzleIntent {
   }
 
   // 특정 난이도의 최고 기록 조회
-  Future<Map<String, dynamic>?> getBestRecordByDifficulty(
-      Difficulty difficulty) async {
-    final record =
-        await _recordRepository.getBestRecordByDifficulty(difficulty);
+  Future<Map<String, dynamic>?> getBestRecordByDifficulty(Difficulty difficulty) async {
+    final record = await _recordRepository.getBestRecordByDifficulty(difficulty);
     if (record == null) {
       return null;
     }
@@ -383,9 +375,7 @@ class PuzzleIntent {
     for (int row = 0; row < boardSize; row++) {
       for (int col = 0; col < boardSize; col++) {
         // 이미 숫자가 있거나 체스 기물이 있거나 초기 셀이면 건너뛰기
-        if (board[row][col].hasNumber ||
-            board[row][col].hasChessPiece ||
-            board[row][col].isInitial) {
+        if (board[row][col].hasNumber || board[row][col].hasChessPiece || board[row][col].isInitial) {
           continue;
         }
 
@@ -429,8 +419,7 @@ class PuzzleIntent {
   }
 
   // 특정 셀의 가능한 후보 숫자 계산
-  Set<int> _getPossibleNumbers(
-      List<List<CellContent>> board, int row, int col) {
+  Set<int> _getPossibleNumbers(List<List<CellContent>> board, int row, int col) {
     final boardSize = board.length;
     Set<int> allNumbers = Set.from(List.generate(boardSize, (i) => i + 1));
     Set<int> usedNumbers = {};
@@ -470,8 +459,7 @@ class PuzzleIntent {
         // 현재 셀이 기물의 공격 범위에 있는지 확인
         if (_canPieceAttack(board[r][c].chessPiece!, r, c, row, col)) {
           // 각 방향을 독립적으로 고려하기 위해, 해당 방향의 셀들 수집
-          List<List<int>> attackedCells =
-              _getAttackedCells(board[r][c].chessPiece!, r, c, row, col);
+          List<List<int>> attackedCells = _getAttackedCells(board[r][c].chessPiece!, r, c, row, col);
 
           // 같은 방향/패턴에 있는 모든 셀을 순회
           for (final cell in attackedCells) {
@@ -499,8 +487,7 @@ class PuzzleIntent {
   }
 
   // 기물의 특정 방향/패턴에 있는 모든 셀 반환
-  List<List<int>> _getAttackedCells(ChessPiece piece, int pieceRow,
-      int pieceCol, int targetRow, int targetCol) {
+  List<List<int>> _getAttackedCells(ChessPiece piece, int pieceRow, int pieceCol, int targetRow, int targetCol) {
     const boardSize = 9;
     List<List<int>> attackedCells = [];
 
@@ -624,8 +611,7 @@ class PuzzleIntent {
   }
 
   // 체스 기물이 특정 위치를 공격할 수 있는지 확인
-  bool _canPieceAttack(ChessPiece piece, int pieceRow, int pieceCol,
-      int targetRow, int targetCol) {
+  bool _canPieceAttack(ChessPiece piece, int pieceRow, int pieceCol, int targetRow, int targetCol) {
     switch (piece) {
       case ChessPiece.knight:
         // 나이트의 L자 이동
@@ -647,9 +633,7 @@ class PuzzleIntent {
         // 퀸의 모든 방향 이동 (룩 + 비숍)
         final rowDiff = (pieceRow - targetRow).abs();
         final colDiff = (pieceCol - targetCol).abs();
-        return pieceRow == targetRow ||
-            pieceCol == targetCol ||
-            rowDiff == colDiff;
+        return pieceRow == targetRow || pieceCol == targetCol || rowDiff == colDiff;
 
       case ChessPiece.king:
         // 킹의 한 칸 이동 (모든 방향)
@@ -722,8 +706,7 @@ class PuzzleIntent {
   }
 
   // 게임 이어하기 또는 새로 시작
-  Future<void> continueOrStartNewGame(
-      Difficulty difficulty, bool shouldContinue) async {
+  Future<void> continueOrStartNewGame(Difficulty difficulty, bool shouldContinue) async {
     if (shouldContinue) {
       // 이어하기 선택 - 저장된 데이터 사용
       await initializeGame(difficulty, useSavedState: true);
