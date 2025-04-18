@@ -1,7 +1,6 @@
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/models/puzzle_action.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/states/saved_puzzle_state.dart';
 
 class PuzzleState {
   final Difficulty difficulty;
@@ -16,7 +15,8 @@ class PuzzleState {
   final List<PuzzleAction> history; // 동작 히스토리
   final int historyIndex; // 현재 히스토리 인덱스
   final Set<String> errorCells; // 오류가 있는 셀 좌표 (row,col 형식)
-  final Map<int, SavedPuzzleState> savedStates; // 저장된 분기점 상태 (슬롯별)
+  final Map<int, PuzzleState> savedStates; // 저장된 분기점 상태 (슬롯별)
+  final DateTime? createdAt; // 저장 시점 (슬롯에 저장될 때만 사용)
 
   const PuzzleState({
     this.difficulty = Difficulty.easy,
@@ -32,6 +32,7 @@ class PuzzleState {
     this.historyIndex = -1,
     this.errorCells = const {},
     this.savedStates = const {},
+    this.createdAt,
   });
 
   PuzzleState copyWith({
@@ -47,7 +48,8 @@ class PuzzleState {
     List<PuzzleAction>? history,
     int? historyIndex,
     Set<String>? errorCells,
-    Map<int, SavedPuzzleState>? savedStates,
+    Map<int, PuzzleState>? savedStates,
+    DateTime? createdAt,
   }) {
     return PuzzleState(
       difficulty: difficulty ?? this.difficulty,
@@ -63,16 +65,14 @@ class PuzzleState {
       historyIndex: historyIndex ?? this.historyIndex,
       errorCells: errorCells ?? this.errorCells,
       savedStates: savedStates ?? this.savedStates,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
   // 선택된 셀 내용
   CellContent? get selectedCell {
     if (selectedRow == null || selectedCol == null) return null;
-    if (selectedRow! < 0 ||
-        selectedRow! >= boardSize ||
-        selectedCol! < 0 ||
-        selectedCol! >= boardSize) {
+    if (selectedRow! < 0 || selectedRow! >= boardSize || selectedCol! < 0 || selectedCol! >= boardSize) {
       return null;
     }
     return board[selectedRow!][selectedCol!];
@@ -96,10 +96,8 @@ class PuzzleState {
 
   // 포맷된 타이머 시간 (mm:ss)
   String get formattedTime {
-    final minutes =
-        elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds =
-        elapsedTime.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final minutes = elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = elapsedTime.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
@@ -112,8 +110,7 @@ class PuzzleState {
   // 히스토리에 동작 추가
   PuzzleState addAction(PuzzleAction action) {
     // 히스토리 중간에 있는 경우 이후 히스토리를 잘라냄
-    final newHistory =
-        List<PuzzleAction>.from(history.sublist(0, historyIndex + 1));
+    final newHistory = List<PuzzleAction>.from(history.sublist(0, historyIndex + 1));
     newHistory.add(action);
 
     return copyWith(
@@ -159,7 +156,7 @@ class PuzzleState {
   PuzzleState saveToSlot(int slot) {
     if (slot < 0 || slot > 2) return this; // 슬롯은 0-2까지만 허용
 
-    final savedState = SavedPuzzleState(
+    final savedState = PuzzleState(
       board: List.generate(
         boardSize,
         (row) => List.generate(
@@ -171,9 +168,10 @@ class PuzzleState {
       history: List.from(history),
       historyIndex: historyIndex,
       errorCells: Set.from(errorCells),
+      createdAt: DateTime.now(),
     );
 
-    final newSavedStates = Map<int, SavedPuzzleState>.from(savedStates);
+    final newSavedStates = Map<int, PuzzleState>.from(savedStates);
     newSavedStates[slot] = savedState;
 
     return copyWith(savedStates: newSavedStates);
@@ -204,5 +202,11 @@ class PuzzleState {
   // 특정 슬롯에 저장된 상태가 있는지 확인
   bool hasStateInSlot(int slot) {
     return savedStates.containsKey(slot);
+  }
+
+  // 저장된 시간을 포맷팅하여 반환
+  String? get formattedCreatedAt {
+    if (createdAt == null) return null;
+    return '${createdAt!.month}월 ${createdAt!.day}일 ${createdAt!.hour.toString().padLeft(2, '0')}:${createdAt!.minute.toString().padLeft(2, '0')}';
   }
 }
