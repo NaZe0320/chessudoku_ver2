@@ -35,7 +35,8 @@ class PuzzleIntent {
   }
 
   // 게임 초기화 (새 게임 또는 저장된 게임)
-  Future<void> initializeGame(Difficulty difficulty, {bool useSavedState = false}) async {
+  Future<void> initializeGame(Difficulty difficulty,
+      {bool useSavedState = false}) async {
     // 타이머 중지
     _notifier.stopTimer();
 
@@ -54,12 +55,19 @@ class PuzzleIntent {
     // 저장된 상태가 없거나 새 게임을 시작하는 경우
     const boardSize = ChessSudokuGenerator.boardSize;
 
+    // 로딩 화면 실행행
+    ref 
+        .read(loadingNotifierProvider.notifier)
+        .showLoading(message: '게임을 생성하는 중...');
     // 체스도쿠 생성기를 사용하여 보드 생성
     final gameBoard = await _generator.generatePuzzle(difficulty);
 
     // 상태 업데이트
     _notifier.initializeGameWithBoard(
         gameBoard: gameBoard, boardSize: boardSize);
+
+    // 로딩 화면 종료료
+    ref.read(loadingNotifierProvider.notifier).hideLoading();
 
     // 타이머 시작
     _notifier.startTimer();
