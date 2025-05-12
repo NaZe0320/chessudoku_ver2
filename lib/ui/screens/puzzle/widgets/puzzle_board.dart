@@ -25,14 +25,14 @@ class PuzzleBoard extends ConsumerWidget {
       width: boardLength,
       height: boardLength,
       decoration: BoxDecoration(
-        color: AppColors.neutral200,
+        color: AppColors2.neutral200,
         border: Border.all(
-          color: AppColors.neutral400,
+          color: AppColors2.neutral400,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.neutral700.withAlpha(10),
+            color: AppColors2.neutral700.withAlpha(10),
             blurRadius: 3,
             offset: const Offset(0, 1),
             spreadRadius: 0,
@@ -42,7 +42,7 @@ class PuzzleBoard extends ConsumerWidget {
       child: puzzleState.board.isEmpty
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors2.primary),
               ),
             )
           : GridView.builder(

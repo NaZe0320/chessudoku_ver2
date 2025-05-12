@@ -18,8 +18,7 @@ class PuzzleScreen extends ConsumerStatefulWidget {
   ConsumerState<PuzzleScreen> createState() => _PuzzleScreenState();
 }
 
-class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
-    with WidgetsBindingObserver {
+class _PuzzleScreenState extends ConsumerState<PuzzleScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -74,9 +73,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
     // 상태 변경 리스너 추가 - build 메소드 내에서 ref.listen 사용
     ref.listen<PuzzleState>(puzzleProvider, (previous, next) {
       // 완료 상태로 변경되었을 때 대화상자 표시
-      if (previous != null &&
-          previous.isCompleted == false &&
-          next.isCompleted) {
+      if (previous != null && previous.isCompleted == false && next.isCompleted) {
         _showCompletionDialog(next);
       }
     });
@@ -84,21 +81,21 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        backgroundColor: AppColors.neutral100,
+        backgroundColor: AppColors2.neutral100,
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors2.primary,
           centerTitle: true,
           title: const Text(
             '체스도쿠',
             style: TextStyle(
-              color: AppColors.neutral100,
+              color: AppColors2.neutral100,
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
           ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.neutral100),
+            icon: const Icon(Icons.arrow_back, color: AppColors2.neutral100),
             onPressed: () {
               // 뒤로 가기 시 게임 상태 저장
               puzzleIntent.saveGameState();
@@ -116,7 +113,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
         ),
         body: Container(
           decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha(13),
+            color: AppColors2.primary.withAlpha(13),
           ),
           child: Stack(
             children: [
@@ -152,13 +149,13 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
                   duration: const Duration(milliseconds: 300),
                   opacity: 0.98,
                   child: Container(
-                    color: AppColors.neutral900.withAlpha(230),
+                    color: AppColors2.neutral900.withAlpha(230),
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
                       child: Center(
                         child: Card(
                           elevation: 8,
-                          shadowColor: AppColors.primary.withAlpha(153),
+                          shadowColor: AppColors2.primary.withAlpha(153),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -174,7 +171,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
                                 const Icon(
                                   Icons.pause_circle_filled,
                                   size: 48,
-                                  color: AppColors.primary,
+                                  color: AppColors2.primary,
                                 ),
                                 const SizedBox(height: 16),
                                 const Text(
@@ -182,7 +179,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
+                                    color: AppColors2.primary,
                                   ),
                                 ),
                                 const SizedBox(height: 24),
@@ -191,8 +188,8 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
                                   icon: const Icon(Icons.play_arrow),
                                   label: const Text('게임 재개'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: AppColors.neutral100,
+                                    backgroundColor: AppColors2.primary,
+                                    foregroundColor: AppColors2.neutral100,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 32,
                                       vertical: 16,
@@ -232,7 +229,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
             children: [
               const Icon(
                 Icons.emoji_events,
-                color: AppColors.primary,
+                color: AppColors2.primary,
                 size: 64,
               ),
               const SizedBox(height: 16),
@@ -245,8 +242,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
               const SizedBox(height: 8),
               Text(
                 '소요 시간: $time',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ],
           ),
@@ -259,7 +255,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor: AppColors.neutral100,
+          backgroundColor: AppColors2.neutral100,
         );
       },
     );

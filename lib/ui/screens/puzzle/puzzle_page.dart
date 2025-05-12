@@ -12,8 +12,7 @@ class PuzzlePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final intent =
-        ProviderScope.containerOf(context).read(puzzleIntentProvider);
+    final intent = ProviderScope.containerOf(context).read(puzzleIntentProvider);
 
     // 난이도별 게임 시작 핸들러
     Future<void> handleStartGame(Difficulty difficulty) async {
@@ -24,8 +23,7 @@ class PuzzlePage extends StatelessWidget {
 
       if (shouldNavigate == null && navigationContext.mounted) {
         // 저장된 게임이 있는 경우 다이얼로그 표시
-        final shouldContinue =
-            await ContinueGameDialog.show(navigationContext, difficulty);
+        final shouldContinue = await ContinueGameDialog.show(navigationContext, difficulty);
 
         if (shouldContinue != null) {
           if (!navigationContext.mounted) return;
@@ -49,7 +47,7 @@ class PuzzlePage extends StatelessWidget {
             fontSize: 22,
           ),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors2.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -59,8 +57,8 @@ class PuzzlePage extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.primaryLight.withAlpha(77),
-              AppColors.neutral100,
+              AppColors2.primaryLight.withAlpha(77),
+              AppColors2.neutral100,
             ],
           ),
         ),
@@ -70,14 +68,14 @@ class PuzzlePage extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 30),
-                const Icon(Icons.extension, size: 80, color: AppColors.primary),
+                const Icon(Icons.extension, size: 80, color: AppColors2.primary),
                 const SizedBox(height: 20),
                 const Text(
                   '난이도를 선택하세요',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.neutral800,
+                    color: AppColors2.neutral800,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -112,8 +110,8 @@ class PuzzlePage extends StatelessWidget {
                     icon: const Icon(Icons.emoji_events),
                     label: const Text('기록실'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.secondary,
-                      side: const BorderSide(color: AppColors.secondary),
+                      foregroundColor: AppColors2.secondary,
+                      side: const BorderSide(color: AppColors2.secondary),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -141,15 +139,15 @@ class PuzzlePage extends StatelessWidget {
     switch (difficulty) {
       case Difficulty.easy:
         difficultyText = '쉬움';
-        buttonColor = AppColors.success;
+        buttonColor = AppColors2.success;
         break;
       case Difficulty.medium:
         difficultyText = '보통';
-        buttonColor = AppColors.warning;
+        buttonColor = AppColors2.warning;
         break;
       case Difficulty.hard:
         difficultyText = '어려움';
-        buttonColor = AppColors.error;
+        buttonColor = AppColors2.error;
         break;
     }
 

@@ -26,9 +26,7 @@ class PuzzleControls extends ConsumerWidget {
                 text: '되돌리기',
                 prefixIcon: Icon(
                   Icons.undo,
-                  color: puzzleState.canUndo
-                      ? AppColors.primary
-                      : AppColors.neutral400,
+                  color: puzzleState.canUndo ? AppColors2.primary : AppColors2.neutral400,
                   size: 18,
                 ),
                 onTap: puzzleState.canUndo ? () => intent.undoAction() : null,
@@ -42,9 +40,7 @@ class PuzzleControls extends ConsumerWidget {
                 text: '메모',
                 prefixIcon: Icon(
                   Icons.edit_note,
-                  color: puzzleState.isNoteMode
-                      ? AppColors.primary
-                      : AppColors.neutral700,
+                  color: puzzleState.isNoteMode ? AppColors2.primary : AppColors2.neutral700,
                   size: 18,
                 ),
                 onTap: () => intent.toggleNoteMode(),
@@ -59,9 +55,7 @@ class PuzzleControls extends ConsumerWidget {
                 text: '다시 실행',
                 prefixIcon: Icon(
                   Icons.redo,
-                  color: puzzleState.canRedo
-                      ? AppColors.primary
-                      : AppColors.neutral400,
+                  color: puzzleState.canRedo ? AppColors2.primary : AppColors2.neutral400,
                   size: 18,
                 ),
                 onTap: puzzleState.canRedo ? () => intent.redoAction() : null,
@@ -75,7 +69,7 @@ class PuzzleControls extends ConsumerWidget {
                 text: '자동 메모',
                 prefixIcon: const Icon(
                   Icons.auto_fix_high,
-                  color: AppColors.neutral700,
+                  color: AppColors2.neutral700,
                   size: 18,
                 ),
                 onTap: () => intent.fillNotes(),
@@ -89,9 +83,7 @@ class PuzzleControls extends ConsumerWidget {
                 text: '오류 검사',
                 prefixIcon: Icon(
                   Icons.check_circle_outline,
-                  color: puzzleState.errorCells.isNotEmpty
-                      ? AppColors.error
-                      : AppColors.neutral700,
+                  color: puzzleState.errorCells.isNotEmpty ? AppColors2.error : AppColors2.neutral700,
                   size: 18,
                 ),
                 onTap: () {
@@ -101,7 +93,7 @@ class PuzzleControls extends ConsumerWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('$errorCount개의 오류가 있습니다.'),
-                        backgroundColor: AppColors.error,
+                        backgroundColor: AppColors2.error,
                         behavior: SnackBarBehavior.floating,
                         margin: const EdgeInsets.all(8),
                         duration: const Duration(seconds: 2),
@@ -130,24 +122,22 @@ class PuzzleControls extends ConsumerWidget {
                 text: '분기점',
                 prefixIcon: const Icon(
                   Icons.save_outlined,
-                  color: AppColors.primary,
+                  color: AppColors2.primary,
                   size: 18,
                 ),
                 suffixIcon: const Icon(
                   Icons.arrow_drop_down,
-                  color: AppColors.neutral700,
+                  color: AppColors2.neutral700,
                   size: 18,
                 ),
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
                     shape: const RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(20)),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                     ),
                     builder: (context) => Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -156,7 +146,7 @@ class PuzzleControls extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.neutral900,
+                              color: AppColors2.neutral900,
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -170,15 +160,14 @@ class PuzzleControls extends ConsumerWidget {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           '슬롯 ${slot + 1}',
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
-                                            color: AppColors.neutral900,
+                                            color: AppColors2.neutral900,
                                           ),
                                         ),
                                         if (hasState) ...[
@@ -187,7 +176,7 @@ class PuzzleControls extends ConsumerWidget {
                                             saveTime ?? '',
                                             style: const TextStyle(
                                               fontSize: 12,
-                                              color: AppColors.neutral700,
+                                              color: AppColors2.neutral700,
                                             ),
                                           ),
                                         ],
@@ -200,22 +189,17 @@ class PuzzleControls extends ConsumerWidget {
                                       // 저장 버튼
                                       IconButton(
                                         icon: const Icon(Icons.save_outlined),
-                                        color: AppColors.primary,
+                                        color: AppColors2.primary,
                                         onPressed: () {
                                           Navigator.pop(context);
                                           intent.saveToSlot(slot);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
+                                          ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
-                                              content: Text(
-                                                  '슬롯 ${slot + 1}에 저장되었습니다.'),
-                                              backgroundColor:
-                                                  AppColors.primary,
-                                              behavior:
-                                                  SnackBarBehavior.floating,
+                                              content: Text('슬롯 ${slot + 1}에 저장되었습니다.'),
+                                              backgroundColor: AppColors2.primary,
+                                              behavior: SnackBarBehavior.floating,
                                               margin: const EdgeInsets.all(8),
-                                              duration:
-                                                  const Duration(seconds: 1),
+                                              duration: const Duration(seconds: 1),
                                             ),
                                           );
                                         },
@@ -223,26 +207,18 @@ class PuzzleControls extends ConsumerWidget {
                                       // 불러오기 버튼
                                       IconButton(
                                         icon: const Icon(Icons.restore),
-                                        color: hasState
-                                            ? AppColors.primary
-                                            : AppColors.neutral400,
+                                        color: hasState ? AppColors2.primary : AppColors2.neutral400,
                                         onPressed: hasState
                                             ? () {
                                                 Navigator.pop(context);
                                                 intent.loadFromSlot(slot);
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
+                                                ScaffoldMessenger.of(context).showSnackBar(
                                                   SnackBar(
-                                                    content: Text(
-                                                        '슬롯 ${slot + 1}에서 불러왔습니다.'),
-                                                    backgroundColor:
-                                                        AppColors.primary,
-                                                    behavior: SnackBarBehavior
-                                                        .floating,
-                                                    margin:
-                                                        const EdgeInsets.all(8),
-                                                    duration: const Duration(
-                                                        seconds: 1),
+                                                    content: Text('슬롯 ${slot + 1}에서 불러왔습니다.'),
+                                                    backgroundColor: AppColors2.primary,
+                                                    behavior: SnackBarBehavior.floating,
+                                                    margin: const EdgeInsets.all(8),
+                                                    duration: const Duration(seconds: 1),
                                                   ),
                                                 );
                                               }

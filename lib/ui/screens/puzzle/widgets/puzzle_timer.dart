@@ -17,8 +17,8 @@ class PuzzleTimer extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            AppColors.primaryDark,
-            AppColors.primary,
+            AppColors2.primaryDark,
+            AppColors2.primary,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -26,7 +26,7 @@ class PuzzleTimer extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withAlpha(77),
+            color: AppColors2.primary.withAlpha(77),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -38,13 +38,13 @@ class PuzzleTimer extends ConsumerWidget {
           const Icon(
             Icons.timer_outlined,
             size: 16,
-            color: AppColors.neutral100,
+            color: AppColors2.neutral100,
           ),
           const SizedBox(width: 4),
           Text(
             puzzleState.formattedTime,
             style: AppTextStyles.buttonMedium.copyWith(
-              color: AppColors.neutral100,
+              color: AppColors2.neutral100,
               fontSize: 14,
             ),
           ),
@@ -63,11 +63,9 @@ class PuzzleTimer extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(2.0),
                 child: Icon(
-                  puzzleState.isTimerRunning
-                      ? Icons.pause_rounded
-                      : Icons.play_arrow_rounded,
+                  puzzleState.isTimerRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
                   size: 16,
-                  color: AppColors.neutral100,
+                  color: AppColors2.neutral100,
                 ),
               ),
             ),

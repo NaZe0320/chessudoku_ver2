@@ -60,8 +60,7 @@ class AppButton extends StatelessWidget {
               child: Padding(
                 padding: _getButtonPadding(),
                 child: Row(
-                  mainAxisSize:
-                      isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+                  mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (prefixIcon != null) ...[
@@ -89,26 +88,26 @@ class AppButton extends StatelessWidget {
   Color _getButtonColor() {
     switch (type) {
       case ButtonType.primary:
-        return AppColors.primary;
+        return AppColors2.primary;
       case ButtonType.secondary:
-        return AppColors.secondary;
+        return AppColors2.secondary;
       case ButtonType.success:
-        return AppColors.success;
+        return AppColors2.success;
       case ButtonType.warning:
-        return AppColors.warning;
+        return AppColors2.warning;
       case ButtonType.error:
-        return AppColors.error;
+        return AppColors2.error;
       case ButtonType.info:
-        return AppColors.info;
+        return AppColors2.info;
     }
   }
 
   Color _getSplashColor() {
     switch (type) {
       case ButtonType.primary:
-        return AppColors.primaryDark;
+        return AppColors2.primaryDark;
       case ButtonType.secondary:
-        return AppColors.secondaryDark;
+        return AppColors2.secondaryDark;
       case ButtonType.success:
         return Colors.green.shade700;
       case ButtonType.warning:

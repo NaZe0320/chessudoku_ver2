@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 
 class LoadingManager {
-  static final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   static OverlayEntry? _overlayEntry;
-
 
   static void showLoading({String? message}) {
     final context = navigatorKey.currentContext;
@@ -16,12 +14,10 @@ class LoadingManager {
     // Overlay가 있는지 확인
     if (!_hasOverlayContext(context)) return;
 
-
     // Overlay가 있는지 확인
     if (!_hasOverlayContext(context)) return;
 
     hideLoading(); // 이미 표시된 로딩이 있다면 제거
-
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Material(
@@ -29,28 +25,26 @@ class LoadingManager {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
           child: Container(
-            color: AppColors.neutral900.withAlpha(175),
+            color: AppColors2.neutral900.withAlpha(175),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.primary), 
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors2.primary),
                   ),
                   if (message != null) ...[
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                       decoration: BoxDecoration(
-                        color: AppColors.neutral100,
+                        color: AppColors2.neutral100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         message,
                         style: const TextStyle(
-                          color: AppColors.neutral800,
+                          color: AppColors2.neutral800,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),

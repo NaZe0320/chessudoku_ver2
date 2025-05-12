@@ -54,13 +54,9 @@ class _AppNeomorphicButtonState extends State<AppNeomorphicButton> {
     final button = Opacity(
       opacity: widget.isDisabled ? 0.6 : 1.0,
       child: GestureDetector(
-        onTapDown:
-            widget.isDisabled ? null : (_) => setState(() => _isPressed = true),
-        onTapUp: widget.isDisabled
-            ? null
-            : (_) => setState(() => _isPressed = false),
-        onTapCancel:
-            widget.isDisabled ? null : () => setState(() => _isPressed = false),
+        onTapDown: widget.isDisabled ? null : (_) => setState(() => _isPressed = true),
+        onTapUp: widget.isDisabled ? null : (_) => setState(() => _isPressed = false),
+        onTapCancel: widget.isDisabled ? null : () => setState(() => _isPressed = false),
         onTap: widget.isDisabled ? null : widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
@@ -69,16 +65,14 @@ class _AppNeomorphicButtonState extends State<AppNeomorphicButton> {
             color: _getBaseColor(),
             borderRadius: BorderRadius.circular(widget.borderRadius),
             border: Border.all(
-              color: widget.isActive
-                  ? _getTextColor().withAlpha(51)
-                  : AppColors.neutral300,
+              color: widget.isActive ? _getTextColor().withAlpha(51) : AppColors2.neutral300,
               width: 1,
             ),
             boxShadow: _isPressed || widget.isActive
                 ? null
                 : [
                     BoxShadow(
-                      color: AppColors.neutral400.withAlpha(10),
+                      color: AppColors2.neutral400.withAlpha(10),
                       blurRadius: 2,
                       offset: const Offset(0, 1),
                       spreadRadius: 0,
@@ -119,29 +113,29 @@ class _AppNeomorphicButtonState extends State<AppNeomorphicButton> {
     if (widget.isActive) {
       switch (widget.type) {
         case NeomorphicButtonType.primary:
-          return AppColors.primary.withAlpha(13);
+          return AppColors2.primary.withAlpha(13);
         case NeomorphicButtonType.secondary:
-          return AppColors.secondary.withAlpha(13);
+          return AppColors2.secondary.withAlpha(13);
         case NeomorphicButtonType.accent:
-          return AppColors.accent1.withAlpha(13);
+          return AppColors2.accent1.withAlpha(13);
         case NeomorphicButtonType.error:
-          return AppColors.error.withAlpha(13);
+          return AppColors2.error.withAlpha(13);
       }
     } else {
-      return AppColors.neutral200;
+      return AppColors2.neutral200;
     }
   }
 
   Color _getTextColor() {
     switch (widget.type) {
       case NeomorphicButtonType.primary:
-        return AppColors.primary;
+        return AppColors2.primary;
       case NeomorphicButtonType.secondary:
-        return AppColors.secondary;
+        return AppColors2.secondary;
       case NeomorphicButtonType.accent:
-        return AppColors.accent1;
+        return AppColors2.accent1;
       case NeomorphicButtonType.error:
-        return AppColors.error;
+        return AppColors2.error;
     }
   }
 

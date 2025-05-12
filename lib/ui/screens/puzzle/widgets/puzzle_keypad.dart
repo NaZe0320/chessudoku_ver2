@@ -85,17 +85,15 @@ class PuzzleKeypad extends ConsumerWidget {
           borderRadius: BorderRadius.circular(24),
           child: Ink(
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : AppColors.neutral200,
+              color: isSelected ? AppColors2.primary : AppColors2.neutral200,
               shape: BoxShape.circle,
               border: Border.all(
-                color: isSelected ? Colors.transparent : AppColors.neutral300,
+                color: isSelected ? Colors.transparent : AppColors2.neutral300,
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isSelected
-                      ? AppColors.primary.withAlpha(51)
-                      : AppColors.neutral400.withAlpha(10),
+                  color: isSelected ? AppColors2.primary.withAlpha(51) : AppColors2.neutral400.withAlpha(10),
                   blurRadius: 2,
                   offset: const Offset(0, 1),
                   spreadRadius: 0,
@@ -106,8 +104,7 @@ class PuzzleKeypad extends ConsumerWidget {
               child: Text(
                 '$number',
                 style: TextStyle(
-                  color:
-                      isSelected ? AppColors.neutral100 : AppColors.neutral800,
+                  color: isSelected ? AppColors2.neutral100 : AppColors2.neutral800,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -134,8 +131,8 @@ class PuzzleKeypad extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.error.withAlpha(204),
-                  AppColors.error,
+                  AppColors2.error.withAlpha(204),
+                  AppColors2.error,
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -143,7 +140,7 @@ class PuzzleKeypad extends ConsumerWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.error.withAlpha(51),
+                  color: AppColors2.error.withAlpha(51),
                   blurRadius: 2,
                   offset: const Offset(0, 1),
                   spreadRadius: 0,
@@ -153,7 +150,7 @@ class PuzzleKeypad extends ConsumerWidget {
             child: const Center(
               child: Icon(
                 Icons.backspace_outlined,
-                color: AppColors.neutral100,
+                color: AppColors2.neutral100,
                 size: 20,
               ),
             ),

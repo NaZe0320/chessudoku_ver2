@@ -23,27 +23,25 @@ class PuzzleCell extends ConsumerWidget {
     final puzzleState = ref.watch(puzzleProvider);
     final intent = ref.read(puzzleIntentProvider);
 
-    if (row >= puzzleState.board.length ||
-        col >= puzzleState.board[row].length) {
-      return Container(color: AppColors.neutral100);
+    if (row >= puzzleState.board.length || col >= puzzleState.board[row].length) {
+      return Container(color: AppColors2.neutral100);
     }
 
     final cell = puzzleState.board[row][col];
-    final isSelected =
-        puzzleState.selectedRow == row && puzzleState.selectedCol == col;
+    final isSelected = puzzleState.selectedRow == row && puzzleState.selectedCol == col;
 
     // 3x3 박스 경계 처리
-    const borderSide = BorderSide(color: AppColors.neutral400, width: 0.5);
-    const boldBorderSide = BorderSide(color: AppColors.neutral400, width: 2.0);
+    const borderSide = BorderSide(color: AppColors2.neutral400, width: 0.5);
+    const boldBorderSide = BorderSide(color: AppColors2.neutral400, width: 2.0);
 
     // 셀 배경색 결정
     Color cellColor;
     if (isSelected) {
-      cellColor = AppColors.primaryLight.withAlpha(64);
+      cellColor = AppColors2.primaryLight.withAlpha(64);
     } else if (cell.isInitial) {
-      cellColor = AppColors.neutral200;
+      cellColor = AppColors2.neutral200;
     } else {
-      cellColor = AppColors.neutral100;
+      cellColor = AppColors2.neutral100;
     }
 
     // 오류 셀 표시
@@ -51,7 +49,7 @@ class PuzzleCell extends ConsumerWidget {
 
     // 오류가 있으면 빨간색 배경으로 표시
     if (isError) {
-      cellColor = AppColors.error.withAlpha(70);
+      cellColor = AppColors2.error.withAlpha(70);
     }
 
     return GestureDetector(
@@ -81,7 +79,7 @@ class PuzzleCell extends ConsumerWidget {
         cell.chessPiece!.symbol,
         style: TextStyle(
           fontSize: cellSize * 0.5,
-          color: AppColors.neutral900,
+          color: AppColors2.neutral900,
           fontWeight: FontWeight.bold,
         ),
       );

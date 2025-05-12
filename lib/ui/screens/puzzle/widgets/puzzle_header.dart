@@ -20,8 +20,8 @@ class PuzzleHeader extends ConsumerWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.primary.withAlpha(26),
-                AppColors.primaryLight.withAlpha(13),
+                AppColors2.primary.withAlpha(26),
+                AppColors2.primaryLight.withAlpha(13),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -29,13 +29,13 @@ class PuzzleHeader extends ConsumerWidget {
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withAlpha(26),
+                color: AppColors2.primary.withAlpha(26),
                 blurRadius: 4,
                 offset: const Offset(0, 1),
               ),
             ],
             border: Border.all(
-              color: AppColors.primary.withAlpha(51),
+              color: AppColors2.primary.withAlpha(51),
               width: 1,
             ),
           ),
@@ -44,14 +44,14 @@ class PuzzleHeader extends ConsumerWidget {
             children: [
               const Icon(
                 Icons.leaderboard_rounded,
-                color: AppColors.primary,
+                color: AppColors2.primary,
                 size: 16,
               ),
               const SizedBox(width: 6),
               Text(
                 '난이도: ${puzzleState.difficulty.label}',
                 style: AppTextStyles.subtitle2.copyWith(
-                  color: AppColors.primary,
+                  color: AppColors2.primary,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),

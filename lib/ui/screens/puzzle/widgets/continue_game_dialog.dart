@@ -48,13 +48,13 @@ class ContinueGameDialog extends StatelessWidget {
           onPressed: () => Navigator.pop(context, false),
           child: const Text(
             '새로 시작',
-            style: TextStyle(color: AppColors.primary),
+            style: TextStyle(color: AppColors2.primary),
           ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.neutral100,
+            backgroundColor: AppColors2.primary,
+            foregroundColor: AppColors2.neutral100,
           ),
           onPressed: () => Navigator.pop(context, true),
           child: const Text('이어하기'),
