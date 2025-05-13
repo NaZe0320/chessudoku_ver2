@@ -95,7 +95,7 @@ class BottomNavBar extends StatelessWidget {
           // 중앙 떠있는 버튼
           if (onCenterButtonPressed != null)
             Positioned(
-              top: -20,
+              top: -10,
               child: GestureDetector(
                 onTap: onCenterButtonPressed,
                 child: Container(

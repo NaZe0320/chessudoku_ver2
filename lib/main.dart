@@ -1,7 +1,7 @@
-import 'package:chessudoku/core/routes/app_routes.dart';
 import 'package:chessudoku/core/utils/loading_manager.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/data/services/database_service.dart';
+import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,8 +34,7 @@ class MainApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      initialRoute: AppRoutes.main,
-      routes: AppRoutes.getRoutes(),
+      home: const MainScreen(),
     );
   }
 }
