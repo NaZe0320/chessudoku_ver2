@@ -3,7 +3,6 @@ import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/ui/theme/dimensions.dart';
 import 'package:chessudoku/ui/theme/typography.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class CollapsingAppBar extends StatelessWidget {
   final bool isCollapsed;
