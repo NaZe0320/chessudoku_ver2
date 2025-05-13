@@ -1,5 +1,5 @@
-import 'package:chessudoku/ui/common/widgets/app_bar/collapsing_app_bar.dart';
-
+import 'package:chessudoku/ui/common/widgets/app_bar/chess_pattern.dart';
+import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/ui/theme/dimensions.dart';
 import 'package:flutter/material.dart';
 
@@ -11,33 +11,33 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isHeaderCollapsed = false;
-  final _scrollController = ScrollController();
-  final int _selectedTabIndex = 0;
+  late ScrollController _scrollController;
+  bool _isScrolled = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    _scrollController = ScrollController();
+
+    _scrollController.addListener(_listenToScrollChange);
+  }
+
+  void _listenToScrollChange() {
+    if (_scrollController.offset >= 50) {
+      setState(() {
+        _isScrolled = true;
+      });
+    } else {
+      setState(() {
+        _isScrolled = false;
+      });
+    }
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scrollController.offset > 50 && !_isHeaderCollapsed) {
-      setState(() {
-        _isHeaderCollapsed = true;
-      });
-    } else if (_scrollController.offset <= 50 && _isHeaderCollapsed) {
-      setState(() {
-        _isHeaderCollapsed = false;
-      });
-    }
   }
 
   @override
@@ -45,25 +45,22 @@ class _HomeScreenState extends State<HomeScreen> {
     return Stack(
       children: [
         CustomScrollView(controller: _scrollController, slivers: [
-          SliverToBoxAdapter(
-            child: CollapsingAppBar(
-              isCollapsed: _isHeaderCollapsed,
-              title: '체스도쿠',
-              actions: [
-                IconButton(
-                  icon:
-                      const Icon(Icons.notifications_none, color: Colors.white),
-                  onPressed: () {},
+          SliverAppBar(
+            expandedHeight: 200,
+            floating: false,
+            pinned: true,
+            elevation: 0,
+            title: const Text("체스도쿠", style: TextStyle(color: Colors.white)),
+            backgroundColor: AppColors.primary,
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: Opacity(
+                opacity: 0.25,
+                child: CustomPaint(
+                  painter: ChessPatternPainter(),
+                  size: const Size(double.infinity, double.infinity),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ],
-              stats: const [
-                Text('100'),
-                Text('100'),
-              ],
+              ),
             ),
           ),
           const SliverToBoxAdapter(

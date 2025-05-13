@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ChessPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    const double cellSize = 24;
+    const double cellSize = 12;
 
     final Paint paint = Paint()
       ..color = Colors.white.withAlpha(30)
