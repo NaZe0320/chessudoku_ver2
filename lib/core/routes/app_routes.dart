@@ -1,5 +1,4 @@
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/ui/common/widgets/button_example.dart';
 import 'package:chessudoku/ui/screens/home/home_page.dart';
 import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:chessudoku/ui/screens/puzzle/puzzle_page.dart';
@@ -39,7 +38,7 @@ class AppRoutes {
   static final List<Widget> navigationPages = [
     const HomePage(),
     const PuzzlePage(),
-    const ButtonExample(),
+    const TestPage(),
     const TestPage(),
     const TestPage(),
   ];
@@ -65,7 +64,7 @@ class AppRoutes {
       puzzle: (context) => const PuzzlePage(),
       puzzleGame: (context) => const PuzzleScreen(),
       records: (context) => const RecordsPage(),
-      social: (context) => const ButtonExample(),
+      social: (context) => const TestPage(),
       profile: (context) => const TestPage(),
       store: (context) => const TestPage(),
     };
