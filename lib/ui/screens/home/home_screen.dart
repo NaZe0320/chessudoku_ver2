@@ -1,16 +1,19 @@
+import 'package:chessudoku/core/di/tab_provider.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/chess_pattern.dart';
+import 'package:chessudoku/ui/common/widgets/tab_bar/floating_tab_bar.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/ui/theme/dimensions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   late ScrollController _scrollController;
   bool _isScrolled = false;
 
@@ -126,6 +129,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: FloatingTabBar(
+              tabs: const ["홈", "도전", "기록", "추천"],
+              provider: homeTabProvider,
             ),
           ),
           const SliverToBoxAdapter(
