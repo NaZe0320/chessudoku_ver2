@@ -93,29 +93,34 @@ class _HomeScreenState extends State<HomeScreen> {
                     right: 0,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "닉네임",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                      child: AnimatedOpacity(
+                        opacity: _isScrolled ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "닉네임",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildStatCard("오늘", "32", Icons.today_outlined),
-                              _buildStatCard(
-                                  "승률", "75%", Icons.bar_chart_outlined),
-                              _buildStatCard(
-                                  "포인트", "1,250", Icons.star_outline),
-                            ],
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildStatCard(
+                                    "오늘", "32", Icons.today_outlined),
+                                _buildStatCard(
+                                    "승률", "75%", Icons.bar_chart_outlined),
+                                _buildStatCard(
+                                    "포인트", "1,250", Icons.star_outline),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
