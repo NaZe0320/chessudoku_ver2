@@ -4,6 +4,11 @@ import 'package:chessudoku/ui/common/widgets/app_bar/chess_pattern.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/stat_card.dart';
 import 'package:chessudoku/ui/common/widgets/tab_bar/floating_tab_bar.dart';
 import 'package:chessudoku/ui/common/widgets/tab_bar/sliver_tab_bar_delegate.dart';
+import 'package:chessudoku/ui/common/widgets/tab_bar/tab_content.dart';
+import 'package:chessudoku/ui/screens/home/challenge_tab_content.dart';
+import 'package:chessudoku/ui/screens/home/history_tab_content.dart';
+import 'package:chessudoku/ui/screens/home/home_tab_content.dart';
+import 'package:chessudoku/ui/screens/home/recommend_tab_content.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,10 +24,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   late ScrollController _scrollController;
   bool _isScrolled = false;
 
+  final List<String> _tabs = ['홈', '도전', '기록', '추천'];
+  late final List<Widget> _tabViews;
+
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+
+    _tabViews = [
+      const HomeTabContent(),
+      const ChallengeTabContent(),
+      const HistoryTabContent(),
+      const RecommendTabContent(),
+    ];
 
     _scrollController.addListener(_listenToScrollChange);
   }
@@ -146,26 +161,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               pinned: true,
               delegate: SliverTabBarDelegate(
                 FloatingTabBar(
-                  tabs: const ["홈", "도전", "기록", "추천"],
+                  tabs: _tabs,
                   provider: homeTabProvider,
                 ),
               ),
             ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(top: 16.0, bottom: 8.0),
-                child: Column(
-                  children: [
-                    Text('오늘의 도전전'),
-                    SizedBox(height: 160),
-                    Text('연속 기록록'),
-                    SizedBox(height: 160),
-                    Text('최근 활동동'),
-                    SizedBox(height: 160),
-                    Text('주간 리더보드'),
-                    SizedBox(height: 160),
-                  ],
-                ),
+            SliverToBoxAdapter(
+              child: TabContent(
+                tabViews: _tabViews,
+                provider: homeTabProvider,
               ),
             ),
           ],
