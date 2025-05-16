@@ -7,5 +7,5 @@ StateNotifierProvider<TabNotifier, TabState> createTabProvider(String screenId) 
 }
 
 final homeTabProvider = createTabProvider('home');
-final puzzleTabProvider = createTabProvider('puzzle');
+final packTabProvider = createTabProvider('pack');
 final profileTabProvider = createTabProvider('profile');
