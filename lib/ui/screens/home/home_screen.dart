@@ -1,8 +1,10 @@
 import 'package:chessudoku/core/di/tab_provider.dart';
+import 'package:chessudoku/ui/common/widgets/app_bar/app_bar_icon_button.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/chess_pattern.dart';
+import 'package:chessudoku/ui/common/widgets/app_bar/stat_card.dart';
 import 'package:chessudoku/ui/common/widgets/tab_bar/floating_tab_bar.dart';
+import 'package:chessudoku/ui/common/widgets/tab_bar/sliver_tab_bar_delegate.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
-import 'package:chessudoku/ui/theme/dimensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -101,10 +103,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: AnimatedOpacity(
                           opacity: _isScrolled ? 0.0 : 1.0,
                           duration: const Duration(milliseconds: 200),
-                          child: Column(
+                          child: const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 "닉네임",
                                 style: TextStyle(
                                   color: Colors.white,
@@ -112,17 +114,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  _buildStatCard(
-                                      "오늘", "32", Icons.today_outlined),
-                                  _buildStatCard(
-                                      "승률", "75%", Icons.bar_chart_outlined),
-                                  _buildStatCard(
-                                      "포인트", "1,250", Icons.star_outline),
+                                  StatCard(
+                                      title: "오늘",
+                                      value: "32",
+                                      icon: Icons.today_outlined),
+                                  StatCard(
+                                      title: "승률",
+                                      value: "75%",
+                                      icon: Icons.bar_chart_outlined),
+                                  StatCard(
+                                      title: "포인트",
+                                      value: "1,250",
+                                      icon: Icons.star_outline),
                                 ],
                               ),
                             ],
@@ -136,7 +144,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             SliverPersistentHeader(
               pinned: true,
-              delegate: _SliverTabBarDelegate(
+              delegate: SliverTabBarDelegate(
                 FloatingTabBar(
                   tabs: const ["홈", "도전", "기록", "추천"],
                   provider: homeTabProvider,
@@ -148,15 +156,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 padding: EdgeInsets.only(top: 16.0, bottom: 8.0),
                 child: Column(
                   children: [
-                    Text('오늘의 목표'),
+                    Text('오늘의 도전전'),
                     SizedBox(height: 160),
-                    Text('오늘의 목표1'),
+                    Text('연속 기록록'),
                     SizedBox(height: 160),
-                    Text('오늘의 목표2'),
+                    Text('최근 활동동'),
                     SizedBox(height: 160),
-                    Text('오늘의 목표3'),
+                    Text('주간 리더보드'),
                     SizedBox(height: 160),
-                    Text('오늘의 목표4'),
                   ],
                 ),
               ),
@@ -166,87 +173,4 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ],
     );
   }
-
-  Widget _buildStatCard(String title, String value, IconData icon) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-      decoration: BoxDecoration(
-        color: Colors.white.withAlpha(52),
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(height: 4),
-          Text(value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              )),
-          Text(title,
-              style: TextStyle(
-                color: Colors.white.withAlpha(208),
-                fontSize: 12,
-              )),
-        ],
-      ),
-    );
-  }
-}
-
-class AppBarIconButton extends StatelessWidget {
-  final IconData icon;
-  final bool isScrolled;
-  final VoidCallback onPressed;
-  final EdgeInsetsGeometry margin;
-
-  const AppBarIconButton({
-    super.key,
-    required this.icon,
-    required this.isScrolled,
-    required this.onPressed,
-    required this.margin,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: margin,
-      decoration: BoxDecoration(
-        color: isScrolled ? Colors.transparent : Colors.white.withAlpha(52),
-        borderRadius: BorderRadius.circular(24),
-        shape: BoxShape.rectangle,
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: Colors.white),
-        onPressed: onPressed,
-        padding: const EdgeInsets.all(8.0),
-        iconSize: 24.0,
-      ),
-    );
-  }
-}
-
-class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-  _SliverTabBarDelegate(this.child);
-
-  @override
-  double get minExtent => 80; // TabBar 높이
-  @override
-  double get maxExtent => 80;
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return child;
-  }
-
-  @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
-      false;
 }
