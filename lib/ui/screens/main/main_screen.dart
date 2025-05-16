@@ -1,5 +1,6 @@
 import 'package:chessudoku/ui/common/widgets/bottom_nav_bar/bottom_nav_bar.dart';
 import 'package:chessudoku/ui/screens/home/home_screen.dart';
+import 'package:chessudoku/ui/screens/pack/pack_screen.dart';
 import 'package:chessudoku/ui/screens/test/test_page.dart';
 import 'package:flutter/material.dart';
 
@@ -7,16 +8,16 @@ class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   @override
-  _MainScreenState createState() => _MainScreenState();
+  MainScreenState createState() => MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   // 각 탭에 해당하는 스크린들
   final List<Widget> _screens = [
     const HomeScreen(),
-    const TestPage(),
+    const PackScreen(),
     const TestPage(),
     const TestPage(),
   ];

@@ -1,4 +1,4 @@
-import 'package:chessudoku/domain/states/navigation_state.dart';
+import 'package:chessudoku/legacy/navigation_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NavigationNotifier extends StateNotifier<NavigationState> {

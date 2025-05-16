@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/states/puzzle_state.dart';
+import 'package:chessudoku/legacy/puzzle_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 

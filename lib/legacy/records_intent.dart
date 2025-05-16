@@ -1,8 +1,8 @@
-import 'package:chessudoku/core/di/providers.dart';
-import 'package:chessudoku/core/di/puzzle_provider.dart';
+import 'package:chessudoku/legacy/providers.dart';
+import 'package:chessudoku/legacy/puzzle_provider.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/notifiers/records_notifier.dart';
-import 'package:chessudoku/domain/states/records_state.dart';
+import 'package:chessudoku/legacy/records_notifier.dart';
+import 'package:chessudoku/legacy/records_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 기록실 화면의 동작을 처리하는 인텐트 클래스

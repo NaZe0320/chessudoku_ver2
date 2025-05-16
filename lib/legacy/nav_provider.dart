@@ -1,6 +1,6 @@
-import 'package:chessudoku/domain/intents/select_tab_intent.dart';
-import 'package:chessudoku/domain/notifiers/navigation_notifier.dart';
-import 'package:chessudoku/domain/states/navigation_state.dart';
+import 'package:chessudoku/legacy/select_tab_intent.dart';
+import 'package:chessudoku/legacy/navigation_notifier.dart';
+import 'package:chessudoku/legacy/navigation_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 //// 네비게이션 관련 프로바이더
