@@ -79,18 +79,18 @@ class _PackScreenState extends ConsumerState<PackScreen> {
                   fontWeight: _isScrolled ? FontWeight.w500 : FontWeight.bold,
                 ),
                 duration: const Duration(milliseconds: 200),
-                child: const Text("체스도쿠"),
+                child: const Text("퍼즐팩"),
               ),
               actions: [
                 AppBarIconButton(
-                  icon: Icons.notifications_outlined,
+                  icon: Icons.search_outlined,
                   isScrolled: _isScrolled,
                   margin: const EdgeInsets.symmetric(
                       horizontal: 4.0, vertical: 8.0),
                   onPressed: () {},
                 ),
                 AppBarIconButton(
-                  icon: Icons.settings_outlined,
+                  icon: Icons.filter_list_outlined,
                   isScrolled: _isScrolled,
                   margin: const EdgeInsets.only(
                       right: 8.0, left: 4.0, top: 8.0, bottom: 8.0),
@@ -135,16 +135,16 @@ class _PackScreenState extends ConsumerState<PackScreen> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   StatCard(
-                                      title: "오늘",
-                                      value: "32",
+                                      title: "완료한 팩",
+                                      value: "3/12",
                                       icon: Icons.today_outlined),
                                   StatCard(
-                                      title: "승률",
-                                      value: "75%",
+                                      title: "팩 진행률",
+                                      value: "43%",
                                       icon: Icons.bar_chart_outlined),
                                   StatCard(
-                                      title: "포인트",
-                                      value: "1,250",
+                                      title: "해결한 퍼즐",
+                                      value: "152",
                                       icon: Icons.star_outline),
                                 ],
                               ),
