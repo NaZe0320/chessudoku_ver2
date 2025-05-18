@@ -20,7 +20,7 @@ class FloatingTabBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tabState = ref.watch(provider);
-    final tabNotifier = ref.watch(provider.notifier);
+    final tabNotifier = ref.read(provider.notifier);
 
     return Container(
       margin: margin,
