@@ -1,7 +1,7 @@
 // 퍼즐 관련 프로바이더
-import 'package:chessudoku/domain/intents/puzzle_intent.dart';
-import 'package:chessudoku/domain/notifiers/puzzle_notifier.dart';
-import 'package:chessudoku/domain/states/puzzle_state.dart';
+import 'package:chessudoku/legacy/puzzle_intent.dart';
+import 'package:chessudoku/legacy/puzzle_notifier.dart';
+import 'package:chessudoku/legacy/puzzle_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final puzzleNotifierProvider =

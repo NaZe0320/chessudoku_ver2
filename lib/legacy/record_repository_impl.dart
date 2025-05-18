@@ -1,8 +1,8 @@
 import 'package:chessudoku/data/models/puzzle_record.dart';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/repositories/record_repository.dart';
-import 'package:chessudoku/domain/states/puzzle_state.dart';
+import 'package:chessudoku/legacy/puzzle_state.dart';
+import 'package:chessudoku/legacy/record_repository.dart';
 
 /// 퍼즐 기록 관리를 담당하는 저장소 구현체
 class RecordRepositoryImpl implements RecordRepository {

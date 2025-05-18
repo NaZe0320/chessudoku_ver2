@@ -5,26 +5,26 @@ import 'package:chessudoku/ui/common/widgets/app_bar/stat_card.dart';
 import 'package:chessudoku/ui/common/widgets/tab_bar/floating_tab_bar.dart';
 import 'package:chessudoku/ui/common/widgets/tab_bar/sliver_tab_bar_delegate.dart';
 import 'package:chessudoku/ui/common/widgets/tab_bar/tab_content.dart';
-import 'package:chessudoku/ui/screens/home/challenge_tab_content.dart';
-import 'package:chessudoku/ui/screens/home/history_tab_content.dart';
-import 'package:chessudoku/ui/screens/home/home_tab_content.dart';
-import 'package:chessudoku/ui/screens/home/recommend_tab_content.dart';
+import 'package:chessudoku/ui/screens/pack/difficulty_tab_content.dart';
+import 'package:chessudoku/ui/screens/pack/progress_tab_content.dart';
+import 'package:chessudoku/ui/screens/pack/recommend_pack_tab_content.dart';
+import 'package:chessudoku/ui/screens/pack/theme_tab_content.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+class PackScreen extends ConsumerStatefulWidget {
+  const PackScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<PackScreen> createState() => _PackScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _PackScreenState extends ConsumerState<PackScreen> {
   late ScrollController _scrollController;
   bool _isScrolled = false;
 
-  final List<String> _tabs = ['홈', '도전', '기록', '추천'];
+  final List<String> _tabs = ['추천', '난이도별', '테마별', '진행 중'];
   late final List<Widget> _tabViews;
 
   @override
@@ -33,10 +33,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _scrollController = ScrollController();
 
     _tabViews = [
-      const HomeTabContent(),
-      const ChallengeTabContent(),
-      const HistoryTabContent(),
-      const RecommendTabContent(),
+      const RecommendPackTabContent(),
+      const DifficultyPackTabContent(),
+      const ThemePackTabContent(),
+      const ProgressPackTabContent(),
     ];
 
     _scrollController.addListener(_listenToScrollChange);
@@ -79,18 +79,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   fontWeight: _isScrolled ? FontWeight.w500 : FontWeight.bold,
                 ),
                 duration: const Duration(milliseconds: 200),
-                child: const Text("체스도쿠"),
+                child: const Text("퍼즐팩"),
               ),
               actions: [
                 AppBarIconButton(
-                  icon: Icons.notifications_outlined,
+                  icon: Icons.search_outlined,
                   isScrolled: _isScrolled,
                   margin: const EdgeInsets.symmetric(
                       horizontal: 4.0, vertical: 8.0),
                   onPressed: () {},
                 ),
                 AppBarIconButton(
-                  icon: Icons.settings_outlined,
+                  icon: Icons.filter_list_outlined,
                   isScrolled: _isScrolled,
                   margin: const EdgeInsets.only(
                       right: 8.0, left: 4.0, top: 8.0, bottom: 8.0),
@@ -135,16 +135,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   StatCard(
-                                      title: "오늘",
-                                      value: "32",
+                                      title: "완료한 팩",
+                                      value: "3/12",
                                       icon: Icons.today_outlined),
                                   StatCard(
-                                      title: "승률",
-                                      value: "75%",
+                                      title: "팩 진행률",
+                                      value: "43%",
                                       icon: Icons.bar_chart_outlined),
                                   StatCard(
-                                      title: "포인트",
-                                      value: "1,250",
+                                      title: "해결한 퍼즐",
+                                      value: "152",
                                       icon: Icons.star_outline),
                                 ],
                               ),
@@ -162,14 +162,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               delegate: SliverTabBarDelegate(
                 FloatingTabBar(
                   tabs: _tabs,
-                  provider: homeTabProvider,
+                  provider: packTabProvider,
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: TabContent(
                 tabViews: _tabViews,
-                provider: homeTabProvider,
+                provider: packTabProvider,
               ),
             ),
           ],

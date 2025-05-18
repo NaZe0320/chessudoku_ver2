@@ -1,5 +1,5 @@
-import 'package:chessudoku/core/di/puzzle_provider.dart';
-import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_cell.dart';
+import 'package:chessudoku/legacy/puzzle_provider.dart';
+import 'package:chessudoku/legacy/puzzle/widgets/puzzle_cell.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

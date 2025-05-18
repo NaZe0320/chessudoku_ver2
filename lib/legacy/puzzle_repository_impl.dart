@@ -5,8 +5,8 @@ import 'package:chessudoku/data/models/puzzle_action.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
-import 'package:chessudoku/domain/states/puzzle_state.dart';
+import 'package:chessudoku/legacy/puzzle_repository.dart';
+import 'package:chessudoku/legacy/puzzle_state.dart';
 
 /// 퍼즐 데이터 처리를 담당하는 저장소 구현체
 class PuzzleRepositoryImpl implements PuzzleRepository {

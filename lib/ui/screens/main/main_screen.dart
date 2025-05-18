@@ -1,5 +1,7 @@
 import 'package:chessudoku/ui/common/widgets/bottom_nav_bar/bottom_nav_bar.dart';
 import 'package:chessudoku/ui/screens/home/home_screen.dart';
+import 'package:chessudoku/ui/screens/pack/pack_screen.dart';
+import 'package:chessudoku/ui/screens/puzzle/create_puzzle_bottom_sheet.dart';
 import 'package:chessudoku/ui/screens/test/test_page.dart';
 import 'package:flutter/material.dart';
 
@@ -7,16 +9,16 @@ class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   @override
-  _MainScreenState createState() => _MainScreenState();
+  MainScreenState createState() => MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   // 각 탭에 해당하는 스크린들
   final List<Widget> _screens = [
     const HomeScreen(),
-    const TestPage(),
+    const PackScreen(),
     const TestPage(),
     const TestPage(),
   ];
@@ -49,25 +51,11 @@ class _MainScreenState extends State<MainScreen> {
               ],
               onCenterButtonPressed: () {
                 // 새 퍼즐 생성 바텀 시트 표시
-                _showCreatePuzzleBottomSheet();
+                showCreatePuzzleBottomSheet(context);
               },
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showCreatePuzzleBottomSheet() {
-    // 퍼즐 생성 바텀 시트 구현
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: const Text('퍼즐 생성임 아무튼 생성임'),
       ),
     );
   }

@@ -1,12 +1,12 @@
 import 'dart:ui';
 
-import 'package:chessudoku/core/di/puzzle_provider.dart';
-import 'package:chessudoku/domain/states/puzzle_state.dart';
-import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_board.dart';
-import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_controls.dart';
-import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_header.dart';
-import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_keypad.dart';
-import 'package:chessudoku/ui/screens/puzzle/widgets/puzzle_timer.dart';
+import 'package:chessudoku/legacy/puzzle_provider.dart';
+import 'package:chessudoku/legacy/puzzle_state.dart';
+import 'package:chessudoku/legacy/puzzle/widgets/puzzle_board.dart';
+import 'package:chessudoku/legacy/puzzle/widgets/puzzle_controls.dart';
+import 'package:chessudoku/legacy/puzzle/widgets/puzzle_header.dart';
+import 'package:chessudoku/legacy/puzzle/widgets/puzzle_keypad.dart';
+import 'package:chessudoku/legacy/puzzle/widgets/puzzle_timer.dart';
 import 'package:chessudoku/ui/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

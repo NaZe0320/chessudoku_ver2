@@ -1,5 +1,5 @@
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/states/records_state.dart';
+import 'package:chessudoku/legacy/records_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 기록실 상태를 관리하는 노티파이어
