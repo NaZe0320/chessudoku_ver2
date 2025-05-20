@@ -177,39 +177,53 @@ class _CreatePuzzleBottomSheetState
 
   Widget _premiumDifficultyButton(String title, String subtitle) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(subtitle,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-              ],
+      child: Opacity(
+        opacity: 0.5, // 비활성화 효과를 위한 투명도 조절
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey[300]!,
+              width: 2,
             ),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.amber,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text('프리미엄',
-                    style:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(subtitle,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                ],
               ),
-            ),
-          ],
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text('프리미엄',
+                      style:
+                          TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              // 자물쇠 아이콘 추가
+              const Positioned(
+                right: 0,
+                bottom: 0,
+                child: Icon(Icons.lock, size: 16, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       ),
     );
