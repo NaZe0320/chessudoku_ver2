@@ -5,7 +5,7 @@ import 'package:chessudoku/domain/enums/creation_status.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/intents/puzzle_creation_intent.dart';
 import 'package:chessudoku/domain/states/puzzle_creation_state.dart';
-import 'package:chessudoku/ui/screens/puzzle/puzzle_screen.dart';
+import 'package:chessudoku/ui/screens/game/game_screen.dart';
 
 void showCreatePuzzleBottomSheet(BuildContext context) {
   showModalBottomSheet(
@@ -256,7 +256,7 @@ class _CreatePuzzleBottomSheetState
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => PuzzleScreen(board: state.generatedBoard!),
+              builder: (_) => GameScreen(board: state.generatedBoard!),
             ),
           );
         }

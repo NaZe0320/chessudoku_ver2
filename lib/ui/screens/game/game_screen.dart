@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 
-class PuzzleScreen extends StatelessWidget {
+class GameScreen extends StatelessWidget {
   final List<List<CellContent>> board;
 
-  const PuzzleScreen({super.key, required this.board});
+  const GameScreen({super.key, required this.board});
 
   @override
   Widget build(BuildContext context) {
