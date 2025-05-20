@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class AppColors {
+class AppColors2 {
   // 기본 색상 (벚꽃 계열로 변경)
   static const Color primary = Color(0xFFFF8DC7); // 연한 벚꽃 핑크
   static const Color primaryLight = Color(0xFFFFB5D8); // 더 연한 핑크

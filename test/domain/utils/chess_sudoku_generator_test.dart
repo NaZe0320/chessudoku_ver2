@@ -1,9 +1,7 @@
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/utils/chess_sudoku_generator.dart';
+import 'package:chessudoku/core/utils/chess_sudoku_generator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
-import 'package:chessudoku/domain/enums/chess_piece.dart';
-import 'dart:math';
 import 'chess_sudoku_solver.dart'; // ChessSudokuSolver 임포트
 
 void main() {
