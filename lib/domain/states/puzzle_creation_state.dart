@@ -6,14 +6,14 @@ class PuzzleCreationState {
   final CreationStatus status;
   final Difficulty selectedDifficulty;
   final List<List<CellContent>>? generatedBoard;
-  final String? _errorMessage;
+  final String? errorMessage;
 
   PuzzleCreationState({
     this.status = CreationStatus.initial,
     this.selectedDifficulty = Difficulty.easy,
     this.generatedBoard,
-    String? errorMessage,
-  }) : _errorMessage = errorMessage;
+    this.errorMessage,
+  });
 
   PuzzleCreationState copyWith({
     CreationStatus? status,
@@ -25,7 +25,7 @@ class PuzzleCreationState {
       status: status ?? this.status,
       selectedDifficulty: selectedDifficulty ?? this.selectedDifficulty,
       generatedBoard: generatedBoard ?? this.generatedBoard,
-      errorMessage: errorMessage ?? _errorMessage,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 }

@@ -17,7 +17,14 @@ class PuzzleCreationNotifier
       case CreatePuzzleIntent(:final difficulty):
         _createPuzzle(difficulty);
         break;
+      case SelectDifficultyIntent(:final selectedDifficulty):
+        _selectDifficulty(selectedDifficulty);
+        break;
     }
+  }
+
+  void _selectDifficulty(Difficulty selectedDifficulty) {
+    state = state.copyWith(selectedDifficulty: selectedDifficulty);
   }
 
   Future<void> _createPuzzle(Difficulty difficulty) async {
