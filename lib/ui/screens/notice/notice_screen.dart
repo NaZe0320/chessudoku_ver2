@@ -37,8 +37,12 @@ class _NoticeScreenState extends State<NoticeScreen>
               children: [
                 // 체스 패턴 배경
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: ChessPatternPainter(),
+                  child: Opacity(
+                    opacity: 0.25,
+                    child: CustomPaint(
+                      painter: ChessPatternPainter(),
+                      size: const Size(double.infinity, double.infinity),
+                    ),
                   ),
                 ),
                 // 앱바 내용
@@ -185,6 +189,7 @@ class _NoticeScreenState extends State<NoticeScreen>
   }
 
   Widget _buildTab(String title, String count, int index) {
+    final isSelected = _tabController.index == index;
     return AnimatedBuilder(
       animation: _tabController,
       builder: (context, child) {
