@@ -157,15 +157,15 @@ class _PackScreenState extends ConsumerState<PackScreen> {
                 ),
               ),
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: SliverTabBarDelegate(
-                FloatingTabBar(
-                  tabs: _tabs,
-                  provider: packTabProvider,
-                ),
-              ),
-            ),
+            // SliverPersistentHeader(
+            //   pinned: true,
+            //   delegate: SliverTabBarDelegate(
+            //     FloatingTabBar(
+            //       tabs: _tabs,
+            //       provider: packTabProvider,
+            //     ),
+            //   ),
+            // ),
             SliverToBoxAdapter(
               child: TabContent(
                 tabViews: _tabViews,

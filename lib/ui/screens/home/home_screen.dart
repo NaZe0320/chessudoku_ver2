@@ -9,6 +9,7 @@ import 'package:chessudoku/ui/screens/home/tab/challenge_tab_content.dart';
 import 'package:chessudoku/ui/screens/home/tab/history_tab_content.dart';
 import 'package:chessudoku/ui/screens/home/tab/home_tab_content.dart';
 import 'package:chessudoku/ui/screens/home/tab/recommend_tab_content.dart';
+import 'package:chessudoku/ui/screens/notice/notice_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -87,7 +88,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   isScrolled: _isScrolled,
                   margin: const EdgeInsets.symmetric(
                       horizontal: 4.0, vertical: 8.0),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NoticeScreen(),
+                      ),
+                    );
+                  },
                 ),
                 AppBarIconButton(
                   icon: Icons.settings_outlined,
