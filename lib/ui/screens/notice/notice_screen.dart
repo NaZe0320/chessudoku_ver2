@@ -189,6 +189,7 @@ class _NoticeScreenState extends State<NoticeScreen>
   }
 
   Widget _buildTab(String title, String count, int index) {
+    final isSelected = _tabController.index == index;
     return AnimatedBuilder(
       animation: _tabController,
       builder: (context, child) {
