@@ -23,5 +23,7 @@ class AppColors {
   static const textPrimary = Color(0xFF1F2937); // 주요 텍스트
   static const textSecondary = Color(0xFF4B5563); // 보조 텍스트
   static const textTertiary = Color(0xFF6B7280); // 더 약한 텍스트
+  static const textWhite = Color(0xFFFFFFFF); // 텍스트 화이트
+  
   static const divider = Color(0xFFE5E7EB); // 구분선
 }

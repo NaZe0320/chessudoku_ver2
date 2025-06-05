@@ -1,6 +1,7 @@
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import '../../common/widgets/app_bar/chess_pattern.dart';
+import '../../common/widgets/app_bar/app_bar_icon_button.dart';
 
 class NoticeScreen extends StatefulWidget {
   const NoticeScreen({super.key});
@@ -56,41 +57,34 @@ class _NoticeScreenState extends State<NoticeScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(52),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.arrow_back,
-                                    color: Colors.white),
-                                onPressed: () => Navigator.pop(context),
-                              ),
+                            AppBarIconButton(
+                              icon: Icons.arrow_back,
+                              isScrolled: false,
+                              margin: const EdgeInsets.all(0),
+                              onPressed: () => Navigator.pop(context),
                             ),
                             Row(
                               children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withAlpha(52),
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(Icons.check,
-                                        color: Colors.white),
-                                    onPressed: () {},
-                                  ),
+                                AppBarIconButton(
+                                  icon: Icons.check,
+                                  isScrolled: false,
+                                  margin: const EdgeInsets.only(
+                                      right: 8.0,
+                                      left: 4.0,
+                                      top: 8.0,
+                                      bottom: 8.0),
+                                  onPressed: () {},
                                 ),
                                 const SizedBox(width: 8),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withAlpha(52),
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(Icons.settings,
-                                        color: Colors.white),
-                                    onPressed: () {},
-                                  ),
+                                AppBarIconButton(
+                                  icon: Icons.settings,
+                                  isScrolled: false,
+                                  margin: const EdgeInsets.only(
+                                      right: 8.0,
+                                      left: 4.0,
+                                      top: 8.0,
+                                      bottom: 8.0),
+                                  onPressed: () {},
                                 ),
                               ],
                             ),
@@ -189,7 +183,6 @@ class _NoticeScreenState extends State<NoticeScreen>
   }
 
   Widget _buildTab(String title, String count, int index) {
-    final isSelected = _tabController.index == index;
     return AnimatedBuilder(
       animation: _tabController,
       builder: (context, child) {
