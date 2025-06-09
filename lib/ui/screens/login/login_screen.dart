@@ -92,32 +92,32 @@ class LoginScreen extends ConsumerWidget {
   Widget _buildLoginButtons(AuthNotifier authNotifier, AuthState authState) {
     return Column(
       children: [
-        // Apple 로그인
-        _buildLoginButton(
-          icon: Icons.apple,
-          text: 'Apple로 계속하기',
-          backgroundColor: AppColors.onSurface,
-          textColor: AppColors.textWhite,
-          onPressed: authState.isLoading
-              ? null
-              : () => authNotifier.handleIntent(const SignInWithAppleIntent()),
-        ),
+        // // Apple 로그인
+        // _buildLoginButton(
+        //   icon: Icons.apple,
+        //   text: 'Apple로 계속하기',
+        //   backgroundColor: AppColors.onSurface,
+        //   textColor: AppColors.textWhite,
+        //   onPressed: authState.isLoading
+        //       ? null
+        //       : () => authNotifier.handleIntent(const SignInWithAppleIntent()),
+        // ),
 
-        const SizedBox(height: 16),
+        // const SizedBox(height: 16),
 
-        // Google 로그인
-        _buildLoginButton(
-          icon: Icons.g_mobiledata,
-          text: 'Google로 계속하기',
-          backgroundColor: AppColors.surface,
-          textColor: AppColors.textPrimary,
-          borderColor: AppColors.divider,
-          onPressed: authState.isLoading
-              ? null
-              : () => authNotifier.handleIntent(const SignInWithGoogleIntent()),
-        ),
+        // // Google 로그인
+        // _buildLoginButton(
+        //   icon: Icons.g_mobiledata,
+        //   text: 'Google로 계속하기',
+        //   backgroundColor: AppColors.surface,
+        //   textColor: AppColors.textPrimary,
+        //   borderColor: AppColors.divider,
+        //   onPressed: authState.isLoading
+        //       ? null
+        //       : () => authNotifier.handleIntent(const SignInWithGoogleIntent()),
+        // ),
 
-        const SizedBox(height: 16),
+        // const SizedBox(height: 16),
 
         // 익명 로그인
         _buildLoginButton(
