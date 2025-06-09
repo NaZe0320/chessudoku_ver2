@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import '../../core/base/base_notifier.dart';
+import '../intents/auth_intent.dart';
 import '../states/auth_state.dart';
 import '../../data/models/user.dart';
 
-class AuthNotifier extends StateNotifier<AuthState> {
+class AuthNotifier extends BaseNotifier<AuthIntent, AuthState> {
   AuthNotifier() : super(const AuthState.initial()) {
     // Firebase Auth 상태 변화 감지
     firebase_auth.FirebaseAuth.instance
@@ -25,8 +27,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
     });
   }
 
+  @override
+  void onIntent(AuthIntent intent) {
+    switch (intent) {
+      case SignInWithGoogleIntent():
+        _signInWithGoogle();
+        break;
+      case SignInWithAppleIntent():
+        _signInWithApple();
+        break;
+      case SignInAnonymouslyIntent():
+        _signInAnonymously();
+        break;
+      case LinkAnonymousWithGoogleIntent():
+        _linkAnonymousWithGoogle();
+        break;
+      case LinkAnonymousWithAppleIntent():
+        _linkAnonymousWithApple();
+        break;
+      case SignOutIntent():
+        _signOut();
+        break;
+      case CheckAuthStatusIntent():
+        // 현재 인증 상태를 확인하는 로직 (필요시 구현)
+        break;
+    }
+  }
+
   // Google 로그인
-  Future<void> signInWithGoogle() async {
+  Future<void> _signInWithGoogle() async {
     try {
       state = const AuthState.loading();
 
@@ -59,7 +88,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // Apple 로그인
-  Future<void> signInWithApple() async {
+  Future<void> _signInWithApple() async {
     try {
       state = const AuthState.loading();
 
@@ -89,7 +118,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // 익명 로그인
-  Future<void> signInAnonymously() async {
+  Future<void> _signInAnonymously() async {
     try {
       state = const AuthState.loading();
       await firebase_auth.FirebaseAuth.instance.signInAnonymously();
@@ -102,7 +131,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // 익명 계정을 Google 계정으로 연결
-  Future<void> linkAnonymousWithGoogle() async {
+  Future<void> _linkAnonymousWithGoogle() async {
     try {
       final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
       if (currentUser == null || !currentUser.isAnonymous) {
@@ -136,7 +165,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // 익명 계정을 Apple 계정으로 연결
-  Future<void> linkAnonymousWithApple() async {
+  Future<void> _linkAnonymousWithApple() async {
     try {
       final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
       if (currentUser == null || !currentUser.isAnonymous) {
@@ -169,7 +198,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // 로그아웃
-  Future<void> signOut() async {
+  Future<void> _signOut() async {
     try {
       await firebase_auth.FirebaseAuth.instance.signOut();
       await GoogleSignIn().signOut();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/notifiers/auth_notifier.dart';
 import '../../../domain/states/auth_state.dart';
+import '../../../domain/intents/auth_intent.dart';
 import '../../theme/color_palette.dart';
 import '../../theme/app_text_styles.dart';
 
@@ -29,12 +30,6 @@ class LoginScreen extends ConsumerWidget {
 
               // 로그인 버튼들
               _buildLoginButtons(authNotifier, authState),
-
-              // const Spacer(flex: 1),
-
-              // // 익명 로그인 연결 옵션 (익명 사용자인 경우)
-              // if (authNotifier.isAnonymousUser)
-              //   _buildLinkAccountSection(authNotifier, authState),
 
               const Spacer(flex: 2),
             ],
@@ -103,8 +98,9 @@ class LoginScreen extends ConsumerWidget {
           text: 'Apple로 계속하기',
           backgroundColor: AppColors.onSurface,
           textColor: AppColors.textWhite,
-          onPressed:
-              authState.isLoading ? null : () => authNotifier.signInWithApple(),
+          onPressed: authState.isLoading
+              ? null
+              : () => authNotifier.handleIntent(const SignInWithAppleIntent()),
         ),
 
         const SizedBox(height: 16),
@@ -118,7 +114,7 @@ class LoginScreen extends ConsumerWidget {
           borderColor: AppColors.divider,
           onPressed: authState.isLoading
               ? null
-              : () => authNotifier.signInWithGoogle(),
+              : () => authNotifier.handleIntent(const SignInWithGoogleIntent()),
         ),
 
         const SizedBox(height: 16),
@@ -131,7 +127,8 @@ class LoginScreen extends ConsumerWidget {
           textColor: AppColors.textWhite,
           onPressed: authState.isLoading
               ? null
-              : () => authNotifier.signInAnonymously(),
+              : () =>
+                  authNotifier.handleIntent(const SignInAnonymouslyIntent()),
         ),
 
         if (authState.isLoading) ...[
@@ -148,7 +145,8 @@ class LoginScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               color: AppColors.warningLight,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -205,96 +203,6 @@ class LoginScreen extends ConsumerWidget {
               text,
               style: AppTextStyles.buttonLarge.copyWith(
                 color: textColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLinkAccountSection(
-      AuthNotifier authNotifier, AuthState authState) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.infoLight,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '계정 연결하기',
-            style: AppTextStyles.subtitle2.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '게스트 계정을 소셜 계정과 연결하면\n데이터를 안전하게 보관할 수 있어요',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildLinkButton(
-                  icon: Icons.apple,
-                  text: 'Apple',
-                  onPressed: authState.isLoading
-                      ? null
-                      : () => authNotifier.linkAnonymousWithApple(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildLinkButton(
-                  icon: Icons.g_mobiledata,
-                  text: 'Google',
-                  onPressed: authState.isLoading
-                      ? null
-                      : () => authNotifier.linkAnonymousWithGoogle(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLinkButton({
-    required IconData icon,
-    required String text,
-    required VoidCallback? onPressed,
-  }) {
-    return SizedBox(
-      height: 40,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.info,
-          side: BorderSide(color: AppColors.info.withValues(alpha: 0.5)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              text,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.info,
                 fontWeight: FontWeight.w600,
               ),
             ),

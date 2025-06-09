@@ -1,6 +1,7 @@
 import 'package:chessudoku/ui/common/widgets/bottom_nav_bar/bottom_nav_bar.dart';
 import 'package:chessudoku/ui/screens/home/home_screen.dart';
 import 'package:chessudoku/ui/screens/pack/pack_screen.dart';
+import 'package:chessudoku/ui/screens/profile/profile_screen.dart';
 import 'package:chessudoku/ui/screens/puzzle/create_puzzle_bottom_sheet.dart';
 import 'package:chessudoku/ui/screens/test/test_page.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const PackScreen(),
     const TestPage(),
-    const TestPage(),
+    const ProfileScreen(),
   ];
 
   @override
