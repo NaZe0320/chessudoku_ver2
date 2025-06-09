@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "211754548062",
+    "project_id": "chessudoku-f1843",
+    "storage_bucket": "chessudoku-f1843.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:211754548062:android:d656ddbc550de41ddf2dcf",
+        "android_client_info": {
+          "package_name": "com.naze.chessudoku"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "211754548062-eji8mfqqb9ipj7st6u030n2jeuij84gs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBo4gvwrvCzAiV02k7cz_izyu9fLA52Yb8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "211754548062-eji8mfqqb9ipj7st6u030n2jeuij84gs.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "211754548062-n571sp8dhm49ol2gfu3ofe7155a4ha33.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.naze.chessudoku"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
