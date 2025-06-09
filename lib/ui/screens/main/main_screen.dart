@@ -1,6 +1,7 @@
 import 'package:chessudoku/ui/common/widgets/bottom_nav_bar/bottom_nav_bar.dart';
 import 'package:chessudoku/ui/screens/home/home_screen.dart';
 import 'package:chessudoku/ui/screens/pack/pack_screen.dart';
+import 'package:chessudoku/ui/screens/profile/profile_screen.dart';
 import 'package:chessudoku/ui/screens/puzzle/create_puzzle_bottom_sheet.dart';
 import 'package:chessudoku/ui/screens/test/test_page.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const PackScreen(),
     const TestPage(),
-    const TestPage(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -28,8 +29,12 @@ class MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 현재 선택된 인덱스에 따라 화면 전환
-          _screens[_currentIndex],
+          // 현재 선택된 인덱스에 따라 화면 전환 (하단 패딩 추가)
+          Padding(
+            padding:
+                const EdgeInsets.only(bottom: 60), // BottomNavBar 높이만큼 패딩 추가
+            child: _screens[_currentIndex],
+          ),
 
           // 바텀 네비게이션을 화면 하단에 배치
           Positioned(

@@ -315,6 +315,18 @@ class ChessSudokuGenerator {
           'minPieces': 5,
           'maxPieces': 8
         };
+      case Difficulty.expert:
+        return {
+          'pieces': {
+            ChessPiece.king: [0, 3],
+            ChessPiece.queen: [0, 3],
+            ChessPiece.bishop: [2, 4],
+            ChessPiece.knight: [3, 4],
+            ChessPiece.rook: [0, 3]
+          },
+          'minPieces': 8,
+          'maxPieces': 10
+        };
     }
   }
 

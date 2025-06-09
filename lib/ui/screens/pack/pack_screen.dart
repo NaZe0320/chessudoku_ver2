@@ -2,13 +2,13 @@ import 'package:chessudoku/core/di/tab_provider.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/app_bar_icon_button.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/chess_pattern.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/stat_card.dart';
-import 'package:chessudoku/ui/common/widgets/tab_bar/floating_tab_bar.dart';
-import 'package:chessudoku/ui/common/widgets/tab_bar/sliver_tab_bar_delegate.dart';
+// import 'package:chessudoku/ui/common/widgets/tab_bar/floating_tab_bar.dart';
+// import 'package:chessudoku/ui/common/widgets/tab_bar/sliver_tab_bar_delegate.dart';
 import 'package:chessudoku/ui/common/widgets/tab_bar/tab_content.dart';
-import 'package:chessudoku/ui/screens/pack/difficulty_tab_content.dart';
-import 'package:chessudoku/ui/screens/pack/progress_tab_content.dart';
-import 'package:chessudoku/ui/screens/pack/recommend_pack_tab_content.dart';
-import 'package:chessudoku/ui/screens/pack/theme_tab_content.dart';
+// import 'package:chessudoku/ui/screens/pack/tab/difficulty_tab_content.dart';
+// import 'package:chessudoku/ui/screens/pack/tab/progress_tab_content.dart';
+import 'package:chessudoku/ui/screens/pack/tab/recommend_pack_tab_content.dart';
+// import 'package:chessudoku/ui/screens/pack/tab/theme_tab_content.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +24,7 @@ class _PackScreenState extends ConsumerState<PackScreen> {
   late ScrollController _scrollController;
   bool _isScrolled = false;
 
-  final List<String> _tabs = ['추천', '난이도별', '테마별', '진행 중'];
+  // final List<String> _tabs = ['추천', '난이도별', '테마별', '진행 중'];
   late final List<Widget> _tabViews;
 
   @override
@@ -34,9 +34,9 @@ class _PackScreenState extends ConsumerState<PackScreen> {
 
     _tabViews = [
       const RecommendPackTabContent(),
-      const DifficultyPackTabContent(),
-      const ThemePackTabContent(),
-      const ProgressPackTabContent(),
+      // const DifficultyPackTabContent(),
+      // const ThemePackTabContent(),
+      // const ProgressPackTabContent(),
     ];
 
     _scrollController.addListener(_listenToScrollChange);
@@ -157,15 +157,15 @@ class _PackScreenState extends ConsumerState<PackScreen> {
                 ),
               ),
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: SliverTabBarDelegate(
-                FloatingTabBar(
-                  tabs: _tabs,
-                  provider: packTabProvider,
-                ),
-              ),
-            ),
+            // SliverPersistentHeader(
+            //   pinned: true,
+            //   delegate: SliverTabBarDelegate(
+            //     FloatingTabBar(
+            //       tabs: _tabs,
+            //       provider: packTabProvider,
+            //     ),
+            //   ),
+            // ),
             SliverToBoxAdapter(
               child: TabContent(
                 tabViews: _tabViews,
