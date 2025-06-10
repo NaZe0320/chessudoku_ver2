@@ -8,7 +8,6 @@ import 'package:uuid/uuid.dart';
 class DeviceService {
   static final DeviceService _instance = DeviceService._internal();
   static final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
-  static const String _deviceIdKey = 'device_unique_id';
   
   factory DeviceService() {
     return _instance;
