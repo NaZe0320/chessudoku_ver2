@@ -1,6 +1,7 @@
 import 'package:chessudoku/core/utils/loading_manager.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/data/services/database_service.dart';
+import 'package:chessudoku/data/services/device_service.dart';
 import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:chessudoku/ui/screens/login/login_screen.dart';
 import 'package:chessudoku/domain/notifiers/auth_notifier.dart';
@@ -24,6 +25,11 @@ void main() async {
 
   // 데이터베이스 서비스 초기화 (첫 액세스만 해도 초기화됨)
   await DatabaseService().database;
+
+  // 디바이스 서비스 초기화 (디바이스 ID 미리 생성)
+  final deviceService = DeviceService();
+  final deviceId = await deviceService.getDeviceId();
+  debugPrint('Main: 앱 시작 - 디바이스 ID: $deviceId');
 
   runApp(
     const ProviderScope(
