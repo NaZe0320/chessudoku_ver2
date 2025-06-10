@@ -20,14 +20,19 @@ class AuthNotifier extends BaseNotifier<AuthIntent, AuthState> {
         .authStateChanges()
         .listen((firebaseUser) {
       if (firebaseUser != null) {
-        final user = User(
-          id: firebaseUser.uid,
-          email: firebaseUser.email ?? '',
-          displayName: firebaseUser.displayName,
-        );
-        state = AuthState.authenticated(user);
+        // 이미 복구된 계정이 있는지 확인
+        if (state.user != null) {
+          debugPrint('AuthNotifier: 이미 복구된 계정 있음, Firebase Auth 무시');
+          return;
+        }
+
+        // Firestore에 사용자 정보 저장/업데이트 처리
+        _handleFirebaseUserChange(firebaseUser);
       } else {
-        state = const AuthState.unauthenticated();
+        // 계정 복구 중이 아닌 경우만 로그아웃 상태로 변경
+        if (state.user == null) {
+          state = const AuthState.unauthenticated();
+        }
       }
     });
   }
@@ -43,12 +48,6 @@ class AuthNotifier extends BaseNotifier<AuthIntent, AuthState> {
         break;
       case SignInAnonymouslyIntent():
         _signInAnonymously();
-        break;
-      case LinkAnonymousWithGoogleIntent():
-        _linkAnonymousWithGoogle();
-        break;
-      case LinkAnonymousWithAppleIntent():
-        _linkAnonymousWithApple();
         break;
       case SignOutIntent():
         _signOut();
@@ -66,8 +65,7 @@ class AuthNotifier extends BaseNotifier<AuthIntent, AuthState> {
       final deviceId = await _deviceService.getDeviceId();
 
       // 디바이스 ID로 기존 계정 확인
-      User? existingUser =
-          await _firestoreService.findUserByDeviceId(deviceId);
+      User? existingUser = await _firestoreService.findUserByDeviceId(deviceId);
 
       if (existingUser != null) {
         // 기존 계정이 있는 경우 - 해당 계정 정보 사용
@@ -184,118 +182,53 @@ class AuthNotifier extends BaseNotifier<AuthIntent, AuthState> {
     try {
       state = const AuthState.loading();
 
-      // 1. 디바이스 ID 획득
-      final deviceId = await _deviceService.getDeviceId();
-      debugPrint('AuthNotifier: 디바이스 ID로 익명 로그인 시도 - ${deviceId.substring(0, 8)}...');
+      // 1. 먼저 계정 복구 시도 (임시 익명 로그인으로 권한 확보)
+      final recoveredUser = await _attemptDeviceBasedAccountRecovery();
 
-      // 2. 디바이스 ID로 기존 계정 확인
-      final existingUser = await _firestoreService.findUserByDeviceId(deviceId);
-      
-      if (existingUser != null) {
-        // 기존 계정이 있는 경우 - Firebase에 익명 로그인 후 기존 계정 정보 사용
-        debugPrint('AuthNotifier: 기존 계정 발견, 복구 진행');
-        await firebase_auth.FirebaseAuth.instance.signInAnonymously();
-        // _handleFirebaseUserChange에서 기존 계정 처리가 됨
-      } else {
-        // 새로운 계정인 경우 - 일반적인 익명 로그인
-        debugPrint('AuthNotifier: 새로운 익명 계정 생성');
-        await firebase_auth.FirebaseAuth.instance.signInAnonymously();
-        // _handleFirebaseUserChange에서 새 계정 생성이 됨
+      if (recoveredUser != null) {
+        state = AuthState.authenticated(recoveredUser);
+        debugPrint('AuthNotifier: 계정 복구 완료 - ${recoveredUser.email}');
+        return;
       }
+
+      // 2. 기존 계정이 없으면 새로운 익명 로그인
+      debugPrint('AuthNotifier: 기존 계정 없음, 새로운 익명 계정 생성');
+      await firebase_auth.FirebaseAuth.instance.signInAnonymously();
+      // _handleFirebaseUserChange에서 새 계정 생성
     } catch (e) {
       state =
           AuthState.unauthenticated(errorMessage: '익명 로그인 실패: ${e.toString()}');
-
       debugPrint('익명 로그인 실패: ${e.toString()}');
     }
   }
 
-// 익명 계정을 Google 계정으로 연결
-  Future<void> _linkAnonymousWithGoogle() async {
+  // 디바이스 기반 계정 복구 시도 (인증 없이)
+  Future<User?> _attemptDeviceBasedAccountRecovery() async {
     try {
-      final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
-      if (currentUser == null || !currentUser.isAnonymous) {
-        state = const AuthState.unauthenticated(errorMessage: '익명 사용자가 아닙니다.');
-        return;
-      }
+      final deviceId = await _deviceService.getDeviceId();
+      debugPrint('AuthNotifier: 계정 복구 시도 - ${deviceId.substring(0, 8)}...');
 
-      state = const AuthState.loading();
+      // 인증 없이 바로 기존 계정 확인
+      final existingUser = await _firestoreService.findUserByDeviceId(deviceId);
 
-      // Google Sign In
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        state = const AuthState.unauthenticated(errorMessage: '로그인이 취소되었습니다.');
-        return;
-      }
+      if (existingUser != null) {
+        // 기존 계정 발견
+        debugPrint('AuthNotifier: 기존 계정 발견 - ${existingUser.email}');
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final credential = firebase_auth.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // 익명 계정과 Google 계정 연결
-      await currentUser.linkWithCredential(credential);
-      
-      // 연결 후 사용자 정보 업데이트
-      if (state.user != null) {
-        final updatedUser = state.user!.copyWith(
-          email: googleUser.email,
-          displayName: googleUser.displayName ?? state.user!.displayName,
-          isOfflineAuthenticated: false,
+        // 기존 계정 로그인 시간 업데이트 (나중에 인증 후 업데이트)
+        final updatedUser = existingUser.copyWith(
+          lastLoginAt: DateTime.now(),
         );
-        
-        await _firestoreService.updateUser(updatedUser);
+
+        return updatedUser;
+      } else {
+        // 기존 계정 없음
+        debugPrint('AuthNotifier: 기존 계정 없음');
+        return null;
       }
     } catch (e) {
-      state = AuthState.unauthenticated(
-          errorMessage: 'Google 계정 연결 실패: ${e.toString()}');
-      debugPrint('Google 계정 연결 실패: ${e.toString()}');
-    }
-  }
-
-  // 익명 계정을 Apple 계정으로 연결
-  Future<void> _linkAnonymousWithApple() async {
-    try {
-      final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
-      if (currentUser == null || !currentUser.isAnonymous) {
-        state = const AuthState.unauthenticated(errorMessage: '익명 사용자가 아닙니다.');
-        return;
-      }
-
-      state = const AuthState.loading();
-
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
-
-      final oauthCredential =
-          firebase_auth.OAuthProvider("apple.com").credential(
-        idToken: credential.identityToken,
-        accessToken: credential.authorizationCode,
-      );
-
-      // 익명 계정과 Apple 계정 연결
-      await currentUser.linkWithCredential(oauthCredential);
-      
-      // 연결 후 사용자 정보 업데이트
-      if (state.user != null) {
-        final updatedUser = state.user!.copyWith(
-          email: credential.email ?? state.user!.email,
-          displayName: credential.givenName ?? state.user!.displayName,
-          isOfflineAuthenticated: false,
-        );
-        
-        await _firestoreService.updateUser(updatedUser);
-      }
-    } catch (e) {
-      state = AuthState.unauthenticated(
-          errorMessage: 'Apple 계정 연결 실패: ${e.toString()}');
-      debugPrint('Apple 계정 연결 실패: ${e.toString()}');
+      debugPrint('AuthNotifier: 계정 복구 실패: $e');
+      return null;
     }
   }
 
@@ -319,29 +252,29 @@ class AuthNotifier extends BaseNotifier<AuthIntent, AuthState> {
     return currentUser?.isAnonymous ?? false;
   }
 
-  // 계정 완전 삭제 (디바이스 매핑 포함)
+  // 계정 완전 삭제 (사용자 데이터 + 디바이스 매핑 모두 삭제)
   Future<void> deleteAccount() async {
     try {
       if (state.user == null) return;
-      
+
       final userId = state.user!.id;
-      final deviceId = await _deviceService.getDeviceId();
-      
-      // Firestore에서 사용자 데이터 삭제
+
+      // Firestore에서 사용자 데이터 및 관련된 모든 디바이스 매핑 삭제
       await _firestoreService.deleteUserAccount(userId);
-      
+
       // Firebase Auth 계정 삭제
       final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
       await currentUser?.delete();
-      
+
       // 로컬 디바이스 ID도 초기화
       await _deviceService.resetDeviceId();
-      
+
       state = const AuthState.unauthenticated();
-      debugPrint('AuthNotifier: 계정 완전 삭제 완료');
+      debugPrint('AuthNotifier: 계정 완전 삭제 완료 (사용자 데이터 + 디바이스 매핑)');
     } catch (e) {
       debugPrint('AuthNotifier: 계정 삭제 중 오류: $e');
-      state = AuthState.unauthenticated(errorMessage: '계정 삭제 실패: ${e.toString()}');
+      state =
+          AuthState.unauthenticated(errorMessage: '계정 삭제 실패: ${e.toString()}');
     }
   }
 }

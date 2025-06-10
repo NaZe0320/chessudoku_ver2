@@ -6,47 +6,45 @@ import 'package:flutter/material.dart';
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // 컬렉션 이름
   static const String _usersCollection = 'users';
   static const String _deviceMappingCollection = 'device_mappings';
-  
+
   factory FirestoreService() {
     return _instance;
   }
 
   FirestoreService._internal();
 
-  /// 디바이스 ID로 기존 사용자 계정 찾기
+  /// 디바이스 ID로 기존 사용자 계정 찾기 (인증 없이 접근 가능)
   Future<User?> findUserByDeviceId(String deviceId) async {
     try {
-      debugPrint('FirestoreService: 디바이스 ID로 사용자 검색 - ${deviceId.substring(0, 8)}...');
-      
-      // device_mappings 컬렉션에서 디바이스 ID로 사용자 ID 찾기
-      final deviceMappingQuery = await _firestore
+      debugPrint(
+          'FirestoreService: 디바이스 ID로 사용자 검색 - $deviceId');
+
+      // 디바이스 ID를 document ID로 사용하여 직접 접근
+      final deviceMappingDoc = await _firestore
           .collection(_deviceMappingCollection)
-          .where('deviceId', isEqualTo: deviceId)
-          .limit(1)
+          .doc(deviceId)
           .get();
 
-      if (deviceMappingQuery.docs.isEmpty) {
+      if (!deviceMappingDoc.exists) {
         debugPrint('FirestoreService: 해당 디바이스 ID의 매핑 정보 없음');
         return null;
       }
 
-      final mappingDoc = deviceMappingQuery.docs.first;
-      final userId = mappingDoc.data()['userId'] as String?;
-      
+      final mappingData = deviceMappingDoc.data()!;
+      final userId = mappingData['userId'] as String?;
+
       if (userId == null) {
         debugPrint('FirestoreService: 매핑에서 사용자 ID를 찾을 수 없음');
         return null;
       }
 
-      // 사용자 정보 가져오기
-      final userDoc = await _firestore
-          .collection(_usersCollection)
-          .doc(userId)
-          .get();
+      // 사용자 정보 가져오기 (public 읽기 권한 필요)
+      final userDoc =
+          await _firestore.collection(_usersCollection).doc(userId).get();
 
       if (!userDoc.exists) {
         debugPrint('FirestoreService: 사용자 문서가 존재하지 않음');
@@ -74,36 +72,42 @@ class FirestoreService {
   }) async {
     try {
       debugPrint('FirestoreService: 새 사용자 생성 및 디바이스 매핑 - ${user.email}');
-      
+
       final batch = _firestore.batch();
       final now = DateTime.now();
 
       // 1. 사용자 문서 생성
       final userRef = _firestore.collection(_usersCollection).doc(user.id);
-      final userData = user.copyWith(
-        deviceId: deviceId,
-        createdAt: user.createdAt ?? now,
-        lastLoginAt: now,
-      ).toJson();
+      final userData = user
+          .copyWith(
+            deviceId: deviceId,
+            createdAt: user.createdAt ?? now,
+            lastLoginAt: now,
+          )
+          .toJson();
 
       batch.set(userRef, userData);
 
-      // 2. 디바이스 매핑 생성
-      final deviceMappingRef = _firestore
-          .collection(_deviceMappingCollection)
-          .doc(deviceId);
-      
+      // 2. 디바이스 매핑 생성 (사용자 정보 포함)
+      final deviceMappingRef =
+          _firestore.collection(_deviceMappingCollection).doc(deviceId);
+
       batch.set(deviceMappingRef, {
         'deviceId': deviceId,
         'userId': user.id,
+        'userEmail': user.email,
+        'userDisplayName': user.displayName,
+        'isOfflineAuthenticated': user.isOfflineAuthenticated,
+        'userCreatedAt': user.createdAt?.toIso8601String(),
+        'userLastLoginAt': user.lastLoginAt?.toIso8601String(),
         'createdAt': now.toIso8601String(),
         'lastUsedAt': now.toIso8601String(),
       });
 
       // 3. 배치 실행
       await batch.commit();
-      
-        debugPrint('FirestoreService: 사용자 생성 및 디바이스 매핑 완료');
+
+      debugPrint('FirestoreService: 사용자 생성 및 디바이스 매핑 완료');
     } catch (e) {
       debugPrint('FirestoreService: 사용자 생성 및 디바이스 매핑 중 오류: $e');
       rethrow;
@@ -113,16 +117,34 @@ class FirestoreService {
   /// 기존 사용자의 로그인 시간 업데이트
   Future<void> updateUserLastLogin(String userId) async {
     try {
-      await _firestore
-          .collection(_usersCollection)
-          .doc(userId)
-          .update({
+      await _firestore.collection(_usersCollection).doc(userId).update({
         'lastLoginAt': DateTime.now().toIso8601String(),
       });
-      
+
       debugPrint('FirestoreService: 사용자 로그인 시간 업데이트 완료');
     } catch (e) {
       debugPrint('FirestoreService: 로그인 시간 업데이트 중 오류: $e');
+    }
+  }
+
+  /// 디바이스 매핑의 마지막 사용 시간 및 사용자 정보 업데이트
+  Future<void> updateDeviceMappingWithUserInfo(
+      String deviceId, User user) async {
+    try {
+      await _firestore
+          .collection(_deviceMappingCollection)
+          .doc(deviceId)
+          .update({
+        'userEmail': user.email,
+        'userDisplayName': user.displayName,
+        'isOfflineAuthenticated': user.isOfflineAuthenticated,
+        'userLastLoginAt': user.lastLoginAt?.toIso8601String(),
+        'lastUsedAt': DateTime.now().toIso8601String(),
+      });
+
+      debugPrint('FirestoreService: 디바이스 매핑 및 사용자 정보 업데이트 완료');
+    } catch (e) {
+      debugPrint('FirestoreService: 디바이스 매핑 업데이트 중 오류: $e');
     }
   }
 
@@ -135,7 +157,7 @@ class FirestoreService {
           .update({
         'lastUsedAt': DateTime.now().toIso8601String(),
       });
-      
+
       debugPrint('FirestoreService: 디바이스 매핑 사용 시간 업데이트 완료');
     } catch (e) {
       debugPrint('FirestoreService: 디바이스 매핑 업데이트 중 오류: $e');
@@ -149,7 +171,7 @@ class FirestoreService {
           .collection(_usersCollection)
           .doc(user.id)
           .update(user.toJson());
-      
+
       debugPrint('FirestoreService: 사용자 정보 업데이트 완료');
     } catch (e) {
       debugPrint('FirestoreService: 사용자 정보 업데이트 중 오류: $e');
@@ -164,7 +186,7 @@ class FirestoreService {
           .collection(_deviceMappingCollection)
           .doc(deviceId)
           .delete();
-      
+
       debugPrint('FirestoreService: 디바이스 매핑 삭제 완료');
     } catch (e) {
       debugPrint('FirestoreService: 디바이스 매핑 삭제 중 오류: $e');
@@ -172,17 +194,20 @@ class FirestoreService {
   }
 
   /// 사용자의 모든 디바이스 매핑 조회
-  Future<List<Map<String, dynamic>>> getUserDeviceMappings(String userId) async {
+  Future<List<Map<String, dynamic>>> getUserDeviceMappings(
+      String userId) async {
     try {
       final query = await _firestore
           .collection(_deviceMappingCollection)
           .where('userId', isEqualTo: userId)
           .get();
 
-      return query.docs.map((doc) => {
-        'id': doc.id,
-        ...doc.data(),
-      }).toList();
+      return query.docs
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
+          .toList();
     } catch (e) {
       debugPrint('FirestoreService: 사용자 디바이스 매핑 조회 중 오류: $e');
       return [];
@@ -193,7 +218,7 @@ class FirestoreService {
   Future<void> cleanupOldDeviceMappings() async {
     try {
       final cutoffDate = DateTime.now().subtract(const Duration(days: 30));
-      
+
       final query = await _firestore
           .collection(_deviceMappingCollection)
           .where('lastUsedAt', isLessThan: cutoffDate.toIso8601String())
@@ -223,7 +248,8 @@ class FirestoreService {
       // 2. 해당 사용자의 모든 디바이스 매핑 삭제
       final deviceMappings = await getUserDeviceMappings(userId);
       for (final mapping in deviceMappings) {
-        final mappingRef = _firestore.collection(_deviceMappingCollection).doc(mapping['id']);
+        final mappingRef =
+            _firestore.collection(_deviceMappingCollection).doc(mapping['id']);
         batch.delete(mappingRef);
       }
 
