@@ -2,6 +2,7 @@ import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 
 class PuzzleState {
+  final String puzzleId;
   final Difficulty difficulty;
   final List<List<CellContent>> board;
   final int? selectedRow;
@@ -11,6 +12,7 @@ class PuzzleState {
   final bool isPaused;
 
   const PuzzleState({
+    required this.puzzleId,
     this.difficulty = Difficulty.easy,
     required this.board,
     this.selectedRow,

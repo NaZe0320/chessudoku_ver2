@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../domain/notifiers/auth_notifier.dart';
-import '../../../domain/intents/auth_intent.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -27,11 +25,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authNotifierProvider);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('프로필'),
+        title: const Text('설정'),
         centerTitle: true,
       ),
       body: CustomScrollView(
@@ -43,7 +39,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 프로필 헤더
+                  // 앱 정보 헤더
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -54,21 +50,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     child: Column(
                       children: [
-                        // 프로필 아이콘
+                        // 앱 아이콘
                         CircleAvatar(
                           radius: 40,
                           backgroundColor: Theme.of(context).primaryColor,
                           child: const Icon(
-                            Icons.person,
+                            Icons.grid_view,
                             size: 40,
                             color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 16),
 
-                        // 사용자 이름
+                        // 앱 이름
                         Text(
-                          authState.user?.displayName ?? '사용자',
+                          'ChesSudoku',
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -78,9 +74,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         const SizedBox(height: 8),
 
-                        // 이메일
+                        // 앱 설명
                         Text(
-                          authState.user?.email ?? '',
+                          '체스와 스도쿠의 만남',
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Colors.grey[600],
@@ -92,41 +88,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   const SizedBox(height: 24),
 
-                  // 계정 정보 섹션
+                  // 게임 설정 섹션
                   Text(
-                    '계정 정보',
+                    '게임 설정',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   const SizedBox(height: 12),
 
-                  // 정보 리스트
                   Card(
                     child: Column(
                       children: [
-                        _buildInfoTile(
+                        _buildSettingTile(
                           context,
-                          icon: Icons.email_outlined,
-                          title: '이메일',
-                          subtitle: authState.user?.email ?? '정보 없음',
+                          icon: Icons.volume_up_outlined,
+                          title: '사운드 효과',
+                          onTap: () {
+                            // 사운드 설정 페이지로 이동
+                          },
                         ),
                         const Divider(height: 1),
-                        _buildInfoTile(
+                        _buildSettingTile(
                           context,
-                          icon: Icons.person_outline,
-                          title: '사용자 ID',
-                          subtitle: authState.user?.id ?? '정보 없음',
+                          icon: Icons.vibration_outlined,
+                          title: '진동',
+                          onTap: () {
+                            // 진동 설정 페이지로 이동
+                          },
                         ),
                         const Divider(height: 1),
-                        _buildInfoTile(
+                        _buildSettingTile(
                           context,
-                          icon: Icons.offline_bolt_outlined,
-                          title: '오프라인 인증',
-                          subtitle:
-                              authState.user?.isOfflineAuthenticated == true
-                                  ? '활성화됨'
-                                  : '비활성화됨',
+                          icon: Icons.palette_outlined,
+                          title: '테마 설정',
+                          onTap: () {
+                            // 테마 설정 페이지로 이동
+                          },
                         ),
                       ],
                     ),
@@ -134,9 +132,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   const SizedBox(height: 24),
 
-                  // 추가 설정 섹션
+                  // 일반 설정 섹션
                   Text(
-                    '설정',
+                    '일반 설정',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -166,6 +164,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         const Divider(height: 1),
                         _buildSettingTile(
                           context,
+                          icon: Icons.storage_outlined,
+                          title: '저장소 관리',
+                          onTap: () {
+                            // 저장소 관리 페이지로 이동
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // 정보 섹션
+                  Text(
+                    '정보',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Card(
+                    child: Column(
+                      children: [
+                        _buildSettingTile(
+                          context,
                           icon: Icons.help_outline,
                           title: '도움말',
                           onTap: () {
@@ -181,25 +205,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             // 앱 정보 페이지로 이동
                           },
                         ),
+                        const Divider(height: 1),
+                        _buildSettingTile(
+                          context,
+                          icon: Icons.privacy_tip_outlined,
+                          title: '개인정보 처리방침',
+                          onTap: () {
+                            // 개인정보 처리방침 페이지로 이동
+                          },
+                        ),
                       ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // 로그아웃 버튼
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _showLogoutDialog(context, ref);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text('로그아웃'),
                     ),
                   ),
 
@@ -210,20 +225,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: Theme.of(context).primaryColor),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
   }
 
@@ -239,35 +240,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       trailing: const Icon(Icons.chevron_right),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       onTap: onTap,
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('로그아웃'),
-          content: const Text('정말로 로그아웃하시겠습니까?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () {
-                ref.read(authNotifierProvider.notifier).handleIntent(
-                      const SignOutIntent(),
-                    );
-                Navigator.of(context).pop();
-              },
-              child: const Text('로그아웃'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
