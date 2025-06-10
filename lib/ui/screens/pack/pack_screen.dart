@@ -1,14 +1,11 @@
+import 'package:chessudoku/core/di/puzzle_pack_provider.dart';
 import 'package:chessudoku/core/di/tab_provider.dart';
+import 'package:chessudoku/domain/intents/puzzle_pack_intent.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/app_bar_icon_button.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/chess_pattern.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/stat_card.dart';
-// import 'package:chessudoku/ui/common/widgets/tab_bar/floating_tab_bar.dart';
-// import 'package:chessudoku/ui/common/widgets/tab_bar/sliver_tab_bar_delegate.dart';
 import 'package:chessudoku/ui/common/widgets/tab_bar/tab_content.dart';
-// import 'package:chessudoku/ui/screens/pack/tab/difficulty_tab_content.dart';
-// import 'package:chessudoku/ui/screens/pack/tab/progress_tab_content.dart';
 import 'package:chessudoku/ui/screens/pack/tab/recommend_pack_tab_content.dart';
-// import 'package:chessudoku/ui/screens/pack/tab/theme_tab_content.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +37,17 @@ class _PackScreenState extends ConsumerState<PackScreen> {
     ];
 
     _scrollController.addListener(_listenToScrollChange);
+
+    // 퍼즐팩 데이터 로드
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPuzzlePackData();
+    });
+  }
+
+  void _loadPuzzlePackData() {
+    final notifier = ref.read(puzzlePackNotifierProvider.notifier);
+    notifier.handleIntent(LoadAllPuzzlePacksIntent());
+    notifier.handleIntent(LoadRecommendedPuzzlePacksIntent());
   }
 
   void _listenToScrollChange() {
@@ -118,10 +126,10 @@ class _PackScreenState extends ConsumerState<PackScreen> {
                         child: AnimatedOpacity(
                           opacity: _isScrolled ? 0.0 : 1.0,
                           duration: const Duration(milliseconds: 200),
-                          child: const Column(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 "닉네임",
                                 style: TextStyle(
                                   color: Colors.white,
@@ -129,24 +137,101 @@ class _PackScreenState extends ConsumerState<PackScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  StatCard(
-                                      title: "완료한 팩",
-                                      value: "3/12",
-                                      icon: Icons.today_outlined),
-                                  StatCard(
-                                      title: "팩 진행률",
-                                      value: "43%",
-                                      icon: Icons.bar_chart_outlined),
-                                  StatCard(
-                                      title: "해결한 퍼즐",
-                                      value: "152",
-                                      icon: Icons.star_outline),
-                                ],
+                              const SizedBox(height: 8),
+                              Consumer(
+                                builder: (context, ref, child) {
+                                  final puzzlePackState =
+                                      ref.watch(puzzlePackNotifierProvider);
+
+                                  if (puzzlePackState.isLoading) {
+                                    return const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        StatCard(
+                                          title: "완료한 팩",
+                                          value: "...",
+                                          icon: Icons.today_outlined,
+                                        ),
+                                        StatCard(
+                                          title: "팩 진행률",
+                                          value: "...",
+                                          icon: Icons.bar_chart_outlined,
+                                        ),
+                                        StatCard(
+                                          title: "해결한 퍼즐",
+                                          value: "...",
+                                          icon: Icons.star_outline,
+                                        ),
+                                      ],
+                                    );
+                                  }
+
+                                  if (puzzlePackState.hasError) {
+                                    return const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        StatCard(
+                                          title: "완료한 팩",
+                                          value: "Error",
+                                          icon: Icons.error_outline,
+                                        ),
+                                        StatCard(
+                                          title: "팩 진행률",
+                                          value: "Error",
+                                          icon: Icons.error_outline,
+                                        ),
+                                        StatCard(
+                                          title: "해결한 퍼즐",
+                                          value: "Error",
+                                          icon: Icons.error_outline,
+                                        ),
+                                      ],
+                                    );
+                                  }
+
+                                  // 통계 계산
+                                  final allPacks = puzzlePackState.puzzlePacks;
+                                  final completedPacks = allPacks
+                                      .where((pack) => pack.isCompleted)
+                                      .length;
+                                  final totalPacks = allPacks.length;
+                                  final totalPuzzlesSolved = allPacks.fold<int>(
+                                      0,
+                                      (sum, pack) =>
+                                          sum + pack.completedPuzzles);
+                                  final totalPuzzles = allPacks.fold<int>(0,
+                                      (sum, pack) => sum + pack.totalPuzzles);
+                                  final overallProgress = totalPuzzles > 0
+                                      ? (totalPuzzlesSolved /
+                                              totalPuzzles *
+                                              100)
+                                          .round()
+                                      : 0;
+
+                                  return Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      StatCard(
+                                        title: "완료한 팩",
+                                        value: "$completedPacks/$totalPacks",
+                                        icon: Icons.today_outlined,
+                                      ),
+                                      StatCard(
+                                        title: "팩 진행률",
+                                        value: "$overallProgress%",
+                                        icon: Icons.bar_chart_outlined,
+                                      ),
+                                      StatCard(
+                                        title: "해결한 퍼즐",
+                                        value: "$totalPuzzlesSolved",
+                                        icon: Icons.star_outline,
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ],
                           ),
