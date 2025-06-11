@@ -41,7 +41,7 @@ class FilterChipWidget<T> extends StatelessWidget {
         ),
         child: Text(
           option.label,
-          style: AppTextStyles.caption.copyWith(
+          style: AppTextStyles.bodyMedium.copyWith(
             color: isSelected ? AppColors.textWhite : AppColors.textPrimary,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
           ),
