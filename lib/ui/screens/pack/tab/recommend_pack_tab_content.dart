@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:chessudoku/data/models/puzzle_pack.dart';
 import 'package:chessudoku/data/models/filter_option.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
@@ -9,68 +10,61 @@ import 'package:chessudoku/core/di/puzzle_pack_provider.dart';
 import 'package:chessudoku/ui/screens/pack/widgets/puzzle_pack_card.dart';
 import 'package:chessudoku/ui/common/widgets/filter_chip/filter_chip_group.dart';
 
-class RecommendPackTabContent extends ConsumerStatefulWidget {
+class RecommendPackTabContent extends HookConsumerWidget {
   const RecommendPackTabContent({super.key});
 
   @override
-  ConsumerState<RecommendPackTabContent> createState() =>
-      _RecommendPackTabContentState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    void initializeFilter() {
+      // 모든 타입 수집
+      final allTypes = <String>{};
+      for (final pack in _samplePacks) {
+        allTypes.addAll(pack.type);
+      }
 
-class _RecommendPackTabContentState
-    extends ConsumerState<RecommendPackTabContent> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeFilter();
-    });
-  }
+      // 필터 옵션 생성
+      final filterOptions = allTypes
+          .map((type) => FilterOption<String>(
+                id: type,
+                label: type,
+                value: type,
+                isSelected: false,
+              ))
+          .toList();
 
-  void _initializeFilter() {
-    // 모든 타입 수집
-    final allTypes = <String>{};
-    for (final pack in _samplePacks) {
-      allTypes.addAll(pack.type);
+      // 필터 옵션 설정
+      ref.read(recommendPackTypeFilterProvider.notifier).handleIntent(
+            SetFilterOptionsIntent<String>(
+              options: filterOptions,
+              filterType: FilterType.single,
+              showAllOption: true,
+            ),
+          );
     }
 
-    // 필터 옵션 생성
-    final filterOptions = allTypes
-        .map((type) => FilterOption<String>(
-              id: type,
-              label: type,
-              value: type,
-              isSelected: false,
-            ))
-        .toList();
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        initializeFilter();
+      });
+      return null;
+    }, []);
 
-    // 필터 옵션 설정
-    ref.read(recommendPackTypeFilterProvider.notifier).handleIntent(
-          SetFilterOptionsIntent<String>(
-            options: filterOptions,
-            filterType: FilterType.single,
-            showAllOption: true,
-          ),
-        );
-  }
+    List<PuzzlePack> getFilteredPacks() {
+      final filterState = ref.watch(recommendPackTypeFilterProvider);
 
-  List<PuzzlePack> _getFilteredPacks() {
-    final filterState = ref.watch(recommendPackTypeFilterProvider);
+      // 전체 선택이거나 선택된 필터가 없으면 모든 팩 반환
+      if (filterState.isAllSelected || filterState.selectedValues.isEmpty) {
+        return _samplePacks;
+      }
 
-    // 전체 선택이거나 선택된 필터가 없으면 모든 팩 반환
-    if (filterState.isAllSelected || filterState.selectedValues.isEmpty) {
-      return _samplePacks;
+      // 선택된 타입과 일치하는 팩들만 필터링
+      return _samplePacks.where((pack) {
+        return pack.type
+            .any((type) => filterState.selectedValues.contains(type));
+      }).toList();
     }
 
-    // 선택된 타입과 일치하는 팩들만 필터링
-    return _samplePacks.where((pack) {
-      return pack.type.any((type) => filterState.selectedValues.contains(type));
-    }).toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final filteredPacks = _getFilteredPacks();
+    final filteredPacks = getFilteredPacks();
 
     return Padding(
       padding: const EdgeInsets.only(

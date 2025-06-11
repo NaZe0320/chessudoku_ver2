@@ -12,6 +12,8 @@ dependencies:
   
   # 상태 관리
   flutter_riverpod: ^2.6.1
+  flutter_hooks: ^0.20.5
+  hooks_riverpod: ^2.6.1
 
   # 로컬 데이터베이스
   sqflite: ^2.4.1

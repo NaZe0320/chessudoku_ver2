@@ -1,39 +1,113 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import '../../../domain/notifiers/test_notifier.dart';
 import '../../../domain/states/test_state.dart';
 
-class TestPage extends ConsumerStatefulWidget {
+class TestPage extends HookConsumerWidget {
   const TestPage({super.key});
 
   @override
-  ConsumerState<TestPage> createState() => _TestPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nameController = useTextEditingController();
+    final descriptionController = useTextEditingController();
 
-class _TestPageState extends ConsumerState<TestPage> {
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
     // 페이지 로드 시 데이터 가져오기
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(testNotifierProvider.notifier).loadTests();
-    });
-  }
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(testNotifierProvider.notifier).loadTests();
+      });
+      return null;
+    }, []);
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     final testState = ref.watch(testNotifierProvider);
     final testNotifier = ref.read(testNotifierProvider.notifier);
+
+    void createTest() async {
+      if (nameController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('테스트 이름을 입력해주세요')),
+        );
+        return;
+      }
+
+      final success = await testNotifier.createTest(
+        name: nameController.text.trim(),
+        description: descriptionController.text.trim().isEmpty
+            ? '설명 없음'
+            : descriptionController.text.trim(),
+      );
+
+      if (success) {
+        nameController.clear();
+        descriptionController.clear();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('테스트가 생성되었습니다')),
+          );
+        }
+      }
+    }
+
+    void showDeleteDialog(String testId, String testName) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('테스트 삭제'),
+          content: Text('\'$testName\'을(를) 삭제하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final success = await testNotifier.deleteTest(testId);
+
+                if (context.mounted && success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('\'$testName\'이(가) 삭제되었습니다')),
+                  );
+                }
+              },
+              child: const Text('삭제', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Color getStatusColor(TestStatus status) {
+      switch (status) {
+        case TestStatus.initial:
+          return Colors.grey;
+        case TestStatus.loading:
+          return Colors.orange;
+        case TestStatus.success:
+          return Colors.green;
+        case TestStatus.failure:
+          return Colors.red;
+      }
+    }
+
+    String getStatusText(TestState state) {
+      final statusText = switch (state.status) {
+        TestStatus.initial => '초기 상태',
+        TestStatus.loading => '로딩 중...',
+        TestStatus.success => '성공',
+        TestStatus.failure => '실패',
+      };
+
+      final actionText = <String>[];
+      if (state.isCreating) actionText.add('생성 중');
+      if (state.isUpdating) actionText.add('수정 중');
+      if (state.isDeleting) actionText.add('삭제 중');
+
+      return actionText.isEmpty
+          ? statusText
+          : '$statusText (${actionText.join(', ')})';
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -53,9 +127,9 @@ class _TestPageState extends ConsumerState<TestPage> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            color: _getStatusColor(testState.status),
+            color: getStatusColor(testState.status),
             child: Text(
-              _getStatusText(testState),
+              getStatusText(testState),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -101,7 +175,7 @@ class _TestPageState extends ConsumerState<TestPage> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
-                    controller: _nameController,
+                    controller: nameController,
                     decoration: const InputDecoration(
                       labelText: '테스트 이름',
                       border: OutlineInputBorder(),
@@ -109,7 +183,7 @@ class _TestPageState extends ConsumerState<TestPage> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
-                    controller: _descriptionController,
+                    controller: descriptionController,
                     decoration: const InputDecoration(
                       labelText: '설명',
                       border: OutlineInputBorder(),
@@ -120,7 +194,7 @@ class _TestPageState extends ConsumerState<TestPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: testState.isCreating ? null : _createTest,
+                      onPressed: testState.isCreating ? null : createTest,
                       child: testState.isCreating
                           ? const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -212,7 +286,7 @@ class _TestPageState extends ConsumerState<TestPage> {
                                   IconButton(
                                     onPressed: testState.isDeleting
                                         ? null
-                                        : () => _showDeleteDialog(
+                                        : () => showDeleteDialog(
                                             test.id, test.name),
                                     icon: Icon(
                                       Icons.delete,
@@ -245,93 +319,5 @@ class _TestPageState extends ConsumerState<TestPage> {
         ],
       ),
     );
-  }
-
-  void _createTest() async {
-    if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('테스트 이름을 입력해주세요')),
-      );
-      return;
-    }
-
-    final success = await ref.read(testNotifierProvider.notifier).createTest(
-          name: _nameController.text.trim(),
-          description: _descriptionController.text.trim().isEmpty
-              ? '설명 없음'
-              : _descriptionController.text.trim(),
-        );
-
-    if (success) {
-      _nameController.clear();
-      _descriptionController.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('테스트가 생성되었습니다')),
-        );
-      }
-    }
-  }
-
-  void _showDeleteDialog(String testId, String testName) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('테스트 삭제'),
-        content: Text('\'$testName\'을(를) 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final success = await ref
-                  .read(testNotifierProvider.notifier)
-                  .deleteTest(testId);
-
-              if (mounted && success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('\'$testName\'이(가) 삭제되었습니다')),
-                );
-              }
-            },
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getStatusColor(TestStatus status) {
-    switch (status) {
-      case TestStatus.initial:
-        return Colors.grey;
-      case TestStatus.loading:
-        return Colors.orange;
-      case TestStatus.success:
-        return Colors.green;
-      case TestStatus.failure:
-        return Colors.red;
-    }
-  }
-
-  String _getStatusText(TestState state) {
-    final statusText = switch (state.status) {
-      TestStatus.initial => '초기 상태',
-      TestStatus.loading => '로딩 중...',
-      TestStatus.success => '성공',
-      TestStatus.failure => '실패',
-    };
-
-    final actionText = <String>[];
-    if (state.isCreating) actionText.add('생성 중');
-    if (state.isUpdating) actionText.add('수정 중');
-    if (state.isDeleting) actionText.add('삭제 중');
-
-    return actionText.isEmpty
-        ? statusText
-        : '$statusText (${actionText.join(', ')})';
   }
 }
