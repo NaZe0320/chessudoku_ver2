@@ -26,6 +26,9 @@ dependencies:
   # Firebase
   firebase_core: ^2.27.1
 
+  # HTTP 클라이언트
+  dio: ^5.4.3+1
+
   # 디바이스 정보 및 고유 ID
   device_info_plus: ^10.1.2
    

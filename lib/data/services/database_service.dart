@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -34,21 +35,22 @@ class DatabaseService {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _dbName);
 
-    print('데이터베이스 초기화: $path (버전 $_dbVersion)');
+    debugPrint('데이터베이스 초기화: $path (버전 $_dbVersion)');
 
     return await openDatabase(
       path,
       version: _dbVersion,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
       onOpen: (db) {
-        print('데이터베이스 열림: ${db.path}, 테이블: $tablePuzzleRecords');
+        debugPrint('데이터베이스 열림: ${db.path}, 테이블: $tablePuzzleRecords');
       },
     );
   }
 
   /// 데이터베이스 생성
   Future<void> _createDB(Database db, int version) async {
-    print('새 데이터베이스 생성 중... 버전: $version');
+    debugPrint('새 데이터베이스 생성 중... 버전: $version');
     // 퍼즐 기록 테이블 생성
     await db.execute('''
       CREATE TABLE $tablePuzzleRecords (
@@ -59,8 +61,25 @@ class DatabaseService {
         createdAt TEXT NOT NULL
       )
     ''');
-    print('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
+    debugPrint('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
   }
+
+  /// 데이터베이스 업그레이드
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    debugPrint('데이터베이스 업그레이드: $oldVersion -> $newVersion');
+    
+    // 버전별 업그레이드 로직
+    if (oldVersion < 2) {
+      // 예: 새로운 테이블 추가
+      // await db.execute('CREATE TABLE new_table ...');
+    }
+    
+    if (oldVersion < 3) {
+      // 예: 컬럼 추가
+      // await db.execute('ALTER TABLE $tablePuzzleRecords ADD COLUMN newColumn TEXT');
+    }
+  }
+
 
   /// 데이터베이스 닫기
   Future<void> close() async {

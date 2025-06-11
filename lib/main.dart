@@ -1,4 +1,5 @@
 import 'package:chessudoku/core/utils/loading_manager.dart';
+import 'package:chessudoku/data/services/api_service.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/device_service.dart';
@@ -13,13 +14,18 @@ void main() async {
   // 캐시 서비스 초기화
   await CacheService().init();
 
-  // 데이터베이스 서비스 초기화 (첫 액세스만 해도 초기화됨)
-  await DatabaseService().database;
-
   // 디바이스 서비스 초기화 (디바이스 ID 미리 생성)
   final deviceService = DeviceService();
   final deviceId = await deviceService.getDeviceId();
   debugPrint('Main: 앱 시작 - 디바이스 ID: $deviceId');
+
+  // 데이터베이스 서비스 초기화 (첫 액세스만 해도 초기화됨)
+  await DatabaseService().database;
+
+  // API 서비스 초기화 (Dio 클라이언트 미리 생성)
+  final apiService = ApiService();
+  final _ = apiService.dio; // Dio 인스턴스 생성 트리거
+  debugPrint('Main: API 서비스 초기화 완료');
 
   runApp(
     const ProviderScope(
