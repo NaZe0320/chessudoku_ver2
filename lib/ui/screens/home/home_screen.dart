@@ -12,61 +12,42 @@ import 'package:chessudoku/ui/screens/home/tab/recommend_tab_content.dart';
 import 'package:chessudoku/ui/screens/notice/notice_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends HookConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scrollController = useScrollController();
+    final isScrolled = useState(false);
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  late ScrollController _scrollController;
-  bool _isScrolled = false;
-
-  final List<String> _tabs = ['홈', '도전', '기록', '추천'];
-  late final List<Widget> _tabViews;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-
-    _tabViews = [
+    final List<String> tabs = ['홈', '도전', '기록', '추천'];
+    final List<Widget> tabViews = [
       const HomeTabContent(),
       const ChallengeTabContent(),
       const HistoryTabContent(),
       const RecommendTabContent(),
     ];
 
-    _scrollController.addListener(_listenToScrollChange);
-  }
-
-  void _listenToScrollChange() {
-    if (_scrollController.offset >= 50) {
-      setState(() {
-        _isScrolled = true;
-      });
-    } else {
-      setState(() {
-        _isScrolled = false;
-      });
+    void listenToScrollChange() {
+      if (scrollController.offset >= 50) {
+        isScrolled.value = true;
+      } else {
+        isScrolled.value = false;
+      }
     }
-  }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
+    useEffect(() {
+      scrollController.addListener(listenToScrollChange);
+      return () => scrollController.removeListener(listenToScrollChange);
+    }, [scrollController]);
 
-  @override
-  Widget build(BuildContext context) {
     return Stack(
       children: [
         CustomScrollView(
-          controller: _scrollController,
+          controller: scrollController,
           slivers: [
             SliverAppBar(
               expandedHeight: 200,
@@ -76,8 +57,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               title: AnimatedDefaultTextStyle(
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: _isScrolled ? 20.0 : 24.0,
-                  fontWeight: _isScrolled ? FontWeight.w500 : FontWeight.bold,
+                  fontSize: isScrolled.value ? 20.0 : 24.0,
+                  fontWeight:
+                      isScrolled.value ? FontWeight.w500 : FontWeight.bold,
                 ),
                 duration: const Duration(milliseconds: 200),
                 child: const Text("체스도쿠"),
@@ -85,7 +67,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               actions: [
                 AppBarIconButton(
                   icon: Icons.notifications_outlined,
-                  isScrolled: _isScrolled,
+                  isScrolled: isScrolled.value,
                   margin: const EdgeInsets.symmetric(
                       horizontal: 4.0, vertical: 8.0),
                   onPressed: () {
@@ -99,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 AppBarIconButton(
                   icon: Icons.settings_outlined,
-                  isScrolled: _isScrolled,
+                  isScrolled: isScrolled.value,
                   margin: const EdgeInsets.only(
                       right: 8.0, left: 4.0, top: 8.0, bottom: 8.0),
                   onPressed: () {},
@@ -124,7 +106,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: AnimatedOpacity(
-                          opacity: _isScrolled ? 0.0 : 1.0,
+                          opacity: isScrolled.value ? 0.0 : 1.0,
                           duration: const Duration(milliseconds: 200),
                           child: const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,14 +151,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               pinned: true,
               delegate: SliverTabBarDelegate(
                 FloatingTabBar(
-                  tabs: _tabs,
+                  tabs: tabs,
                   provider: homeTabProvider,
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: TabContent(
-                tabViews: _tabViews,
+                tabViews: tabViews,
                 provider: homeTabProvider,
               ),
             ),

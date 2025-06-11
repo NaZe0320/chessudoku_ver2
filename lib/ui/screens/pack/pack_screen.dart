@@ -11,61 +11,42 @@ import 'package:chessudoku/ui/screens/pack/tab/recommend_pack_tab_content.dart';
 // import 'package:chessudoku/ui/screens/pack/tab/theme_tab_content.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-class PackScreen extends ConsumerStatefulWidget {
+class PackScreen extends HookConsumerWidget {
   const PackScreen({super.key});
 
   @override
-  ConsumerState<PackScreen> createState() => _PackScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scrollController = useScrollController();
+    final isScrolled = useState(false);
 
-class _PackScreenState extends ConsumerState<PackScreen> {
-  late ScrollController _scrollController;
-  bool _isScrolled = false;
-
-  // final List<String> _tabs = ['추천', '난이도별', '테마별', '진행 중'];
-  late final List<Widget> _tabViews;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-
-    _tabViews = [
+    // final List<String> tabs = ['추천', '난이도별', '테마별', '진행 중'];
+    final List<Widget> tabViews = [
       const RecommendPackTabContent(),
       // const DifficultyPackTabContent(),
       // const ThemePackTabContent(),
       // const ProgressPackTabContent(),
     ];
 
-    _scrollController.addListener(_listenToScrollChange);
-  }
-
-  void _listenToScrollChange() {
-    if (_scrollController.offset >= 50) {
-      setState(() {
-        _isScrolled = true;
-      });
-    } else {
-      setState(() {
-        _isScrolled = false;
-      });
+    void listenToScrollChange() {
+      if (scrollController.offset >= 50) {
+        isScrolled.value = true;
+      } else {
+        isScrolled.value = false;
+      }
     }
-  }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
+    useEffect(() {
+      scrollController.addListener(listenToScrollChange);
+      return () => scrollController.removeListener(listenToScrollChange);
+    }, [scrollController]);
 
-  @override
-  Widget build(BuildContext context) {
     return Stack(
       children: [
         CustomScrollView(
-          controller: _scrollController,
+          controller: scrollController,
           slivers: [
             SliverAppBar(
               expandedHeight: 200,
@@ -75,8 +56,9 @@ class _PackScreenState extends ConsumerState<PackScreen> {
               title: AnimatedDefaultTextStyle(
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: _isScrolled ? 20.0 : 24.0,
-                  fontWeight: _isScrolled ? FontWeight.w500 : FontWeight.bold,
+                  fontSize: isScrolled.value ? 20.0 : 24.0,
+                  fontWeight:
+                      isScrolled.value ? FontWeight.w500 : FontWeight.bold,
                 ),
                 duration: const Duration(milliseconds: 200),
                 child: const Text("퍼즐팩"),
@@ -84,14 +66,14 @@ class _PackScreenState extends ConsumerState<PackScreen> {
               actions: [
                 AppBarIconButton(
                   icon: Icons.search_outlined,
-                  isScrolled: _isScrolled,
+                  isScrolled: isScrolled.value,
                   margin: const EdgeInsets.symmetric(
                       horizontal: 4.0, vertical: 8.0),
                   onPressed: () {},
                 ),
                 AppBarIconButton(
                   icon: Icons.filter_list_outlined,
-                  isScrolled: _isScrolled,
+                  isScrolled: isScrolled.value,
                   margin: const EdgeInsets.only(
                       right: 8.0, left: 4.0, top: 8.0, bottom: 8.0),
                   onPressed: () {},
@@ -116,7 +98,7 @@ class _PackScreenState extends ConsumerState<PackScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: AnimatedOpacity(
-                          opacity: _isScrolled ? 0.0 : 1.0,
+                          opacity: isScrolled.value ? 0.0 : 1.0,
                           duration: const Duration(milliseconds: 200),
                           child: const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +150,7 @@ class _PackScreenState extends ConsumerState<PackScreen> {
             // ),
             SliverToBoxAdapter(
               child: TabContent(
-                tabViews: _tabViews,
+                tabViews: tabViews,
                 provider: packTabProvider,
               ),
             ),
