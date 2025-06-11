@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:chessudoku/data/models/puzzle_pack.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 
 class PuzzlePackCard extends StatelessWidget {
