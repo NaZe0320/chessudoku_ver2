@@ -11,10 +11,11 @@ class DatabaseService {
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
   // 데이터베이스 버전
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
 
   // 테이블 이름
   static const String tablePuzzleRecords = 'puzzle_records';
+  static const String tableDataVersions = 'data_versions';
 
   // 싱글톤 패턴 적용
   factory DatabaseService() {
@@ -62,24 +63,40 @@ class DatabaseService {
       )
     ''');
     debugPrint('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
+
+    // 데이터 버전 관리 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tableDataVersions (
+        dataType TEXT PRIMARY KEY,
+        version INTEGER NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+    debugPrint('데이터 버전 테이블 생성 완료: $tableDataVersions');
   }
 
   /// 데이터베이스 업그레이드
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
     debugPrint('데이터베이스 업그레이드: $oldVersion -> $newVersion');
-    
+
     // 버전별 업그레이드 로직
     if (oldVersion < 2) {
-      // 예: 새로운 테이블 추가
-      // await db.execute('CREATE TABLE new_table ...');
+      // 버전 2에서 추가된 data_versions 테이블 생성
+      await db.execute('''
+        CREATE TABLE $tableDataVersions (
+          dataType TEXT PRIMARY KEY,
+          version INTEGER NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      debugPrint('데이터 버전 테이블 생성 완료 (업그레이드): $tableDataVersions');
     }
-    
+
     if (oldVersion < 3) {
       // 예: 컬럼 추가
       // await db.execute('ALTER TABLE $tablePuzzleRecords ADD COLUMN newColumn TEXT');
     }
   }
-
 
   /// 데이터베이스 닫기
   Future<void> close() async {

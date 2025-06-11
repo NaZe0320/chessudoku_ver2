@@ -1,8 +1,5 @@
+import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/utils/loading_manager.dart';
-import 'package:chessudoku/data/services/api_service.dart';
-import 'package:chessudoku/data/services/cache_service.dart';
-import 'package:chessudoku/data/services/database_service.dart';
-import 'package:chessudoku/data/services/device_service.dart';
 import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,27 +8,45 @@ void main() async {
   // Flutter 엔진 초기화
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 캐시 서비스 초기화
-  await CacheService().init();
+  // --- Dependency Injection Container 생성 ---
+  // 앱 실행 전 초기화가 필요한 프로바이더들을 위해 임시 컨테이너 생성
+  final container = ProviderContainer();
 
-  // 디바이스 서비스 초기화 (디바이스 ID 미리 생성)
-  final deviceService = DeviceService();
-  final deviceId = await deviceService.getDeviceId();
-  debugPrint('Main: 앱 시작 - 디바이스 ID: $deviceId');
+  // 앱 실행에 필수적인 서비스들 초기화
+  await _initializeServices(container);
 
-  // 데이터베이스 서비스 초기화 (첫 액세스만 해도 초기화됨)
-  await DatabaseService().database;
-
-  // API 서비스 초기화 (Dio 클라이언트 미리 생성)
-  final apiService = ApiService();
-  final _ = apiService.dio; // Dio 인스턴스 생성 트리거
-  debugPrint('Main: API 서비스 초기화 완료');
+  // 사용이 끝난 임시 컨테이너는 폐기
+  container.dispose();
 
   runApp(
     const ProviderScope(
+      // 자식 위젯에서 프로바이더를 사용할 수 있도록 ProviderScope로 감싸기
       child: MainApp(),
     ),
   );
+}
+
+/// 앱 실행에 필수적인 서비스들을 초기화하는 함수
+Future<void> _initializeServices(ProviderContainer container) async {
+  // 캐시 서비스 초기화
+  await container.read(cacheServiceProvider).init();
+
+  // 디바이스 서비스 초기화
+  final deviceId = await container.read(deviceServiceProvider).getDeviceId();
+  debugPrint('Main: 앱 시작 - 디바이스 ID: $deviceId');
+
+  // 데이터베이스 서비스 초기화
+  await container.read(databaseServiceProvider).database;
+  debugPrint('Main: 데이터베이스 서비스 초기화 완료');
+
+  // API 서비스 초기화
+  container.read(apiServiceProvider).dio;
+  debugPrint('Main: API 서비스 초기화 완료');
+
+  // 데이터 버전 체크 및 동기화
+  debugPrint('Main: 데이터 버전 동기화 시작...');
+  await container.read(versionRepositoryProvider).checkVersionAndSync();
+  debugPrint('Main: 데이터 버전 동기화 완료.');
 }
 
 class MainApp extends ConsumerWidget {
