@@ -42,16 +42,16 @@ class PuzzlePackCard extends StatelessWidget {
                       child: Container(
                         height: 100,
                         decoration: BoxDecoration(
-                          color: _getIconBackgroundColor(),
+                          color: AppColors.success.withValues(alpha: 0.1),
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(16),
                             topRight: Radius.circular(16),
                           ),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.shield_outlined,
                           size: 32,
-                          color: _getIconColor(),
+                          color: AppColors.success,
                         ),
                       ),
                     ),
@@ -90,11 +90,11 @@ class PuzzlePackCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _getDifficultyColor(),
+                              color: AppColors.success,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              pack.difficulty.label,
+                              "${pack.completedPuzzles / pack.totalPuzzles * 100}%",
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -136,47 +136,5 @@ class PuzzlePackCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  /// 아이콘 배경 색상
-  Color _getIconBackgroundColor() {
-    switch (pack.difficulty) {
-      case Difficulty.easy:
-        return AppColors.success.withValues(alpha: 0.1);
-      case Difficulty.medium:
-        return AppColors.info.withValues(alpha: 0.1);
-      case Difficulty.hard:
-        return AppColors.warning.withValues(alpha: 0.1);
-      case Difficulty.expert:
-        return const Color(0xFFEF4444).withValues(alpha: 0.1);
-    }
-  }
-
-  /// 아이콘 색상
-  Color _getIconColor() {
-    switch (pack.difficulty) {
-      case Difficulty.easy:
-        return AppColors.success;
-      case Difficulty.medium:
-        return AppColors.info;
-      case Difficulty.hard:
-        return AppColors.warning;
-      case Difficulty.expert:
-        return const Color(0xFFEF4444);
-    }
-  }
-
-  /// 난이도별 색상
-  Color _getDifficultyColor() {
-    switch (pack.difficulty) {
-      case Difficulty.easy:
-        return AppColors.success;
-      case Difficulty.medium:
-        return AppColors.info;
-      case Difficulty.hard:
-        return AppColors.warning;
-      case Difficulty.expert:
-        return const Color(0xFFEF4444);
-    }
   }
 }

@@ -3,7 +3,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:chessudoku/data/models/puzzle_pack.dart';
 import 'package:chessudoku/data/models/filter_option.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/enums/filter_type.dart';
 import 'package:chessudoku/domain/intents/filter_intent.dart';
 import 'package:chessudoku/core/di/puzzle_pack_provider.dart';
@@ -134,64 +133,5 @@ class RecommendPackTabContent extends HookConsumerWidget {
   }
 
   /// 샘플 퍼즐팩 데이터
-  static const List<PuzzlePack> _samplePacks = [
-    PuzzlePack(
-      id: '1',
-      name: '체스 마스터',
-      totalPuzzles: 30,
-      difficulty: Difficulty.easy,
-      type: ['체스'],
-      iconAsset: '',
-      completedPuzzles: 0,
-    ),
-    PuzzlePack(
-      id: '2',
-      name: '나이트 투어',
-      totalPuzzles: 15,
-      difficulty: Difficulty.medium,
-      type: ['추천'],
-      isPremium: true,
-      iconAsset: '',
-      completedPuzzles: 0,
-    ),
-    PuzzlePack(
-      id: '3',
-      name: '초보자용',
-      totalPuzzles: 10,
-      difficulty: Difficulty.easy,
-      type: ['초보자'],
-      iconAsset: '',
-      completedPuzzles: 0,
-    ),
-    PuzzlePack(
-      id: '4',
-      name: '킹 어택',
-      totalPuzzles: 20,
-      difficulty: Difficulty.expert,
-      type: ['고급'],
-      isPremium: true,
-      iconAsset: '',
-      completedPuzzles: 0,
-    ),
-    PuzzlePack(
-      id: '5',
-      name: '킹 디펜스',
-      totalPuzzles: 25,
-      difficulty: Difficulty.medium,
-      type: ['고급', '인기'],
-      isPremium: true,
-      iconAsset: '',
-      completedPuzzles: 0,
-    ),
-    PuzzlePack(
-      id: '6',
-      name: '비숍 챌린지',
-      totalPuzzles: 18,
-      difficulty: Difficulty.expert,
-      type: ['고급', '인기'],
-      isPremium: true,
-      iconAsset: '',
-      completedPuzzles: 0,
-    ),
-  ];
+  static const List<PuzzlePack> _samplePacks = [];
 }
