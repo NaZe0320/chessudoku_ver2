@@ -11,13 +11,15 @@ class DatabaseService {
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
   // 데이터베이스 버전
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
 
   // 테이블 이름
   static const String tablePuzzlePacks = 'puzzle_packs';
   // static const String tablePuzzles = 'puzzles';
   static const String tablePuzzleRecords = 'puzzle_records';
   static const String tableDataVersions = 'data_versions';
+  static const String tableLanguagePacks = 'language_packs';
+  static const String tableSettings = 'settings';
 
   // 싱글톤 패턴 적용
   factory DatabaseService() {
@@ -63,6 +65,7 @@ class DatabaseService {
 
     if (oldVersion < 2) {
       await _createDataVersionsTable(db);
+      await _createLanguageTables(db);
     }
     if (oldVersion < 3) {
       await _createPuzzleTables(db);
@@ -73,6 +76,8 @@ class DatabaseService {
     await _createPuzzleRecordsTable(db);
     await _createDataVersionsTable(db);
     await _createPuzzleTables(db);
+    await _createLanguageTables(db);
+    await _createSettingsTable(db);
   }
 
   Future<void> _createPuzzleRecordsTable(Database db) async {
@@ -114,6 +119,39 @@ class DatabaseService {
       )
     ''');
     debugPrint('퍼즐 팩 테이블 생성 완료: $tablePuzzlePacks');
+  }
+
+  Future<void> _createLanguageTables(Database db) async {
+    // 언어팩 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tableLanguagePacks (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        nativeName TEXT NOT NULL,
+        languageCode TEXT NOT NULL,
+        countryCode TEXT NOT NULL,
+        isDownloaded INTEGER NOT NULL DEFAULT 0,
+        isDefault INTEGER NOT NULL DEFAULT 0,
+        version TEXT,
+        lastUpdated INTEGER,
+        downloadSize INTEGER NOT NULL,
+        translations TEXT
+      )
+    ''');
+    debugPrint('언어팩 테이블 생성 완료: $tableLanguagePacks');
+  }
+
+  Future<void> _createSettingsTable(Database db) async {
+    // 설정 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tableSettings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        currentLanguageId TEXT NOT NULL,
+        systemLanguage TEXT,
+        lastUpdated INTEGER NOT NULL
+      )
+    ''');
+    debugPrint('설정 테이블 생성 완료: $tableSettings');
   }
 
   /// 데이터베이스 닫기

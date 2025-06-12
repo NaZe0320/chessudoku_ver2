@@ -1,3 +1,5 @@
+import 'package:chessudoku/core/di/language_pack_provider.dart';
+import 'package:chessudoku/ui/screens/profile/language_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,9 +27,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final translate = ref.watch(translationProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('설정'),
+        title: Text(translate('settings')),
         centerTitle: true,
       ),
       body: CustomScrollView(
@@ -64,7 +68,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                         // 앱 이름
                         Text(
-                          'ChesSudoku',
+                          translate('app_name'),
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -76,7 +80,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                         // 앱 설명
                         Text(
-                          '체스와 스도쿠의 만남',
+                          translate('app_description', '체스와 스도쿠의 만남'),
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Colors.grey[600],
@@ -90,7 +94,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   // 게임 설정 섹션
                   Text(
-                    '게임 설정',
+                    translate('game_settings', '게임 설정'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -103,7 +107,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildSettingTile(
                           context,
                           icon: Icons.volume_up_outlined,
-                          title: '사운드 효과',
+                          title: translate('sound_effects', '사운드 효과'),
                           onTap: () {
                             // 사운드 설정 페이지로 이동
                           },
@@ -112,7 +116,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildSettingTile(
                           context,
                           icon: Icons.vibration_outlined,
-                          title: '진동',
+                          title: translate('vibration', '진동'),
                           onTap: () {
                             // 진동 설정 페이지로 이동
                           },
@@ -121,7 +125,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildSettingTile(
                           context,
                           icon: Icons.palette_outlined,
-                          title: '테마 설정',
+                          title: translate('theme_settings', '테마 설정'),
                           onTap: () {
                             // 테마 설정 페이지로 이동
                           },
@@ -134,7 +138,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   // 일반 설정 섹션
                   Text(
-                    '일반 설정',
+                    translate('general_settings', '일반 설정'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -147,7 +151,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildSettingTile(
                           context,
                           icon: Icons.notifications_outlined,
-                          title: '알림 설정',
+                          title: translate('notification_settings', '알림 설정'),
                           onTap: () {
                             // 알림 설정 페이지로 이동
                           },
@@ -156,16 +160,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildSettingTile(
                           context,
                           icon: Icons.language_outlined,
-                          title: '언어 설정',
+                          title: translate('language_settings', '언어 설정'),
                           onTap: () {
-                            // 언어 설정 페이지로 이동
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const LanguageSettingsScreen(),
+                              ),
+                            );
                           },
                         ),
                         const Divider(height: 1),
                         _buildSettingTile(
                           context,
                           icon: Icons.storage_outlined,
-                          title: '저장소 관리',
+                          title: translate('storage_management', '저장소 관리'),
                           onTap: () {
                             // 저장소 관리 페이지로 이동
                           },
@@ -178,7 +188,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   // 정보 섹션
                   Text(
-                    '정보',
+                    translate('information', '정보'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -191,7 +201,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildSettingTile(
                           context,
                           icon: Icons.help_outline,
-                          title: '도움말',
+                          title: translate('help', '도움말'),
                           onTap: () {
                             // 도움말 페이지로 이동
                           },
@@ -200,7 +210,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildSettingTile(
                           context,
                           icon: Icons.info_outline,
-                          title: '앱 정보',
+                          title: translate('app_info', '앱 정보'),
                           onTap: () {
                             // 앱 정보 페이지로 이동
                           },
@@ -209,7 +219,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildSettingTile(
                           context,
                           icon: Icons.privacy_tip_outlined,
-                          title: '개인정보 처리방침',
+                          title: translate('privacy_policy', '개인정보 처리방침'),
                           onTap: () {
                             // 개인정보 처리방침 페이지로 이동
                           },

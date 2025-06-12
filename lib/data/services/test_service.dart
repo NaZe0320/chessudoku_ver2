@@ -223,6 +223,7 @@ class TestService {
     // Mock 데이터. 실제로는 API 응답을 파싱해야 함.
     final mockServerVersions = {
       "puzzles": 4,
+      "languages": 1,
       "notices": 1,
       "achievements": 2,
     };

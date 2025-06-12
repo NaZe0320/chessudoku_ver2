@@ -1,6 +1,6 @@
 import 'package:chessudoku/data/models/filter_option.dart';
-import 'package:chessudoku/ui/theme/app_text_styles.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
+import 'package:chessudoku/ui/theme/typography.dart';
 import 'package:flutter/material.dart';
 
 class FilterChipWidget<T> extends StatelessWidget {
@@ -41,9 +41,8 @@ class FilterChipWidget<T> extends StatelessWidget {
         ),
         child: Text(
           option.label,
-          style: AppTextStyles.bodyMedium.copyWith(
+          style: AppTypography.body.copyWith(
             color: isSelected ? AppColors.textWhite : AppColors.textPrimary,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
       ),

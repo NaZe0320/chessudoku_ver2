@@ -1,5 +1,4 @@
 import 'package:chessudoku/core/di/providers.dart';
-import 'package:chessudoku/core/utils/loading_manager.dart';
 import 'package:chessudoku/ui/screens/splash/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,7 +55,6 @@ class MainApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'ChesSudoku',
-      navigatorKey: LoadingManager.navigatorKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

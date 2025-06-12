@@ -1,5 +1,6 @@
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/test_service.dart';
+import 'package:chessudoku/domain/repositories/language_repository.dart';
 import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
 import 'package:chessudoku/domain/repositories/version_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -8,14 +9,17 @@ class VersionRepositoryImpl implements VersionRepository {
   final DatabaseService _databaseService;
   final TestService _testService;
   final PuzzleRepository _puzzleRepository;
+  final LanguageRepository _languageRepository;
 
   VersionRepositoryImpl({
     required DatabaseService databaseService,
     required TestService testService,
     required PuzzleRepository puzzleRepository,
+    required LanguageRepository languageRepository,
   })  : _databaseService = databaseService,
         _testService = testService,
-        _puzzleRepository = puzzleRepository;
+        _puzzleRepository = puzzleRepository,
+        _languageRepository = languageRepository;
 
   @override
   Future<void> checkVersionAndSync(
@@ -119,6 +123,11 @@ class VersionRepositoryImpl implements VersionRepository {
         debugPrint('[$dataType] 동기화 중... (구현)');
         await Future.delayed(
             const Duration(milliseconds: 1000)); // Simulate network latency
+        break;
+      case 'languages':
+        await _languageRepository.syncLanguagePacks();
+        debugPrint('[$dataType] 동기화 중... (구현)');
+        await Future.delayed(const Duration(milliseconds: 800));
         break;
       case 'notices':
         // await _noticeRepository.syncNotices();
