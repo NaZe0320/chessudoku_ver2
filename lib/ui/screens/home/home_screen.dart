@@ -157,9 +157,14 @@ class HomeScreen extends HookConsumerWidget {
               ),
             ),
             SliverToBoxAdapter(
-              child: TabContent(
-                tabViews: tabViews,
-                provider: homeTabProvider,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height - 180,
+                ),
+                child: TabContent(
+                  tabViews: tabViews,
+                  provider: homeTabProvider,
+                ),
               ),
             ),
           ],
