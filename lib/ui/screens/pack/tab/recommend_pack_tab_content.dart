@@ -102,23 +102,23 @@ class RecommendPackTabContent extends HookConsumerWidget {
               }).toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(
-          top: 16.0, bottom: 8.0, left: 16.0, right: 16.0),
+      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '추천 팩',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              '추천 팩',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
           FilterChipGroup<String>(
             provider: recommendPackTypeFilterProvider,
-            padding: const EdgeInsets.only(bottom: 16.0),
           ),
           if (filteredPacks.isEmpty)
             const Padding(
@@ -144,20 +144,23 @@ class RecommendPackTabContent extends HookConsumerWidget {
               ),
             )
           else
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: filteredPacks.map((pack) {
-                return SizedBox(
-                  width: (MediaQuery.of(context).size.width - 44) / 2,
-                  child: PuzzlePackCard(
-                    pack: pack,
-                    onTap: () {
-                      debugPrint('팩 선택: ${pack.name}');
-                    },
-                  ),
-                );
-              }).toList(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: filteredPacks.map((pack) {
+                  return SizedBox(
+                    width: (MediaQuery.of(context).size.width - 44) / 2,
+                    child: PuzzlePackCard(
+                      pack: pack,
+                      onTap: () {
+                        debugPrint('팩 선택: ${pack.name}');
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
         ],
       ),
