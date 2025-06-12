@@ -1,4 +1,5 @@
 import 'package:chessudoku/core/di/tab_provider.dart';
+import 'package:chessudoku/core/di/puzzle_pack_provider.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/app_bar_icon_button.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/chess_pattern.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/stat_card.dart';
@@ -22,6 +23,10 @@ class PackScreen extends HookConsumerWidget {
     final scrollController = useScrollController();
     final isScrolled = useState(false);
 
+    // 퍼즐 팩 상태 관리
+    final puzzlePackState = ref.watch(puzzlePackNotifierProvider);
+    final puzzlePackNotifier = ref.read(puzzlePackNotifierProvider.notifier);
+
     // final List<String> tabs = ['추천', '난이도별', '테마별', '진행 중'];
     final List<Widget> tabViews = [
       const RecommendPackTabContent(),
@@ -29,6 +34,14 @@ class PackScreen extends HookConsumerWidget {
       // const ThemePackTabContent(),
       // const ProgressPackTabContent(),
     ];
+
+    // 컴포넌트 마운트 시 퍼즐 팩 데이터 로드
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        puzzlePackNotifier.loadPuzzlePacks();
+      });
+      return null;
+    }, []);
 
     void listenToScrollChange() {
       if (scrollController.offset >= 50) {
@@ -42,6 +55,15 @@ class PackScreen extends HookConsumerWidget {
       scrollController.addListener(listenToScrollChange);
       return () => scrollController.removeListener(listenToScrollChange);
     }, [scrollController]);
+
+    // 통계 계산
+    final totalPacks = puzzlePackState.puzzlePacks.length;
+    final completedPacks =
+        puzzlePackState.puzzlePacks.where((pack) => pack.isCompleted).length;
+    final completedPuzzles = puzzlePackState.puzzlePacks
+        .fold<int>(0, (sum, pack) => sum + pack.completedPuzzles);
+    final progressRate =
+        totalPacks > 0 ? (completedPacks / totalPacks * 100).round() : 0;
 
     return Stack(
       children: [
@@ -100,10 +122,10 @@ class PackScreen extends HookConsumerWidget {
                         child: AnimatedOpacity(
                           opacity: isScrolled.value ? 0.0 : 1.0,
                           duration: const Duration(milliseconds: 200),
-                          child: const Column(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 "닉네임",
                                 style: TextStyle(
                                   color: Colors.white,
@@ -111,25 +133,68 @@ class PackScreen extends HookConsumerWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  StatCard(
-                                      title: "완료한 팩",
-                                      value: "3/12",
-                                      icon: Icons.today_outlined),
-                                  StatCard(
-                                      title: "팩 진행률",
-                                      value: "43%",
-                                      icon: Icons.bar_chart_outlined),
-                                  StatCard(
-                                      title: "해결한 퍼즐",
-                                      value: "152",
-                                      icon: Icons.star_outline),
-                                ],
-                              ),
+                              const SizedBox(height: 8),
+                              puzzlePackState.isLoading
+                                  ? const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          "통계 로딩 중...",
+                                          style:
+                                              TextStyle(color: Colors.white70),
+                                        ),
+                                      ],
+                                    )
+                                  : puzzlePackState.errorMessage != null
+                                      ? const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.error_outline,
+                                                color: Colors.white70,
+                                                size: 20),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              "통계 로딩 실패",
+                                              style: TextStyle(
+                                                  color: Colors.white70),
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            StatCard(
+                                              title: "완료한 팩",
+                                              value:
+                                                  "$completedPacks/$totalPacks",
+                                              icon: Icons.today_outlined,
+                                            ),
+                                            StatCard(
+                                              title: "팩 진행률",
+                                              value: "$progressRate%",
+                                              icon: Icons.bar_chart_outlined,
+                                            ),
+                                            StatCard(
+                                              title: "해결한 퍼즐",
+                                              value: "$completedPuzzles",
+                                              icon: Icons.star_outline,
+                                            ),
+                                          ],
+                                        ),
                             ],
                           ),
                         ),
