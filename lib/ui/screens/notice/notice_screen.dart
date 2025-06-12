@@ -1,33 +1,66 @@
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import '../../common/widgets/app_bar/chess_pattern.dart';
 import '../../common/widgets/app_bar/app_bar_icon_button.dart';
 
-class NoticeScreen extends StatefulWidget {
+class NoticeScreen extends HookConsumerWidget {
   const NoticeScreen({super.key});
 
   @override
-  State<NoticeScreen> createState() => _NoticeScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tabController = useTabController(initialLength: 4);
 
-class _NoticeScreenState extends State<NoticeScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+    Widget buildTab(String title, String count, int index) {
+      return AnimatedBuilder(
+        animation: tabController,
+        builder: (context, child) {
+          final isCurrentSelected = tabController.index == index;
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isCurrentSelected
+                  ? const Color(0xFF1E40AF)
+                  : Colors.grey[200],
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: isCurrentSelected ? Colors.white : Colors.grey[600],
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    count,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
@@ -149,7 +182,7 @@ class _NoticeScreenState extends State<NoticeScreen>
           Container(
             color: Colors.white,
             child: TabBar(
-              controller: _tabController,
+              controller: tabController,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.grey[600],
               indicatorColor: Colors.transparent,
@@ -157,10 +190,10 @@ class _NoticeScreenState extends State<NoticeScreen>
               tabAlignment: TabAlignment.start,
               labelPadding: const EdgeInsets.symmetric(horizontal: 4),
               tabs: [
-                Tab(child: _buildTab('전체', '13', 0)),
-                Tab(child: _buildTab('친구', '3', 1)),
-                Tab(child: _buildTab('게임', '4', 2)),
-                Tab(child: _buildTab('시스템', '5', 3)),
+                Tab(child: buildTab('전체', '13', 0)),
+                Tab(child: buildTab('친구', '3', 1)),
+                Tab(child: buildTab('게임', '4', 2)),
+                Tab(child: buildTab('시스템', '5', 3)),
               ],
             ),
           ),
@@ -168,7 +201,7 @@ class _NoticeScreenState extends State<NoticeScreen>
           // 탭뷰 내용
           Expanded(
             child: TabBarView(
-              controller: _tabController,
+              controller: tabController,
               children: const [
                 Center(child: Text('전체 알림')),
                 Center(child: Text('친구 알림')),
@@ -179,53 +212,6 @@ class _NoticeScreenState extends State<NoticeScreen>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTab(String title, String count, int index) {
-    return AnimatedBuilder(
-      animation: _tabController,
-      builder: (context, child) {
-        final isCurrentSelected = _tabController.index == index;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color:
-                isCurrentSelected ? const Color(0xFF1E40AF) : Colors.grey[200],
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: isCurrentSelected ? Colors.white : Colors.grey[600],
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  count,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

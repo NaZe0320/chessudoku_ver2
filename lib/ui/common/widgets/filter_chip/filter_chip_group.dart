@@ -75,17 +75,21 @@ class FilterChipGroup<T> extends ConsumerWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: displayOptions
-              .map((option) => Padding(
-                    padding: EdgeInsets.only(
-                      right: spacing,
-                    ),
-                    child: FilterChipWidget(
-                        option: option,
-                        onTap: () => filterNotifier.handleIntent(
-                            SelectFilterIntent(optionId: option.id))),
-                  ))
-              .toList(),
+          children: [
+            const SizedBox(width: 16),
+            ...displayOptions
+                .map((option) => Padding(
+                      padding: EdgeInsets.only(
+                        right: spacing,
+                      ),
+                      child: FilterChipWidget(
+                          option: option,
+                          onTap: () => filterNotifier.handleIntent(
+                              SelectFilterIntent(optionId: option.id))),
+                    ))
+                .toList(),
+            const SizedBox(width: 8),
+          ],
         ),
       ),
     );
