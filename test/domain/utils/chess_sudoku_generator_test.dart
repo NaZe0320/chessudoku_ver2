@@ -285,47 +285,6 @@ void _printBoard(List<List<CellContent>> board) {
   }
 }
 
-// 풀이 실패 분석용 헬퍼 함수들
-List<int> _getRowNumbers(List<List<CellContent>> board, int row) {
-  final numbers = <int>[];
-
-  for (int j = 0; j < 9; j++) {
-    if (board[row][j].hasNumber) {
-      numbers.add(board[row][j].number!);
-    }
-  }
-
-  return numbers;
-}
-
-List<int> _getColNumbers(List<List<CellContent>> board, int col) {
-  final numbers = <int>[];
-
-  for (int i = 0; i < 9; i++) {
-    if (board[i][col].hasNumber) {
-      numbers.add(board[i][col].number!);
-    }
-  }
-
-  return numbers;
-}
-
-List<int> _getBoxNumbers(List<List<CellContent>> board, int row, int col) {
-  final numbers = <int>[];
-  final boxRow = (row ~/ 3) * 3;
-  final boxCol = (col ~/ 3) * 3;
-
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      if (board[boxRow + i][boxCol + j].hasNumber) {
-        numbers.add(board[boxRow + i][boxCol + j].number!);
-      }
-    }
-  }
-
-  return numbers;
-}
-
 // 두 보드가 완전히 동일한지 확인하는 함수
 bool _boardsEqual(
     List<List<CellContent>> board1, List<List<CellContent>> board2) {
