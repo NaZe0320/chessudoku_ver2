@@ -68,8 +68,18 @@ class SplashScreen extends HookConsumerWidget {
 
     // syncNotifierProvider를 listen하여 상태 변경 시 UI를 다시 빌드하고,
     // 동기화 완료 시 화면을 전환합니다.
-    ref.listen(syncNotifierProvider, (previous, next) {
+    ref.listen(syncNotifierProvider, (previous, next) async {
       if (next.isCompleted) {
+        // 동기화 완료 후 저장된 언어 설정 복원
+        try {
+          await ref
+              .read(languagePackNotifierProvider.notifier)
+              .restoreLanguageSettings();
+          debugPrint('[SplashScreen] 언어 설정 복원 완료');
+        } catch (e) {
+          debugPrint('[SplashScreen] 언어 설정 복원 실패: $e');
+        }
+
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const MainScreen()),
           (route) => false,

@@ -167,4 +167,50 @@ class LanguagePackNotifier extends StateNotifier<LanguagePackState> {
 
   /// 현재 언어 코드
   String get currentLanguageCode => state.currentLanguageCode;
+
+  /// 앱 시작 시 저장된 언어 설정 복원
+  Future<void> restoreLanguageSettings() async {
+    try {
+      state = state.copyWith(isLoading: true, errorMessage: null);
+
+      debugPrint('[LanguagePackNotifier] 저장된 언어 설정 복원 시작');
+
+      // 병렬로 데이터 가져오기
+      final futures = await Future.wait([
+        _languageRepository.getAvailableLanguagePacks(),
+        _languageRepository.getDownloadedLanguagePacks(),
+        _languageRepository.getCurrentLanguage(),
+      ]);
+
+      final availablePacks = futures[0] as List<LanguagePack>;
+      final downloadedPacks = futures[1] as List<LanguagePack>;
+      final currentLanguage = futures[2] as LanguagePack?;
+
+      // 다운로드 상태를 반영한 언어팩 목록 생성
+      final allPacks = availablePacks.map((pack) {
+        final isDownloaded =
+            downloadedPacks.any((downloaded) => downloaded.id == pack.id);
+        return pack.copyWith(isDownloaded: isDownloaded);
+      }).toList();
+
+      state = state.copyWith(
+        languagePacks: allPacks,
+        currentLanguagePack: currentLanguage,
+        isLoading: false,
+      );
+
+      if (currentLanguage != null) {
+        debugPrint(
+            '[LanguagePackNotifier] 언어 설정 복원 완료: ${currentLanguage.nativeName}');
+      } else {
+        debugPrint('[LanguagePackNotifier] 저장된 언어 설정이 없습니다.');
+      }
+    } catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: error.toString(),
+      );
+      debugPrint('[LanguagePackNotifier] 언어 설정 복원 실패: $error');
+    }
+  }
 }
