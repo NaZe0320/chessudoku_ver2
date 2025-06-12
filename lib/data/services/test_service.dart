@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/test_model.dart';
 import '../mock/test_mock_data.dart';
+import 'package:chessudoku/data/mock/puzzle_mock_data.dart';
 
 /// 테스트 데이터 관련 API 서비스
 class TestService {
@@ -221,11 +222,17 @@ class TestService {
 
     // Mock 데이터. 실제로는 API 응답을 파싱해야 함.
     final mockServerVersions = {
-      "puzzles": 3,
+      "puzzles": 4,
       "notices": 1,
       "achievements": 2,
     };
 
     return mockServerVersions;
+  }
+
+  /// 버전 기반으로 퍼즐 데이터 가져오기 (Mock)
+  Future<Map<String, dynamic>> getPuzzleDataByVersion(int version) async {
+    debugPrint('[TestService] 퍼즐 데이터 조회 (Mock) - 버전: $version');
+    return PuzzleMockData.getPuzzleDataByVersion(version);
   }
 }

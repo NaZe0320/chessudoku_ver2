@@ -1,17 +1,21 @@
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/test_service.dart';
+import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
 import 'package:chessudoku/domain/repositories/version_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class VersionRepositoryImpl implements VersionRepository {
   final DatabaseService _databaseService;
   final TestService _testService;
+  final PuzzleRepository _puzzleRepository;
 
   VersionRepositoryImpl({
     required DatabaseService databaseService,
     required TestService testService,
+    required PuzzleRepository puzzleRepository,
   })  : _databaseService = databaseService,
-        _testService = testService;
+        _testService = testService,
+        _puzzleRepository = puzzleRepository;
 
   @override
   Future<void> checkVersionAndSync(
@@ -111,8 +115,8 @@ class VersionRepositoryImpl implements VersionRepository {
     // 예를 들어, PuzzleRepository, NoticeRepository 등을 호출
     switch (dataType) {
       case 'puzzles':
-        // await _puzzleRepository.syncPuzzles();
-        debugPrint('[$dataType] 동기화 중... (구현 필요)');
+        await _puzzleRepository.syncPuzzles(version);
+        debugPrint('[$dataType] 동기화 중... (구현)');
         await Future.delayed(
             const Duration(milliseconds: 1000)); // Simulate network latency
         break;

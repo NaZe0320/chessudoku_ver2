@@ -11,9 +11,11 @@ class DatabaseService {
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
   // 데이터베이스 버전
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 1;
 
   // 테이블 이름
+  static const String tablePuzzlePacks = 'puzzle_packs';
+  // static const String tablePuzzles = 'puzzles';
   static const String tablePuzzleRecords = 'puzzle_records';
   static const String tableDataVersions = 'data_versions';
 
@@ -52,6 +54,28 @@ class DatabaseService {
   /// 데이터베이스 생성
   Future<void> _createDB(Database db, int version) async {
     debugPrint('새 데이터베이스 생성 중... 버전: $version');
+    await _createTables(db);
+  }
+
+  /// 데이터베이스 업그레이드
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    debugPrint('데이터베이스 업그레이드: $oldVersion -> $newVersion');
+
+    if (oldVersion < 2) {
+      await _createDataVersionsTable(db);
+    }
+    if (oldVersion < 3) {
+      await _createPuzzleTables(db);
+    }
+  }
+
+  Future<void> _createTables(Database db) async {
+    await _createPuzzleRecordsTable(db);
+    await _createDataVersionsTable(db);
+    await _createPuzzleTables(db);
+  }
+
+  Future<void> _createPuzzleRecordsTable(Database db) async {
     // 퍼즐 기록 테이블 생성
     await db.execute('''
       CREATE TABLE $tablePuzzleRecords (
@@ -63,7 +87,9 @@ class DatabaseService {
       )
     ''');
     debugPrint('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
+  }
 
+  Future<void> _createDataVersionsTable(Database db) async {
     // 데이터 버전 관리 테이블 생성
     await db.execute('''
       CREATE TABLE $tableDataVersions (
@@ -75,27 +101,19 @@ class DatabaseService {
     debugPrint('데이터 버전 테이블 생성 완료: $tableDataVersions');
   }
 
-  /// 데이터베이스 업그레이드
-  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    debugPrint('데이터베이스 업그레이드: $oldVersion -> $newVersion');
-
-    // 버전별 업그레이드 로직
-    if (oldVersion < 2) {
-      // 버전 2에서 추가된 data_versions 테이블 생성
-      await db.execute('''
-        CREATE TABLE $tableDataVersions (
-          dataType TEXT PRIMARY KEY,
-          version INTEGER NOT NULL,
-          updatedAt TEXT NOT NULL
-        )
-      ''');
-      debugPrint('데이터 버전 테이블 생성 완료 (업그레이드): $tableDataVersions');
-    }
-
-    if (oldVersion < 3) {
-      // 예: 컬럼 추가
-      // await db.execute('ALTER TABLE $tablePuzzleRecords ADD COLUMN newColumn TEXT');
-    }
+  Future<void> _createPuzzleTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE $tablePuzzlePacks (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        totalPuzzles INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        isPremium INTEGER NOT NULL,
+        iconAsset TEXT NOT NULL,
+        puzzleIds TEXT NOT NULL
+      )
+    ''');
+    debugPrint('퍼즐 팩 테이블 생성 완료: $tablePuzzlePacks');
   }
 
   /// 데이터베이스 닫기

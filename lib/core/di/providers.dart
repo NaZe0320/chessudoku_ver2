@@ -10,6 +10,8 @@ import '../../data/services/device_service.dart';
 import '../../domain/repositories/version_repository.dart';
 import '../../domain/notifiers/sync_notifier.dart';
 import '../../domain/states/sync_state.dart';
+import '../../data/repositories/puzzle_repository_impl.dart';
+import '../../domain/repositories/puzzle_repository.dart';
 
 /// TestService Provider
 final testServiceProvider = Provider<TestService>((ref) {
@@ -36,15 +38,27 @@ final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
 });
 
+/// PuzzleRepository Provider
+final puzzleRepositoryProvider = Provider<PuzzleRepository>((ref) {
+  final databaseService = ref.watch(databaseServiceProvider);
+  final testService = ref.watch(testServiceProvider);
+  return PuzzleRepositoryImpl(
+    databaseService: databaseService,
+    testService: testService,
+  );
+});
+
 /// VersionRepository Provider
 final versionRepositoryProvider = Provider<VersionRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
   final testService = ref.watch(testServiceProvider);
+  final puzzleRepository = ref.watch(puzzleRepositoryProvider);
   // final apiService = ref.watch(apiServiceProvider); // 실제 서버 연동 시 TestService 대신 사용
 
   return VersionRepositoryImpl(
     databaseService: databaseService,
     testService: testService,
+    puzzleRepository: puzzleRepository,
   );
 });
 

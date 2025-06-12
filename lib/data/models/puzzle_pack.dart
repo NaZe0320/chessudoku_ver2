@@ -1,4 +1,3 @@
-
 /// 퍼즐팩 정보를 담는 모델 클래스
 class PuzzlePack {
   final String id;
@@ -20,6 +19,34 @@ class PuzzlePack {
     this.completedPuzzles = 0,
     required this.puzzleIds,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'totalPuzzles': totalPuzzles,
+      'type': type.join(','),
+      'isPremium': isPremium ? 1 : 0,
+      'iconAsset': iconAsset,
+      'puzzleIds': puzzleIds.map((e) => e.toString()).join(','),
+    };
+  }
+
+  factory PuzzlePack.fromMap(Map<String, dynamic> map) {
+    return PuzzlePack(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      totalPuzzles: map['totalPuzzles'] as int,
+      type: (map['type'] as String).split(','),
+      isPremium: (map['isPremium'] as int) == 1,
+      iconAsset: map['iconAsset'] as String,
+      puzzleIds: (map['puzzleIds'] as String)
+          .split(',')
+          .map((e) => int.tryParse(e) ?? 0)
+          .toList(),
+      // completedPuzzles will be calculated dynamically
+    );
+  }
 
   /// 완료율 계산 (0.0 ~ 1.0)
   double get completionRate =>
