@@ -4,6 +4,7 @@ import 'package:chessudoku/ui/screens/pack/pack_screen.dart';
 import 'package:chessudoku/ui/screens/profile/profile_screen.dart';
 import 'package:chessudoku/ui/screens/puzzle/create_puzzle_bottom_sheet.dart';
 import 'package:chessudoku/ui/screens/test/test_page.dart';
+import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -28,6 +29,7 @@ class MainScreen extends HookConsumerWidget {
     ];
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // 현재 선택된 인덱스에 따라 화면 전환 (하단 패딩 추가)

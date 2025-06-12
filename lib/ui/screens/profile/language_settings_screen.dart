@@ -291,8 +291,11 @@ class LanguageSettingsScreen extends HookConsumerWidget {
               const SizedBox(height: 24),
             ],
 
-            // 다운로드된 언어팩 섹션
-            if (languageState.downloadedPacks.isNotEmpty) ...[
+            // 다운로드된 언어팩 섹션 (현재 언어팩 제외)
+            if (languageState.downloadedPacks
+                .where(
+                    (pack) => pack.id != languageState.currentLanguagePack?.id)
+                .isNotEmpty) ...[
               Text(
                 translate('downloaded_languages'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
