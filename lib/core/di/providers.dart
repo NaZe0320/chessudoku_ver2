@@ -8,6 +8,8 @@ import '../../data/services/cache_service.dart';
 import '../../data/services/database_service.dart';
 import '../../data/services/device_service.dart';
 import '../../domain/repositories/version_repository.dart';
+import '../../domain/notifiers/sync_notifier.dart';
+import '../../domain/states/sync_state.dart';
 
 /// TestService Provider
 final testServiceProvider = Provider<TestService>((ref) {
@@ -44,6 +46,13 @@ final versionRepositoryProvider = Provider<VersionRepository>((ref) {
     databaseService: databaseService,
     testService: testService,
   );
+});
+
+/// SyncNotifier Provider
+final syncNotifierProvider =
+    StateNotifierProvider<SyncNotifier, SyncState>((ref) {
+  final versionRepository = ref.watch(versionRepositoryProvider);
+  return SyncNotifier(versionRepository: versionRepository);
 });
 
 /// TestRepository Provider

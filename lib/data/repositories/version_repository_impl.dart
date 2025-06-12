@@ -14,29 +14,45 @@ class VersionRepositoryImpl implements VersionRepository {
         _testService = testService;
 
   @override
-  Future<void> checkVersionAndSync() async {
+  Future<void> checkVersionAndSync(
+      {void Function(double progress, String message)? onProgress}) async {
+    onProgress?.call(0.0, '데이터 버전 확인 중...');
     debugPrint('[VersionRepository] 데이터 버전 체크 및 동기화 시작...');
 
     try {
       // 1. 서버로부터 최신 데이터 버전 정보 가져오기 (현재는 Mock 데이터 사용)
+      onProgress?.call(0.1, '서버 버전 정보 확인 중...');
       final serverVersions = await _testService.getServerDataVersions();
       debugPrint('[VersionRepository] 서버 버전 정보: $serverVersions');
 
+      final dataTypes = serverVersions.keys.toList();
+      final totalSteps = dataTypes.length * 2; // 각 타입별 (체크 + 동기화)
+      int currentStep = 0;
+
       // 2. 각 데이터 타입에 대해 버전 비교 및 동기화
-      for (var entry in serverVersions.entries) {
-        final dataType = entry.key;
-        final serverVersion = entry.value;
+      for (int i = 0; i < dataTypes.length; i++) {
+        final dataType = dataTypes[i];
+        final serverVersion = serverVersions[dataType]!;
 
         // 로컬 데이터 버전 조회
+        onProgress?.call(
+          0.1 + (currentStep / totalSteps) * 0.8,
+          '$dataType 데이터 버전 확인 중...',
+        );
         final localVersion = await _getDataVersion(dataType);
         debugPrint(
             '[VersionRepository] 로컬 $dataType 버전: $localVersion, 서버 버전: $serverVersion');
+        currentStep++;
 
         if (serverVersion > localVersion) {
           debugPrint(
               '[VersionRepository] 새로운 $dataType 데이터($serverVersion) 발견. 동기화를 시작합니다.');
 
           // 3. 데이터 동기화 로직 호출
+          onProgress?.call(
+            0.1 + (currentStep / totalSteps) * 0.8,
+            '$dataType 데이터 다운로드 중...',
+          );
           await _syncData(dataType, serverVersion);
 
           // 4. 동기화 완료 후 로컬 데이터 버전 업데이트
@@ -46,11 +62,16 @@ class VersionRepositoryImpl implements VersionRepository {
         } else {
           debugPrint('[VersionRepository] $dataType 데이터는 이미 최신 버전입니다.');
         }
+        currentStep++;
       }
 
+      onProgress?.call(0.9, '동기화 완료!');
       debugPrint('[VersionRepository] 데이터 버전 체크 및 동기화 완료.');
+      await Future.delayed(const Duration(milliseconds: 300));
+      onProgress?.call(1.0, '앱을 시작합니다.');
     } catch (e) {
       debugPrint('[VersionRepository] 버전 체크 중 오류 발생: $e');
+      onProgress?.call(1.0, '오류가 발생했습니다.');
       // 오류 처리 로직 (예: 사용자에게 알림 등)
     }
   }

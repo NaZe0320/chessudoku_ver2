@@ -1,6 +1,6 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/utils/loading_manager.dart';
-import 'package:chessudoku/ui/screens/main/main_screen.dart';
+import 'package:chessudoku/ui/screens/splash/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -43,10 +43,10 @@ Future<void> _initializeServices(ProviderContainer container) async {
   container.read(apiServiceProvider).dio;
   debugPrint('Main: API 서비스 초기화 완료');
 
-  // 데이터 버전 체크 및 동기화
-  debugPrint('Main: 데이터 버전 동기화 시작...');
-  await container.read(versionRepositoryProvider).checkVersionAndSync();
-  debugPrint('Main: 데이터 버전 동기화 완료.');
+  // 데이터 버전 체크 및 동기화 -> SplashScreen으로 로직 이동
+  // debugPrint('Main: 데이터 버전 동기화 시작...');
+  // await container.read(versionRepositoryProvider).checkVersionAndSync();
+  // debugPrint('Main: 데이터 버전 동기화 완료.');
 }
 
 class MainApp extends ConsumerWidget {
@@ -61,7 +61,7 @@ class MainApp extends ConsumerWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MainScreen(),
+      home: const SplashScreen(),
     );
   }
 }
