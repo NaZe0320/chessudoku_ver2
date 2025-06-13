@@ -3,7 +3,7 @@ import 'package:chessudoku/ui/screens/home/home_screen.dart';
 import 'package:chessudoku/ui/screens/pack/pack_screen.dart';
 import 'package:chessudoku/ui/screens/profile/profile_screen.dart';
 import 'package:chessudoku/ui/screens/puzzle/create_puzzle_bottom_sheet.dart';
-import 'package:chessudoku/ui/screens/test/test_page.dart';
+import 'package:chessudoku/ui/screens/friends/friends_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +26,7 @@ class MainScreen extends HookConsumerWidget {
     final screens = [
       const HomeScreen(),
       const PackScreen(),
-      const TestPage(),
+      const FriendsScreen(),
       const ProfileScreen(),
     ];
 
