@@ -1,5 +1,6 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/ui/common/widgets/app_bar/stat_card.dart';
+import 'package:chessudoku/ui/common/widgets/quick_play_section.dart';
 import 'package:chessudoku/ui/screens/profile/settings_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
@@ -132,6 +133,11 @@ class MainScreen extends HookConsumerWidget {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 32),
+
+                  // 빠른 플레이 섹션
+                  const QuickPlaySection(),
 
                   const SizedBox(height: 32),
 
