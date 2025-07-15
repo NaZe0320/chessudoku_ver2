@@ -1,11 +1,22 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/ui/screens/splash/splash_screen.dart';
+  import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   // Flutter 엔진 초기화
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 상태바 스타일 설정 (앱 전체에 적용)
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: AppColors.primary, // 상태바 배경색
+      statusBarIconBrightness: Brightness.light, // 아이콘 밝기 (어두운 배경에 밝은 아이콘)
+      statusBarBrightness: Brightness.dark, // iOS용 설정
+    ),
+  );
 
   // --- Dependency Injection Container 생성 ---
   // 앱 실행 전 초기화가 필요한 프로바이더들을 위해 임시 컨테이너 생성

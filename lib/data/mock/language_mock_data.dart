@@ -14,7 +14,7 @@ class LanguageMockData {
       lastUpdated: DateTime.now(),
       downloadSize: 950000, // 950KB
       translations: {
-        'app_name': 'CheSudoku',
+        'app_name': 'ChesSudoku',
         'loading': 'Loading...',
         'downloading': 'Downloading...',
         'download_complete': 'Download Complete',

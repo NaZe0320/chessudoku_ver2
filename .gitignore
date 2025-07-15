@@ -48,3 +48,7 @@ android/app/.cxx/Debug/fx6g6m34/x86/configure_fingerprint.bin
 android/app/.cxx/Debug/fx6g6m34/x86_64/configure_fingerprint.bin
 lib/firebase_options.dart
 README_FIREBASE_SETUP.md
+CODEBASE.md
+rule.md
+.cursorrules
+.gitignore
