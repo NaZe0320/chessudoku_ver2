@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/test_model.dart';
 import '../mock/test_mock_data.dart';
-import 'package:chessudoku/data/mock/puzzle_mock_data.dart';
 
 /// 테스트 데이터 관련 API 서비스
 class TestService {
@@ -214,26 +213,20 @@ class TestService {
     }
   }
 
-  /// 서버의 데이터 버전 정보 가져오기 (Mock)
+  /// 서버에서 데이터 버전 정보 가져오기 (Mock)
   Future<Map<String, int>> getServerDataVersions() async {
-    debugPrint('[TestService] 서버 데이터 버전 정보 조회 (Mock)');
+    debugPrint('[TestService] 서버 데이터 버전 조회 (Mock)');
+
     // 실제 API 호출처럼 약간의 지연 시간 추가
     await Future.delayed(const Duration(milliseconds: 200));
 
     // Mock 데이터. 실제로는 API 응답을 파싱해야 함.
     final mockServerVersions = {
-      "puzzles": 4,
       "languages": 1,
       "notices": 1,
       "achievements": 2,
     };
 
     return mockServerVersions;
-  }
-
-  /// 버전 기반으로 퍼즐 데이터 가져오기 (Mock)
-  Future<Map<String, dynamic>> getPuzzleDataByVersion(int version) async {
-    debugPrint('[TestService] 퍼즐 데이터 조회 (Mock) - 버전: $version');
-    return PuzzleMockData.getPuzzleDataByVersion(version);
   }
 }

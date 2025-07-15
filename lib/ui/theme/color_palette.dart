@@ -7,7 +7,7 @@ class AppColors {
   static const secondary = Color(0xFFE8EDF5); // 라이트 블루 그레이
   static const accent = Color(0xFFFFC107); // 골드/앰버
   static const accentLight = Color(0xFFFFD54F); // 라이트 골드
-  
+
   // 기능적 컬러
   static const info = Color(0xFF0F76C2); // 정보/알림용 블루
   static const infoLight = Color(0xFFE1F0FD); // 라이트 블루 배경
@@ -15,7 +15,7 @@ class AppColors {
   static const successLight = Color(0xFFE8F5F3); // 성공 배경
   static const warning = Color(0xFFFFC107); // 주의/경고
   static const warningLight = Color(0xFFFFF8E1); // 경고 배경
-  
+
   // 중립 컬러
   static const background = Color(0xFFF8F9FC); // 메인 배경
   static const surface = Color(0xFFFFFFFF); // 카드 표면
@@ -24,6 +24,17 @@ class AppColors {
   static const textSecondary = Color(0xFF4B5563); // 보조 텍스트
   static const textTertiary = Color(0xFF6B7280); // 더 약한 텍스트
   static const textWhite = Color(0xFFFFFFFF); // 텍스트 화이트
-  
+
   static const divider = Color(0xFFE5E7EB); // 구분선
+
+  // 뉴트럴 컬러 (100~900)
+  static const neutral100 = Color(0xFFF3F4F6); // 가장 밝은 뉴트럴
+  static const neutral200 = Color(0xFFE5E7EB);
+  static const neutral300 = Color(0xFFD1D5DB);
+  static const neutral400 = Color(0xFF9CA3AF);
+  static const neutral500 = Color(0xFF6B7280);
+  static const neutral600 = Color(0xFF4B5563);
+  static const neutral700 = Color(0xFF374151);
+  static const neutral800 = Color(0xFF1F2937);
+  static const neutral900 = Color(0xFF111827); // 가장 어두운 뉴트럴
 }

@@ -1,24 +1,20 @@
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/test_service.dart';
 import 'package:chessudoku/domain/repositories/language_repository.dart';
-import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
 import 'package:chessudoku/domain/repositories/version_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class VersionRepositoryImpl implements VersionRepository {
   final DatabaseService _databaseService;
   final TestService _testService;
-  final PuzzleRepository _puzzleRepository;
   final LanguageRepository _languageRepository;
 
   VersionRepositoryImpl({
     required DatabaseService databaseService,
     required TestService testService,
-    required PuzzleRepository puzzleRepository,
     required LanguageRepository languageRepository,
   })  : _databaseService = databaseService,
         _testService = testService,
-        _puzzleRepository = puzzleRepository,
         _languageRepository = languageRepository;
 
   @override
@@ -116,11 +112,11 @@ class VersionRepositoryImpl implements VersionRepository {
   /// 데이터 타입별 동기화 로직
   Future<void> _syncData(String dataType, int version) async {
     // TODO: 각 데이터 타입에 맞는 Repository를 통해 실제 데이터 동기화 구현
-    // 예를 들어, PuzzleRepository, NoticeRepository 등을 호출
+    // 예를 들어, NoticeRepository 등을 호출
     switch (dataType) {
       case 'puzzles':
-        await _puzzleRepository.syncPuzzles(version);
-        debugPrint('[$dataType] 동기화 중... (구현)');
+        // 퍼즐 관련 동기화는 제거됨
+        debugPrint('[$dataType] 동기화 건너뜀 (퍼즐 기능 제거됨)');
         await Future.delayed(
             const Duration(milliseconds: 1000)); // Simulate network latency
         break;

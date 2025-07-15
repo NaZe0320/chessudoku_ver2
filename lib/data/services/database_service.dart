@@ -14,9 +14,6 @@ class DatabaseService {
   static const int _dbVersion = 2;
 
   // 테이블 이름
-  static const String tablePuzzlePacks = 'puzzle_packs';
-  // static const String tablePuzzles = 'puzzles';
-  static const String tablePuzzleRecords = 'puzzle_records';
   static const String tableDataVersions = 'data_versions';
   static const String tableLanguagePacks = 'language_packs';
   static const String tableSettings = 'settings';
@@ -48,7 +45,7 @@ class DatabaseService {
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
       onOpen: (db) {
-        debugPrint('데이터베이스 열림: ${db.path}, 테이블: $tablePuzzleRecords');
+        debugPrint('데이터베이스 열림: ${db.path}');
       },
     );
   }
@@ -67,31 +64,12 @@ class DatabaseService {
       await _createDataVersionsTable(db);
       await _createLanguageTables(db);
     }
-    if (oldVersion < 3) {
-      await _createPuzzleTables(db);
-    }
   }
 
   Future<void> _createTables(Database db) async {
-    await _createPuzzleRecordsTable(db);
     await _createDataVersionsTable(db);
-    await _createPuzzleTables(db);
     await _createLanguageTables(db);
     await _createSettingsTable(db);
-  }
-
-  Future<void> _createPuzzleRecordsTable(Database db) async {
-    // 퍼즐 기록 테이블 생성
-    await db.execute('''
-      CREATE TABLE $tablePuzzleRecords (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        difficulty TEXT NOT NULL,
-        boardData TEXT NOT NULL,
-        completionTime INTEGER NOT NULL,
-        createdAt TEXT NOT NULL
-      )
-    ''');
-    debugPrint('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
   }
 
   Future<void> _createDataVersionsTable(Database db) async {
@@ -104,21 +82,6 @@ class DatabaseService {
       )
     ''');
     debugPrint('데이터 버전 테이블 생성 완료: $tableDataVersions');
-  }
-
-  Future<void> _createPuzzleTables(Database db) async {
-    await db.execute('''
-      CREATE TABLE $tablePuzzlePacks (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        totalPuzzles INTEGER NOT NULL,
-        type TEXT NOT NULL,
-        isPremium INTEGER NOT NULL,
-        iconAsset TEXT NOT NULL,
-        puzzleIds TEXT NOT NULL
-      )
-    ''');
-    debugPrint('퍼즐 팩 테이블 생성 완료: $tablePuzzlePacks');
   }
 
   Future<void> _createLanguageTables(Database db) async {
@@ -226,6 +189,6 @@ class DatabaseService {
   /// 데이터베이스 초기화 (모든 데이터 삭제)
   Future<void> resetDatabase() async {
     final db = await database;
-    await db.delete(tablePuzzleRecords);
+    // 퍼즐 관련 테이블 제거됨
   }
 }
