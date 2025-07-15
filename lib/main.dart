@@ -1,6 +1,6 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/ui/screens/splash/splash_screen.dart';
-  import 'package:chessudoku/ui/theme/color_palette.dart';
+import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,6 +71,14 @@ class MainApp extends ConsumerWidget {
         useMaterial3: true,
       ),
       home: const SplashScreen(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(1.0), // 앱 전체에서 시스템 글자 크기 설정 무시
+          ),
+          child: child!,
+        );
+      },
     );
   }
 }

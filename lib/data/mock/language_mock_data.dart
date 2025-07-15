@@ -57,7 +57,7 @@ class LanguageMockData {
         'privacy_policy': 'Privacy Policy',
 
         // Game Screen
-        'chess_sudoku_game': 'CheSudoku Game',
+        'chess_sudoku_game': 'ChesSudoku Game',
         'generated_puzzle_screen':
             'Generated puzzle will be displayed here. (Board size: ',
 
@@ -155,7 +155,7 @@ class LanguageMockData {
       lastUpdated: DateTime.now(),
       downloadSize: 1024000, // 1MB
       translations: {
-        'app_name': 'CheSudoku',
+        'app_name': 'ChesSudoku',
         'loading': '로딩 중...',
         'downloading': '다운로드 중...',
         'download_complete': '다운로드 완료',
@@ -293,7 +293,7 @@ class LanguageMockData {
       lastUpdated: DateTime.now(),
       downloadSize: 1200000, // 1.2MB
       translations: {
-        'app_name': 'CheSudoku',
+        'app_name': 'ChesSudoku',
         'loading': '読み込み中...',
         'downloading': 'ダウンロード中...',
         'download_complete': 'ダウンロード完了',
@@ -431,7 +431,7 @@ class LanguageMockData {
       lastUpdated: DateTime.now(),
       downloadSize: 1100000, // 1.1MB
       translations: {
-        'app_name': 'CheSudoku',
+        'app_name': 'ChesSudoku',
         'loading': '加载中...',
         'downloading': '下载中...',
         'download_complete': '下载完成',

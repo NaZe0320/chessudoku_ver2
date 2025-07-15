@@ -18,7 +18,7 @@ class MainScreen extends HookConsumerWidget {
         slivers: [
           // Collapsing AppBar
           SliverAppBar(
-            expandedHeight: 150.0,
+            expandedHeight: 140.0,
             floating: false,
             pinned: true,
             backgroundColor: AppColors.primary,
@@ -61,7 +61,7 @@ class MainScreen extends HookConsumerWidget {
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 56.0, 16.0, 20.0),
+                    padding: const EdgeInsets.fromLTRB(16.0, 40.0, 16.0, 24.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [

@@ -149,7 +149,7 @@ class SplashScreen extends HookConsumerWidget {
                     return Opacity(
                       opacity: getLogoOpacity(),
                       child: Text(
-                        translate('app_name', 'ChessSudoku'),
+                        translate('app_name', 'ChesSudoku'),
                         style: Theme.of(context)
                             .textTheme
                             .headlineMedium
