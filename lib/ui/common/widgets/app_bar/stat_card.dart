@@ -1,4 +1,3 @@
-import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 
 class StatCard extends StatelessWidget {
