@@ -4,6 +4,7 @@ import 'package:chessudoku/ui/common/widgets/continue_play_card.dart';
 import 'package:chessudoku/ui/common/widgets/daily_challenge_card.dart';
 import 'package:chessudoku/ui/common/widgets/quick_play_grid.dart';
 import 'package:chessudoku/ui/common/widgets/stat_card.dart';
+import 'package:chessudoku/ui/screens/game/game_screen.dart';
 import 'package:chessudoku/ui/screens/profile/settings_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
@@ -135,7 +136,7 @@ class MainScreen extends HookConsumerWidget {
                   statusText: translate('challenge_status', '이번 주 진행 상황'),
                   messageText: translate(
                       'special_puzzle_message', '매일 특별한 퍼즐로 연속 기록을 쌓아보세요!'),
-                  onDayTap: _onDayProgressTap,
+                  onDayTap: (day) => _onDayProgressTap(context, day),
                 ),
                 const SizedBox(height: 24),
 
@@ -182,9 +183,13 @@ class MainScreen extends HookConsumerWidget {
     );
   }
 
-  void _onDayProgressTap(String day) {
-    // TODO: 일일 챌린지 퍼즐 화면으로 이동
-    print('$day 일일 챌린지 퍼즐 진입');
+  void _onDayProgressTap(BuildContext context, String day) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const GameScreen(),
+      ),
+    );
   }
 
   void _onContinuePlayTap() {
