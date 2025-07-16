@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 class StatCard extends StatelessWidget {
   final String value;
   final String label;
+  final IconData? icon;
 
   const StatCard({
     super.key,
     required this.value,
     required this.label,
+    this.icon,
   });
 
   @override
@@ -26,13 +28,26 @@ class StatCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textWhite,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  color: AppColors.textWhite,
+                  size: 20,
+                ),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                value,
+                style: const TextStyle(
+                  color: AppColors.textWhite,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

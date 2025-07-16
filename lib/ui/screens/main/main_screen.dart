@@ -96,6 +96,7 @@ class MainScreen extends HookConsumerWidget {
                       child: StatCard(
                         value: '47',
                         label: translate('completed_puzzles', '완료한 퍼즐'),
+                        icon: Icons.check_circle,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -103,6 +104,7 @@ class MainScreen extends HookConsumerWidget {
                       child: StatCard(
                         value: '5일',
                         label: translate('current_streak', '연속 기록'),
+                        icon: Icons.local_fire_department,
                       ),
                     ),
                   ],
