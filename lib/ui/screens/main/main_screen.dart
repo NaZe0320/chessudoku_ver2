@@ -1,7 +1,4 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
-import 'package:chessudoku/data/models/day_progress.dart';
-import 'package:chessudoku/domain/enums/day_status.dart';
-import 'package:chessudoku/ui/common/widgets/continue_game_button.dart';
 import 'package:chessudoku/ui/screens/profile/settings_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +25,7 @@ class MainScreen extends HookConsumerWidget {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -61,7 +58,6 @@ class MainScreen extends HookConsumerWidget {
                     ),
                   ],
                 ),
-                
               ],
             ),
           ),
