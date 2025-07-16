@@ -1,4 +1,5 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
+import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/ui/common/widgets/continue_play_card.dart';
 import 'package:chessudoku/ui/common/widgets/daily_challenge_card.dart';
 import 'package:chessudoku/ui/common/widgets/stat_card.dart';
@@ -118,6 +119,7 @@ class MainScreen extends HookConsumerWidget {
                       '${translate('normal_difficulty', '보통 난이도')} • ${translate('puzzle_8', '8번 정답')} • ${translate('progress_65', '65% 완료')}',
                   progressText: '',
                   progressValue: 0.65,
+                  difficulty: Difficulty.medium,
                   onTap: _onContinuePlayTap,
                 ),
                 const SizedBox(height: 16),
