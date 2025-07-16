@@ -8,21 +8,21 @@ enum ChessPiece {
   knight, // 나이트
   pawn; // 폰
 
-  // 체스 기물을 문자로 변환 (UI 표시용)
+  // 체스 기물을 이모지로 변환 (UI 표시용)
   String get symbol {
     switch (this) {
       case ChessPiece.king:
-        return '♚';
+        return '♔';
       case ChessPiece.queen:
-        return '♛';
+        return '♕';
       case ChessPiece.rook:
-        return '♜';
+        return '♖';
       case ChessPiece.bishop:
-        return '♝';
+        return '♗';
       case ChessPiece.knight:
-        return '♞';
+        return '♘';
       case ChessPiece.pawn:
-        return '♟';
+        return '♙';
     }
   }
 
