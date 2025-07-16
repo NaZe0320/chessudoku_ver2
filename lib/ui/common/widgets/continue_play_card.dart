@@ -65,10 +65,11 @@ class ContinuePlayCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           title,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.textWhite,
                             fontSize: 16,
@@ -78,6 +79,7 @@ class ContinuePlayCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           subtitle,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: AppColors.textWhite,
                             fontSize: 12,

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 
 enum ChessPiece {
