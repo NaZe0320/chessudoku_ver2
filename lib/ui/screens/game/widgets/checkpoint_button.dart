@@ -103,25 +103,6 @@ class CheckpointButton extends HookConsumerWidget {
                           index + 1,
                           index == 0, // 첫 번째만 저장된 상태로 표시
                         )),
-                const SizedBox(height: 20),
-                // 새 분기점 저장 버튼
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Intent로 처리 예정
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.add),
-                    label: Text(translate('save_checkpoint', '현재 상태 저장')),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -169,41 +150,56 @@ class CheckpointButton extends HookConsumerWidget {
                 if (hasSave) ...[
                   const SizedBox(height: 2),
                   Text(
-                    '00:05 • 12개 완료',
+                    '00:05',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '비어있음',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          if (hasSave) ...[
-            IconButton(
-              onPressed: () {
-                // TODO: Intent로 처리 예정
-                Navigator.pop(context);
-              },
-              icon: const Icon(Icons.restore, size: 20),
-              tooltip: translate('load_checkpoint', '불러오기'),
-            ),
-            IconButton(
-              onPressed: () {
-                // TODO: Intent로 처리 예정
-              },
-              icon: const Icon(Icons.delete, size: 20),
-              tooltip: translate('delete_checkpoint', '삭제'),
-            ),
-          ] else ...[
-            Text(
-              translate('empty', '비어있음'),
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
+          Row(
+            children: [
+              // 저장 버튼 (아이콘만)
+              IconButton(
+                onPressed: () {
+                  // TODO: Intent로 처리 예정
+                },
+                icon: const Icon(Icons.save, size: 20),
+                tooltip: translate('save', '저장'),
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(40, 40),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
-            ),
-          ],
+              // 불러오기 버튼 (아이콘만)
+              IconButton(
+                onPressed: hasSave
+                    ? () {
+                        // TODO: Intent로 처리 예정
+                        Navigator.pop(context);
+                      }
+                    : null,
+                icon: const Icon(Icons.restore, size: 20),
+                tooltip: translate('load', '불러오기'),
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(40, 40),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
