@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:chessudoku/core/di/language_pack_provider.dart';
+import 'package:chessudoku/core/di/game_provider.dart';
+import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'widgets/game_timer.dart';
 import 'widgets/game_action_buttons.dart';
@@ -14,7 +16,16 @@ class GameScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final translate = ref.watch(translationProvider);
-    final selectedNumbers = useState<Set<int>>({});
+    final gameState = ref.watch(gameNotifierProvider);
+    final gameNotifier = ref.read(gameNotifierProvider.notifier);
+
+    // 화면 진입 시 타이머 시작
+    useEffect(() {
+      Future(() {
+        gameNotifier.handleIntent(const StartTimerIntent());
+      });
+      return null;
+    }, []);
 
     return Scaffold(
       appBar: AppBar(
@@ -37,20 +48,12 @@ class GameScreen extends HookConsumerWidget {
                 const GameActionButtons(),
                 const SizedBox(height: 16),
                 NumberButtonsGrid(
-                  selectedNumbers: selectedNumbers.value,
+                  selectedNumbers: gameState.selectedNumbers,
                   onNumberTap: (number) {
-                    final newSelected = Set<int>.from(selectedNumbers.value);
-                    if (newSelected.contains(number)) {
-                      newSelected.remove(number);
-                    } else {
-                      newSelected.add(number);
-                    }
-                    selectedNumbers.value = newSelected;
-                    // TODO: Intent로 처리 예정
+                    gameNotifier.handleIntent(SelectNumberIntent(number));
                   },
                   onClearTap: () {
-                    selectedNumbers.value = {};
-                    // TODO: Intent로 처리 예정
+                    gameNotifier.handleIntent(const ClearSelectionIntent());
                   },
                 ),
                 const SizedBox(height: 16),

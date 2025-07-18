@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:chessudoku/core/di/game_provider.dart';
+import 'package:chessudoku/domain/intents/game_intent.dart';
 
-class GameTimer extends StatelessWidget {
+class GameTimer extends HookConsumerWidget {
   const GameTimer({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gameState = ref.watch(gameNotifierProvider);
+    final gameNotifier = ref.read(gameNotifierProvider.notifier);
+
+    // 초를 MM:SS 형태로 변환
+    String formatTime(int seconds) {
+      final minutes = seconds ~/ 60;
+      final remainingSeconds = seconds % 60;
+      return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -32,7 +45,7 @@ class GameTimer extends StatelessWidget {
           ),
           const SizedBox(width: 5),
           Text(
-            '00:00',
+            formatTime(gameState.elapsedSeconds),
             style: TextStyle(
               color: Colors.grey[800],
               fontSize: 12,
@@ -43,10 +56,14 @@ class GameTimer extends StatelessWidget {
           const SizedBox(width: 6),
           GestureDetector(
             onTap: () {
-              // TODO: Intent로 처리 예정
+              if (gameState.isTimerRunning) {
+                gameNotifier.handleIntent(const PauseTimerIntent());
+              } else {
+                gameNotifier.handleIntent(const StartTimerIntent());
+              }
             },
             child: Icon(
-              Icons.pause,
+              gameState.isTimerRunning ? Icons.pause : Icons.play_arrow,
               color: Colors.grey[700],
               size: 14,
             ),

@@ -1,0 +1,11 @@
+{
+  "files.associations": {
+    "*.freezed.dart": "dart",
+    "*.g.dart": "dart"
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "*.dart": "${capture}.freezed.dart,${capture}.g.dart"
+  }
+} 

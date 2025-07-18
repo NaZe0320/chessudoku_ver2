@@ -1,51 +1,21 @@
-import 'package:chessudoku/data/models/cell_content.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:chessudoku/data/models/game_board.dart';
+import 'package:chessudoku/data/models/checkpoint.dart';
 
-class GameState {
-  final String gameId;
-  final Difficulty difficulty;
-  final List<List<CellContent>> board;
-  final int? selectedRow;
-  final int? selectedCol;
-  final bool isCompleted;
-  final Duration elapsedTime;
-  final int boardSize;
-  final bool isPaused;
+part 'game_state.freezed.dart';
 
-  const GameState({
-    required this.gameId,
-    this.difficulty = Difficulty.easy,
-    required this.board,
-    this.selectedRow,
-    this.selectedCol,
-    this.isCompleted = false,
-    this.elapsedTime = Duration.zero,
-    this.isPaused = false,
-    this.boardSize = 9,
-  });
-
-  // 새 상태 반환 (불변성 유지)
-  GameState copyWith({
-    String? gameId,
-    Difficulty? difficulty,
-    List<List<CellContent>>? board,
-    int? selectedRow,
-    int? selectedCol,
-    bool? isCompleted,
-    Duration? elapsedTime,
-    int? boardSize,
-    bool? isPaused,
-  }) {
-    return GameState(
-      gameId: gameId ?? this.gameId,
-      difficulty: difficulty ?? this.difficulty,
-      board: board ?? this.board,
-      selectedRow: selectedRow ?? this.selectedRow,
-      selectedCol: selectedCol ?? this.selectedCol,
-      isCompleted: isCompleted ?? this.isCompleted,
-      elapsedTime: elapsedTime ?? this.elapsedTime,
-      boardSize: boardSize ?? this.boardSize,
-      isPaused: isPaused ?? this.isPaused,
-    );
-  }
+@freezed
+class GameState with _$GameState {
+  const factory GameState({
+    @Default(false) bool isLoading,
+    @Default({}) Set<int> selectedNumbers,
+    @Default(0) int elapsedSeconds,
+    @Default(false) bool isTimerRunning,
+    GameBoard? currentBoard, // 현재 게임 보드
+    @Default([]) List<GameBoard> history, // 되돌리기용 히스토리
+    @Default([]) List<GameBoard> redoHistory, // 다시 실행용 히스토리
+    @Default({}) Map<String, Checkpoint> checkpoints, // 분기점 저장 (체크포인트)
+    @Default(false) bool canUndo, // 되돌리기 가능 여부
+    @Default(false) bool canRedo, // 다시 실행 가능 여부
+  }) = _GameState;
 }

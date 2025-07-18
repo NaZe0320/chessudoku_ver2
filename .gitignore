@@ -60,3 +60,7 @@ android/app/.cxx/Debug/fx6g6m34/x86/.cmake/api/v1/reply/index-2025-04-03T00-02-1
 android/app/.cxx/Debug/fx6g6m34/x86/.cmake/api/v1/reply/index-2025-07-18T06-25-37-0606.json
 android/app/.cxx/Debug/fx6g6m34/x86_64/.cmake/api/v1/reply/index-2025-04-03T00-02-15-0849.json
 android/app/.cxx/Debug/fx6g6m34/x86_64/.cmake/api/v1/reply/index-2025-07-18T06-25-39-0121.json
+
+# Freezed generated files
+*.freezed.dart
+*.g.dart
