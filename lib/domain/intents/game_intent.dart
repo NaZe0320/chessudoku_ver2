@@ -53,6 +53,24 @@ class HideCompletionDialogIntent extends GameIntent {
   const HideCompletionDialogIntent();
 }
 
+class CreateCheckpointIntent extends GameIntent {
+  final String checkpointId;
+
+  const CreateCheckpointIntent(this.checkpointId);
+}
+
+class RestoreCheckpointIntent extends GameIntent {
+  final String checkpointId;
+
+  const RestoreCheckpointIntent(this.checkpointId);
+}
+
+class DeleteCheckpointIntent extends GameIntent {
+  final String checkpointId;
+
+  const DeleteCheckpointIntent(this.checkpointId);
+}
+
 class InitializeTestBoardIntent extends GameIntent {
   const InitializeTestBoardIntent();
 }

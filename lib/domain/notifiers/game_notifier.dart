@@ -6,6 +6,7 @@ import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 
@@ -37,6 +38,12 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
         _handleCheckGameCompletion();
       case HideCompletionDialogIntent():
         _handleHideCompletionDialog();
+      case CreateCheckpointIntent():
+        _handleCreateCheckpoint(intent.checkpointId);
+      case RestoreCheckpointIntent():
+        _handleRestoreCheckpoint(intent.checkpointId);
+      case DeleteCheckpointIntent():
+        _handleDeleteCheckpoint(intent.checkpointId);
       case InitializeTestBoardIntent():
         _handleInitializeTestBoard();
       case StartTimerIntent():
@@ -273,6 +280,44 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
 
   void _handleHideCompletionDialog() {
     state = state.copyWith(showCompletionDialog: false);
+  }
+
+  void _handleCreateCheckpoint(String checkpointId) {
+    final currentBoard = state.currentBoard;
+    if (currentBoard == null) return;
+
+    final checkpoint = Checkpoint.create(
+      board: currentBoard,
+      elapsedSeconds: state.elapsedSeconds,
+      history: state.history,
+      redoHistory: state.redoHistory,
+    );
+
+    final newCheckpoints = Map<String, Checkpoint>.from(state.checkpoints);
+    newCheckpoints[checkpointId] = checkpoint;
+
+    state = state.copyWith(checkpoints: newCheckpoints);
+  }
+
+  void _handleRestoreCheckpoint(String checkpointId) {
+    final checkpoint = state.checkpoints[checkpointId];
+    if (checkpoint == null) return;
+
+    // 체크포인트에서 보드와 히스토리 복원 (시간은 복원하지 않음)
+    state = state.copyWith(
+      currentBoard: checkpoint.board,
+      history: checkpoint.history,
+      redoHistory: checkpoint.redoHistory,
+      canUndo: checkpoint.history.isNotEmpty,
+      canRedo: checkpoint.redoHistory.isNotEmpty,
+    );
+  }
+
+  void _handleDeleteCheckpoint(String checkpointId) {
+    final newCheckpoints = Map<String, Checkpoint>.from(state.checkpoints);
+    newCheckpoints.remove(checkpointId);
+
+    state = state.copyWith(checkpoints: newCheckpoints);
   }
 
   void _handleInitializeTestBoard() {
