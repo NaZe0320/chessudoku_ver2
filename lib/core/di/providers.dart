@@ -3,11 +3,13 @@ import '../../data/services/test_service.dart';
 import '../../data/repositories/test_repository_impl.dart';
 import '../../domain/repositories/test_repository.dart';
 import '../../data/repositories/version_repository_impl.dart';
+import '../../data/repositories/game_save_repository_impl.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/cache_service.dart';
 import '../../data/services/database_service.dart';
 import '../../data/services/device_service.dart';
 import '../../domain/repositories/version_repository.dart';
+import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/notifiers/sync_notifier.dart';
 import '../../domain/states/sync_state.dart';
 import './language_pack_provider.dart';
@@ -62,4 +64,10 @@ final syncNotifierProvider =
 final testRepositoryProvider = Provider<TestRepository>((ref) {
   final testService = ref.watch(testServiceProvider);
   return TestRepositoryImpl(testService);
+});
+
+/// GameSaveRepository Provider
+final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
+  final cacheService = ref.watch(cacheServiceProvider);
+  return GameSaveRepositoryImpl(cacheService);
 });
