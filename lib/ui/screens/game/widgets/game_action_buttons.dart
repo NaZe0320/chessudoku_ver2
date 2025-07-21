@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:chessudoku/core/di/language_pack_provider.dart';
+import 'package:chessudoku/core/di/game_provider.dart';
+import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'game_action_button.dart';
 import 'checkpoint_button.dart';
 
@@ -10,6 +12,8 @@ class GameActionButtons extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final translate = ref.watch(translationProvider);
+    final gameState = ref.watch(gameNotifierProvider);
+    final gameNotifier = ref.read(gameNotifierProvider.notifier);
 
     return Wrap(
       spacing: 8,
@@ -26,8 +30,9 @@ class GameActionButtons extends HookConsumerWidget {
         GameActionButton(
           icon: Icons.edit_note,
           text: translate('memo', '메모'),
+          isActive: gameState.currentBoard?.isNoteMode ?? false,
           onTap: () {
-            // TODO: Intent로 처리 예정
+            gameNotifier.handleIntent(const ToggleNoteModeIntent());
           },
         ),
         GameActionButton(
@@ -41,7 +46,7 @@ class GameActionButtons extends HookConsumerWidget {
           icon: Icons.error_outline,
           text: translate('check_error', '오류 검사'),
           onTap: () {
-            // TODO: Intent로 처리 예정
+            gameNotifier.handleIntent(const CheckErrorsIntent());
           },
         ),
         const CheckpointButton(),

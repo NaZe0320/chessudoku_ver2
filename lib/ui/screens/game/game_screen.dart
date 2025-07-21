@@ -19,10 +19,15 @@ class GameScreen extends HookConsumerWidget {
     final gameState = ref.watch(gameNotifierProvider);
     final gameNotifier = ref.read(gameNotifierProvider.notifier);
 
-    // 화면 진입 시 타이머 시작
+    // 화면 진입 시 타이머 시작 및 테스트 보드 초기화
     useEffect(() {
       Future(() {
         gameNotifier.handleIntent(const StartTimerIntent());
+
+        // 테스트용 완성된 보드 초기화 (임시)
+        if (gameState.currentBoard == null) {
+          gameNotifier.handleIntent(const InitializeTestBoardIntent());
+        }
       });
       return null;
     }, []);
@@ -49,11 +54,15 @@ class GameScreen extends HookConsumerWidget {
                 const SizedBox(height: 16),
                 NumberButtonsGrid(
                   selectedNumbers: gameState.selectedNumbers,
+                  isNoteMode: gameState.currentBoard?.isNoteMode ?? false,
+                  selectedCellNotes: gameState.currentBoard?.selectedCellNotes,
                   onNumberTap: (number) {
-                    gameNotifier.handleIntent(SelectNumberIntent(number));
+                    // 숫자 입력 기능으로 변경
+                    gameNotifier.handleIntent(InputNumberIntent(number));
                   },
                   onClearTap: () {
-                    gameNotifier.handleIntent(const ClearSelectionIntent());
+                    // 셀 지우기 기능으로 변경
+                    gameNotifier.handleIntent(const ClearCellIntent());
                   },
                 ),
                 const SizedBox(height: 16),

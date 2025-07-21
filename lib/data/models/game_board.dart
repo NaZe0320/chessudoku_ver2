@@ -4,7 +4,8 @@ import 'package:chessudoku/domain/enums/difficulty.dart';
 
 /// 게임 진행 상황을 포함한 보드 모델
 class GameBoard {
-  final SudokuBoard board;
+  final SudokuBoard board; // 현재 플레이 보드 (빈칸 포함)
+  final SudokuBoard solutionBoard; // 답안 보드 (완성된 보드)
   final Position? selectedCell; // 현재 선택된 셀
   final Set<Position> highlightedCells; // 하이라이트된 셀들
   final Set<Position> errorCells; // 오류가 있는 셀들
@@ -14,6 +15,7 @@ class GameBoard {
 
   const GameBoard({
     required this.board,
+    required this.solutionBoard,
     this.selectedCell,
     this.highlightedCells = const {},
     this.errorCells = const {},
@@ -29,12 +31,28 @@ class GameBoard {
   }) {
     return GameBoard(
       board: SudokuBoard.empty(),
+      solutionBoard: SudokuBoard.empty(),
       difficulty: difficulty,
       puzzleId: puzzleId,
     );
   }
 
-  /// 퍼즐로부터 게임 보드 생성
+  /// 퍼즐과 답안으로부터 게임 보드 생성
+  factory GameBoard.fromPuzzleAndSolution({
+    required List<List<int?>> puzzle, // 빈칸이 있는 퍼즐
+    required List<List<int?>> solution, // 완성된 답안
+    required Difficulty difficulty,
+    required String puzzleId,
+  }) {
+    return GameBoard(
+      board: SudokuBoard.fromPuzzle(puzzle),
+      solutionBoard: SudokuBoard.fromPuzzle(solution),
+      difficulty: difficulty,
+      puzzleId: puzzleId,
+    );
+  }
+
+  /// 퍼즐로부터 게임 보드 생성 (기존 호환성)
   factory GameBoard.fromPuzzle({
     required List<List<int?>> puzzle,
     required Difficulty difficulty,
@@ -42,6 +60,7 @@ class GameBoard {
   }) {
     return GameBoard(
       board: SudokuBoard.fromPuzzle(puzzle),
+      solutionBoard: SudokuBoard.fromPuzzle(puzzle), // 임시로 같은 보드 사용
       difficulty: difficulty,
       puzzleId: puzzleId,
     );
@@ -93,6 +112,12 @@ class GameBoard {
     return related;
   }
 
+  /// 특정 위치의 정답 확인
+  bool isCorrectAnswer(Position position, int number) {
+    final solutionContent = solutionBoard.getCellContent(position);
+    return solutionContent?.number == number;
+  }
+
   /// 메모 모드 토글
   GameBoard toggleNoteMode() {
     return copyWith(isNoteMode: !isNoteMode);
@@ -117,8 +142,21 @@ class GameBoard {
     return copyWith(errorCells: {});
   }
 
-  /// 게임이 완료되었는지 확인
-  bool get isCompleted => board.isCompleted;
+  /// 게임이 완료되었는지 확인 (답안과 비교)
+  bool get isCompleted {
+    for (int row = 0; row < 9; row++) {
+      for (int col = 0; col < 9; col++) {
+        final position = Position(row: row, col: col);
+        final currentContent = board.getCellContent(position);
+        final solutionContent = solutionBoard.getCellContent(position);
+
+        if (currentContent?.number != solutionContent?.number) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 
   /// 남은 빈 셀 수
   int get remainingCells {
@@ -141,9 +179,18 @@ class GameBoard {
     return filledCells / totalCells;
   }
 
+  /// 선택된 셀의 메모 숫자들 가져오기
+  Set<int> get selectedCellNotes {
+    if (selectedCell == null) return {};
+
+    final cellContent = board.getCellContent(selectedCell!);
+    return cellContent?.notes ?? {};
+  }
+
   /// 게임 보드 복사
   GameBoard copyWith({
     SudokuBoard? board,
+    SudokuBoard? solutionBoard,
     Position? selectedCell,
     Set<Position>? highlightedCells,
     Set<Position>? errorCells,
@@ -153,6 +200,7 @@ class GameBoard {
   }) {
     return GameBoard(
       board: board ?? this.board,
+      solutionBoard: solutionBoard ?? this.solutionBoard,
       selectedCell: selectedCell ?? this.selectedCell,
       highlightedCells: highlightedCells ?? this.highlightedCells,
       errorCells: errorCells ?? this.errorCells,
@@ -167,6 +215,7 @@ class GameBoard {
     if (identical(this, other)) return true;
     return other is GameBoard &&
         other.board == board &&
+        other.solutionBoard == solutionBoard &&
         other.selectedCell == selectedCell &&
         other.highlightedCells.length == highlightedCells.length &&
         other.highlightedCells.containsAll(highlightedCells) &&
@@ -180,6 +229,7 @@ class GameBoard {
   @override
   int get hashCode {
     return board.hashCode ^
+        solutionBoard.hashCode ^
         selectedCell.hashCode ^
         highlightedCells.hashCode ^
         errorCells.hashCode ^
