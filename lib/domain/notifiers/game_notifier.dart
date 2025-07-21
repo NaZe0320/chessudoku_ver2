@@ -86,6 +86,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
     // 초기값인 경우 수정 불가
     if (currentContent?.isInitial == true) return;
 
+    // 체스 기물이 있는 칸에는 숫자 입력 불가
+    if (currentContent?.chessPiece != null) return;
+
     if (currentBoard.isNoteMode) {
       // 메모 모드인 경우 메모 토글
       _toggleNoteForCell(selectedCell, number);
@@ -110,6 +113,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
 
     // 초기값인 경우 메모 불가
     if (currentContent?.isInitial == true) return;
+
+    // 체스 기물이 있는 칸에는 메모 입력 불가
+    if (currentContent?.chessPiece != null) return;
 
     // 숫자가 이미 입력된 경우 메모 불가
     if (currentContent?.number != null) return;
@@ -177,6 +183,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
 
     // 초기값인 경우 지울 수 없음
     if (currentContent?.isInitial == true) return;
+
+    // 체스 기물이 있는 칸은 지울 수 없음
+    if (currentContent?.chessPiece != null) return;
 
     // 히스토리에 현재 상태 저장
     _saveToHistory();
@@ -267,29 +276,29 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
   }
 
   void _handleInitializeTestBoard() {
-    // 완성된 스도쿠 답안
+    // 완성된 스도쿠 답안 (체스 기물 위치는 빈 칸으로)
     final solutionPuzzle = [
       [5, 3, 4, 6, 7, 8, 9, 1, 2],
-      [6, 7, 2, 1, 9, 5, 3, 4, 8],
-      [1, 9, 8, 3, 4, 2, 5, 6, 7],
+      [6, null, 2, 1, 9, 5, 3, 4, 8], // (1,1) knight 위치
+      [1, 9, 8, 3, null, 2, 5, 6, 7], // (2,4) bishop 위치
       [8, 5, 9, 7, 6, 1, 4, 2, 3],
-      [4, 2, 6, 8, 5, 3, 7, 9, 1],
+      [4, 2, 6, 8, null, 3, 7, 9, 1], // (4,4) queen 위치
       [7, 1, 3, 9, 2, 4, 8, 5, 6],
-      [9, 6, 1, 5, 3, 7, 2, 8, 4],
-      [2, 8, 7, 4, 1, 9, 6, 3, 5],
+      [9, 6, 1, 5, null, 7, 2, 8, 4], // (6,4) rook 위치
+      [2, 8, 7, 4, 1, 9, 6, 3, 5], // (7,2) pawn 위치
       [3, 4, 5, 2, 8, 6, 1, 7, 9],
     ];
 
     // 빈칸이 있는 퍼즐 (일부 셀을 null로 설정)
     final puzzleWithBlanks = [
       [5, 3, null, 6, 7, 8, 9, null, 2],
-      [6, null, 2, 1, 9, null, 3, 4, 8],
-      [null, 9, 8, 3, null, 2, 5, 6, null],
+      [6, null, 2, 1, 9, null, 3, 4, 8], // (1,1) knight 위치
+      [null, 9, 8, 3, null, 2, 5, 6, null], // (2,4) bishop 위치
       [8, 5, null, 7, 6, 1, null, 2, 3],
-      [4, null, 6, 8, null, 3, 7, null, 1],
+      [4, null, 6, 8, null, 3, 7, null, 1], // (4,4) queen 위치
       [7, 1, null, 9, 2, null, 8, 5, 6],
-      [null, 6, 1, 5, null, 7, 2, 8, null],
-      [2, 8, null, 4, 1, null, 6, 3, 5],
+      [null, 6, 1, 5, null, 7, 2, 8, null], // (6,4) rook 위치
+      [2, 8, null, 4, 1, null, 6, 3, 5], // (7,2) pawn 위치
       [3, null, 5, 2, 8, 6, null, 7, 9],
     ];
 
