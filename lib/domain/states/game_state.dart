@@ -17,5 +17,7 @@ class GameState with _$GameState {
     @Default({}) Map<String, Checkpoint> checkpoints, // 분기점 저장 (체크포인트)
     @Default(false) bool canUndo, // 되돌리기 가능 여부
     @Default(false) bool canRedo, // 다시 실행 가능 여부
+    @Default(false) bool isGameCompleted, // 게임 완료 여부
+    @Default(false) bool showCompletionDialog, // 완료 다이얼로그 표시 여부
   }) = _GameState;
 }

@@ -45,6 +45,14 @@ class CheckErrorsIntent extends GameIntent {
   const CheckErrorsIntent();
 }
 
+class CheckGameCompletionIntent extends GameIntent {
+  const CheckGameCompletionIntent();
+}
+
+class HideCompletionDialogIntent extends GameIntent {
+  const HideCompletionDialogIntent();
+}
+
 class InitializeTestBoardIntent extends GameIntent {
   const InitializeTestBoardIntent();
 }

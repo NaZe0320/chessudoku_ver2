@@ -33,6 +33,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
         _handleClearCell();
       case CheckErrorsIntent():
         _handleCheckErrors();
+      case CheckGameCompletionIntent():
+        _handleCheckGameCompletion();
+      case HideCompletionDialogIntent():
+        _handleHideCompletionDialog();
       case InitializeTestBoardIntent():
         _handleInitializeTestBoard();
       case StartTimerIntent():
@@ -150,6 +154,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
     );
 
     state = state.copyWith(currentBoard: updatedGameBoard);
+
+    // 게임 완료 체크
+    _handleCheckGameCompletion();
   }
 
   void _handleToggleNoteMode() {
@@ -189,6 +196,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
         errorCells: {}, // 오류 검사 내용 초기화
       );
       state = state.copyWith(currentBoard: updatedGameBoard);
+
+      // 게임 완료 체크
+      _handleCheckGameCompletion();
     } else {
       // 체스 기물도 없으면 완전히 제거
       final newBoard = currentBoard.board.removeCellContent(selectedCell);
@@ -199,6 +209,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
         errorCells: {}, // 오류 검사 내용 초기화
       );
       state = state.copyWith(currentBoard: updatedGameBoard);
+
+      // 게임 완료 체크
+      _handleCheckGameCompletion();
     }
   }
 
@@ -229,6 +242,28 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
     // 오류 셀 업데이트 (히스토리에 저장하지 않음)
     final updatedGameBoard = currentBoard.copyWith(errorCells: errorPositions);
     state = state.copyWith(currentBoard: updatedGameBoard);
+  }
+
+  void _handleCheckGameCompletion() {
+    final currentBoard = state.currentBoard;
+    if (currentBoard == null) return;
+
+    final isCompleted = currentBoard.isCompleted;
+    if (isCompleted && !state.isGameCompleted) {
+      // 타이머 정지
+      _timer?.cancel();
+      _timer = null;
+
+      state = state.copyWith(
+        isGameCompleted: true,
+        showCompletionDialog: true,
+        isTimerRunning: false,
+      );
+    }
+  }
+
+  void _handleHideCompletionDialog() {
+    state = state.copyWith(showCompletionDialog: false);
   }
 
   void _handleInitializeTestBoard() {
