@@ -41,6 +41,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
         _handlePauseTimer();
       case ResetTimerIntent():
         _handleResetTimer();
+      case UndoIntent():
+        _handleUndo();
+      case RedoIntent():
+        _handleRedo();
     }
   }
 
@@ -127,6 +131,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
     // 초기값인 경우 수정 불가
     if (currentContent?.isInitial == true) return;
 
+    // 히스토리에 현재 상태 저장
+    _saveToHistory();
+
     // 새로운 셀 내용 생성 (메모는 지우고 숫자만)
     final newContent = CellContent(
       number: number,
@@ -163,6 +170,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
 
     // 초기값인 경우 지울 수 없음
     if (currentContent?.isInitial == true) return;
+
+    // 히스토리에 현재 상태 저장
+    _saveToHistory();
 
     // 체스 기물만 남기고 숫자와 메모 지우기
     if (currentContent?.chessPiece != null) {
@@ -216,7 +226,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
       }
     }
 
-    // 오류 셀 업데이트
+    // 오류 셀 업데이트 (히스토리에 저장하지 않음)
     final updatedGameBoard = currentBoard.copyWith(errorCells: errorPositions);
     state = state.copyWith(currentBoard: updatedGameBoard);
   }
@@ -272,7 +282,13 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
       puzzleId: 'test_puzzle_with_chess',
     );
 
-    state = state.copyWith(currentBoard: gameBoard);
+    state = state.copyWith(
+      currentBoard: gameBoard,
+      history: [],
+      redoHistory: [],
+      canUndo: false,
+      canRedo: false,
+    );
   }
 
   void _handleStartTimer() {
@@ -297,6 +313,79 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
       elapsedSeconds: 0,
       isTimerRunning: false,
     );
+  }
+
+  // 히스토리에 현재 상태 저장
+  void _saveToHistory() {
+    final currentBoard = state.currentBoard;
+    if (currentBoard != null) {
+      // 오류 검사 상태를 제거한 보드를 히스토리에 저장
+      final boardWithoutErrors = currentBoard.copyWith(errorCells: {});
+      final newHistory = List<GameBoard>.from(state.history)
+        ..add(boardWithoutErrors);
+      final newRedoHistory = <GameBoard>[]; // 새로운 액션 시 redo 히스토리 초기화
+
+      state = state.copyWith(
+        history: newHistory,
+        redoHistory: newRedoHistory,
+        canUndo: newHistory.isNotEmpty,
+        canRedo: false,
+      );
+    }
+  }
+
+  // 되돌리기 처리
+  void _handleUndo() {
+    if (state.history.isNotEmpty) {
+      final newHistory = List<GameBoard>.from(state.history);
+      final previousBoard = newHistory.removeLast();
+      final newRedoHistory = List<GameBoard>.from(state.redoHistory);
+
+      // 현재 보드를 redo 히스토리에 추가 (오류 검사 상태 제거)
+      if (state.currentBoard != null) {
+        final currentBoardWithoutErrors =
+            state.currentBoard!.copyWith(errorCells: {});
+        newRedoHistory.add(currentBoardWithoutErrors);
+      }
+
+      // 이전 보드로 복원 (오류 검사 상태 제거)
+      final previousBoardWithoutErrors = previousBoard.copyWith(errorCells: {});
+
+      state = state.copyWith(
+        currentBoard: previousBoardWithoutErrors,
+        history: newHistory,
+        redoHistory: newRedoHistory,
+        canUndo: newHistory.isNotEmpty,
+        canRedo: newRedoHistory.isNotEmpty,
+      );
+    }
+  }
+
+  // 다시 실행 처리
+  void _handleRedo() {
+    if (state.redoHistory.isNotEmpty) {
+      final newRedoHistory = List<GameBoard>.from(state.redoHistory);
+      final nextBoard = newRedoHistory.removeLast();
+      final newHistory = List<GameBoard>.from(state.history);
+
+      // 현재 보드를 히스토리에 추가 (오류 검사 상태 제거)
+      if (state.currentBoard != null) {
+        final currentBoardWithoutErrors =
+            state.currentBoard!.copyWith(errorCells: {});
+        newHistory.add(currentBoardWithoutErrors);
+      }
+
+      // 다음 보드로 복원 (오류 검사 상태 제거)
+      final nextBoardWithoutErrors = nextBoard.copyWith(errorCells: {});
+
+      state = state.copyWith(
+        currentBoard: nextBoardWithoutErrors,
+        history: newHistory,
+        redoHistory: newRedoHistory,
+        canUndo: newHistory.isNotEmpty,
+        canRedo: newRedoHistory.isNotEmpty,
+      );
+    }
   }
 
   @override

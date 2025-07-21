@@ -23,14 +23,17 @@ class GameActionButtons extends HookConsumerWidget {
         GameActionButton(
           icon: Icons.undo,
           text: translate('undo', '되돌리기'),
+          isActive: gameState.canUndo,
+          buttonType: ButtonType.action,
           onTap: () {
-            // TODO: Intent로 처리 예정
+            gameNotifier.handleIntent(const UndoIntent());
           },
         ),
         GameActionButton(
           icon: Icons.edit_note,
           text: translate('memo', '메모'),
           isActive: gameState.currentBoard?.isNoteMode ?? false,
+          buttonType: ButtonType.toggle,
           onTap: () {
             gameNotifier.handleIntent(const ToggleNoteModeIntent());
           },
@@ -38,13 +41,17 @@ class GameActionButtons extends HookConsumerWidget {
         GameActionButton(
           icon: Icons.redo,
           text: translate('redo', '다시 실행'),
+          isActive: gameState.canRedo,
+          buttonType: ButtonType.action,
           onTap: () {
-            // TODO: Intent로 처리 예정
+            gameNotifier.handleIntent(const RedoIntent());
           },
         ),
         GameActionButton(
           icon: Icons.error_outline,
           text: translate('check_error', '오류 검사'),
+          isActive: true,
+          buttonType: ButtonType.action,
           onTap: () {
             gameNotifier.handleIntent(const CheckErrorsIntent());
           },

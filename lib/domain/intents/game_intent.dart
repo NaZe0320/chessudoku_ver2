@@ -60,3 +60,11 @@ class PauseTimerIntent extends GameIntent {
 class ResetTimerIntent extends GameIntent {
   const ResetTimerIntent();
 }
+
+class UndoIntent extends GameIntent {
+  const UndoIntent();
+}
+
+class RedoIntent extends GameIntent {
+  const RedoIntent();
+}

@@ -201,8 +201,8 @@ class SudokuCell extends StatelessWidget {
       return AppColors.primary.withValues(alpha: 0.1);
     }
 
-    // 초기값인 경우 연한 회색 배경
-    if (cellContent?.isInitial == true) {
+    // 초기값이거나 체스 기물이 있는 경우 연한 회색 배경
+    if (cellContent?.isInitial == true || cellContent?.chessPiece != null) {
       return Colors.grey.withValues(alpha: 0.1);
     }
 
