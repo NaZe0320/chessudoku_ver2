@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/domain/states/game_state.dart';
@@ -9,11 +10,53 @@ import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
+import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 
-class GameNotifier extends BaseNotifier<GameIntent, GameState> {
+class GameNotifier extends BaseNotifier<GameIntent, GameState>
+    with WidgetsBindingObserver {
   Timer? _timer;
+  final GameSaveRepository _gameSaveRepository;
+  bool _wasTimerRunningBeforePause = false; // 앱이 백그라운드로 가기 전 타이머 상태
 
-  GameNotifier() : super(const GameState());
+  GameNotifier(this._gameSaveRepository) : super(const GameState()) {
+    // 생명주기 관찰자 등록
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// 게임 상태 자동 저장
+  Future<void> autoSave() async {
+    try {
+      await _gameSaveRepository.saveCurrentGame(state);
+    } catch (e) {
+      print('자동 저장 실패: $e');
+    }
+  }
+
+  /// 저장된 게임 로드
+  Future<void> loadSavedGame() async {
+    try {
+      final savedState = _gameSaveRepository.loadCurrentGame();
+      if (savedState != null) {
+        state = savedState;
+
+        // 로드된 게임이 완료되지 않았고 타이머가 실행 중이었다면 타이머 재시작
+        if (!savedState.isGameCompleted && savedState.isTimerRunning) {
+          _handleStartTimer();
+        }
+      }
+    } catch (e) {
+      print('게임 로드 실패: $e');
+    }
+  }
+
+  /// 저장된 게임 삭제
+  Future<void> clearSavedGame() async {
+    try {
+      await _gameSaveRepository.clearCurrentGame();
+    } catch (e) {
+      print('게임 삭제 실패: $e');
+    }
+  }
 
   @override
   void onIntent(GameIntent intent) {
@@ -275,6 +318,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
         showCompletionDialog: true,
         isTimerRunning: false,
       );
+
+      // 게임 완료 시 자동 저장
+      autoSave();
     }
   }
 
@@ -478,8 +524,30 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState> {
   }
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.paused:
+        // 앱이 백그라운드로 갈 때 타이머 상태 저장 후 일시정지
+        _wasTimerRunningBeforePause = this.state.isTimerRunning;
+        if (this.state.isTimerRunning) {
+          _handlePauseTimer();
+        }
+        autoSave();
+        break;
+      case AppLifecycleState.resumed:
+        // 앱이 포그라운드로 돌아올 때 이전에 실행 중이었다면 재시작
+        if (_wasTimerRunningBeforePause && !this.state.isGameCompleted) {
+          _handleStartTimer();
+        }
+        break;
+      case AppLifecycleState.detached:
+        // 앱이 완전히 종료될 때 자동 저장
+        autoSave();
+        break;
+      default:
+        break;
+    }
   }
 }

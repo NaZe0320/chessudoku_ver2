@@ -20,82 +20,172 @@ class GameScreen extends HookConsumerWidget {
     final gameState = ref.watch(gameNotifierProvider);
     final gameNotifier = ref.read(gameNotifierProvider.notifier);
 
-    // 화면 진입 시 타이머 시작 및 테스트 보드 초기화
+    // 화면 진입 시 저장된 게임 로드 및 초기화
     useEffect(() {
-      Future(() {
-        gameNotifier.handleIntent(const StartTimerIntent());
+      Future(() async {
+        // 저장된 게임 로드 시도
+        await gameNotifier.loadSavedGame();
 
-        // 테스트용 완성된 보드 초기화 (임시)
-        if (gameState.currentBoard == null) {
+        // 로드 후 현재 상태 확인
+        final currentState = ref.read(gameNotifierProvider);
+
+        // 저장된 게임이 없거나 완료된 경우에만 새 게임 시작
+        if (currentState.currentBoard == null || currentState.isGameCompleted) {
           gameNotifier.handleIntent(const InitializeTestBoardIntent());
+          // 새 게임인 경우에만 타이머 시작
+          gameNotifier.handleIntent(const StartTimerIntent());
         }
+        // 기존 게임이 있는 경우 타이머는 생명주기에서 관리
       });
       return null;
     }, []);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textWhite,
-        title: Text(translate('game_screen', '게임')),
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: Colors.white,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const GameTimer(),
-                    const Expanded(child: SudokuBoard()),
-                    const GameActionButtons(),
-                    const SizedBox(height: 16),
-                    NumberButtonsGrid(
-                      selectedNumbers: gameState.selectedNumbers,
-                      isNoteMode: gameState.currentBoard?.isNoteMode ?? false,
-                      selectedCellNotes:
-                          gameState.currentBoard?.selectedCellNotes,
-                      onNumberTap: (number) {
-                        // 숫자 입력 기능으로 변경
-                        gameNotifier.handleIntent(InputNumberIntent(number));
-                      },
-                      onClearTap: () {
-                        // 셀 지우기 기능으로 변경
-                        gameNotifier.handleIntent(const ClearCellIntent());
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
+    return WillPopScope(
+        onWillPop: () async {
+          // 게임이 완료되었거나 보드가 없는 경우 바로 나가기
+          if (gameState.isGameCompleted || gameState.currentBoard == null) {
+            return true;
+          }
+
+          // 중단 확인 다이얼로그 표시
+          final shouldExit = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(translate('exit_game_title', '게임 중단')),
+                content: Text(translate(
+                    'exit_game_message', '게임을 중단하시겠습니까?\n진행 상황이 저장됩니다.')),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(translate('cancel', '취소')),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text(translate('exit', '중단')),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (shouldExit == true) {
+            // 게임 저장 후 나가기
+            await gameNotifier.autoSave();
+            return true;
+          }
+
+          return false;
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.textWhite,
+            title: Text(translate('game_screen', '게임')),
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () async {
+                // 게임이 완료되었거나 보드가 없는 경우 바로 나가기
+                if (gameState.isGameCompleted ||
+                    gameState.currentBoard == null) {
+                  Navigator.of(context).pop();
+                  return;
+                }
+
+                // 중단 확인 다이얼로그 표시
+                final shouldExit = await showDialog<bool>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(translate('exit_game_title', '게임 중단')),
+                      content: Text(translate(
+                          'exit_game_message', '게임을 중단하시겠습니까?\n진행 상황이 저장됩니다.')),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(translate('cancel', '취소')),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: Text(translate('exit', '중단')),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (shouldExit == true) {
+                  // 게임 저장 후 나가기
+                  await gameNotifier.autoSave();
+                  Navigator.of(context).pop();
+                }
+              },
             ),
           ),
-          // 게임 완료 다이얼로그 오버레이
-          if (gameState.showCompletionDialog)
-            Container(
-              color: Colors.black54,
-              child: Center(
-                child: GameCompletionDialog(
-                  elapsedSeconds: gameState.elapsedSeconds,
-                  onNewGame: () {
-                    // 새 게임 시작 로직
-                    gameNotifier
-                        .handleIntent(const InitializeTestBoardIntent());
-                    gameNotifier.handleIntent(const StartTimerIntent());
-                  },
-                  onContinue: () {
-                    // 계속하기 - 다이얼로그만 닫기
-                  },
+          body: Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: Colors.white,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        const GameTimer(),
+                        const Expanded(child: SudokuBoard()),
+                        const GameActionButtons(),
+                        const SizedBox(height: 16),
+                        NumberButtonsGrid(
+                          selectedNumbers: gameState.selectedNumbers,
+                          isNoteMode:
+                              gameState.currentBoard?.isNoteMode ?? false,
+                          selectedCellNotes:
+                              gameState.currentBoard?.selectedCellNotes,
+                          onNumberTap: (number) {
+                            // 숫자 입력 기능으로 변경
+                            gameNotifier
+                                .handleIntent(InputNumberIntent(number));
+                          },
+                          onClearTap: () {
+                            // 셀 지우기 기능으로 변경
+                            gameNotifier.handleIntent(const ClearCellIntent());
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-        ],
-      ),
-    );
+              // 게임 완료 다이얼로그 오버레이
+              if (gameState.showCompletionDialog)
+                Container(
+                  color: Colors.black54,
+                  child: Center(
+                    child: GameCompletionDialog(
+                      elapsedSeconds: gameState.elapsedSeconds,
+                      onNewGame: () async {
+                        // 저장된 게임 삭제
+                        await gameNotifier.clearSavedGame();
+
+                        // 새 게임 시작 로직
+                        gameNotifier
+                            .handleIntent(const InitializeTestBoardIntent());
+                        gameNotifier.handleIntent(const StartTimerIntent());
+                      },
+                      onContinue: () {
+                        // 계속하기 - 다이얼로그만 닫기
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ));
   }
 }
