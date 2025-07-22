@@ -6,6 +6,7 @@ import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/game_provider.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
+import 'package:chessudoku/ui/common/widgets/exit_game_dialog.dart';
 import 'widgets/game_timer.dart';
 import 'widgets/game_action_buttons.dart';
 import 'widgets/number_buttons_grid.dart';
@@ -52,20 +53,14 @@ class GameScreen extends HookConsumerWidget {
             context: context,
             barrierDismissible: false,
             builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text(translate('exit_game_title', '게임 중단')),
-                content: Text(translate(
-                    'exit_game_message', '게임을 중단하시겠습니까?\n진행 상황이 저장됩니다.')),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(translate('cancel', '취소')),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: Text(translate('exit', '중단')),
-                  ),
-                ],
+              return ExitGameDialog(
+                title: translate('exit_game_title', '게임 중단'),
+                message: translate(
+                    'exit_game_message', '게임을 중단하시겠습니까?\n진행 상황이 저장됩니다.'),
+                cancelText: translate('cancel', '취소'),
+                exitText: translate('exit', '중단'),
+                onCancel: () => Navigator.of(context).pop(false),
+                onExit: () => Navigator.of(context).pop(true),
               );
             },
           );
@@ -99,20 +94,14 @@ class GameScreen extends HookConsumerWidget {
                   context: context,
                   barrierDismissible: false,
                   builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text(translate('exit_game_title', '게임 중단')),
-                      content: Text(translate(
-                          'exit_game_message', '게임을 중단하시겠습니까?\n진행 상황이 저장됩니다.')),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: Text(translate('cancel', '취소')),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: Text(translate('exit', '중단')),
-                        ),
-                      ],
+                    return ExitGameDialog(
+                      title: translate('exit_game_title', '게임 중단'),
+                      message: translate(
+                          'exit_game_message', '게임을 중단하시겠습니까?\n진행 상황이 저장됩니다.'),
+                      cancelText: translate('cancel', '취소'),
+                      exitText: translate('exit', '중단'),
+                      onCancel: () => Navigator.of(context).pop(false),
+                      onExit: () => Navigator.of(context).pop(true),
                     );
                   },
                 );
