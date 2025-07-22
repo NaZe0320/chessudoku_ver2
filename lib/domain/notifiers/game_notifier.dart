@@ -25,37 +25,17 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   /// 게임 상태 자동 저장
   Future<void> autoSave() async {
-    try {
-      await _gameSaveRepository.saveCurrentGame(state);
-    } catch (e) {
-      print('자동 저장 실패: $e');
-    }
+    // TODO: 게임 상태 자동 저장 구현
   }
 
   /// 저장된 게임 로드
   Future<void> loadSavedGame() async {
-    try {
-      final savedState = _gameSaveRepository.loadCurrentGame();
-      if (savedState != null) {
-        state = savedState;
-
-        // 로드된 게임이 완료되지 않았고 타이머가 실행 중이었다면 타이머 재시작
-        if (!savedState.isGameCompleted && savedState.isTimerRunning) {
-          _handleStartTimer();
-        }
-      }
-    } catch (e) {
-      print('게임 로드 실패: $e');
-    }
+    // TODO: 저장된 게임 로드 구현
   }
 
   /// 저장된 게임 삭제
   Future<void> clearSavedGame() async {
-    try {
-      await _gameSaveRepository.clearCurrentGame();
-    } catch (e) {
-      print('게임 삭제 실패: $e');
-    }
+    // TODO: 저장된 게임 삭제 구현
   }
 
   @override
@@ -319,8 +299,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isTimerRunning: false,
       );
 
-      // 게임 완료 시 자동 저장
-      autoSave();
+      // TODO: 게임 완료 시 자동 저장 구현
     }
   }
 
@@ -534,7 +513,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         if (this.state.isTimerRunning) {
           _handlePauseTimer();
         }
-        autoSave();
+        // TODO: 자동 저장 구현
         break;
       case AppLifecycleState.resumed:
         // 앱이 포그라운드로 돌아올 때 이전에 실행 중이었다면 재시작
@@ -543,8 +522,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         }
         break;
       case AppLifecycleState.detached:
-        // 앱이 완전히 종료될 때 자동 저장
-        autoSave();
+        // TODO: 앱 종료 시 자동 저장 구현
         break;
       default:
         break;
