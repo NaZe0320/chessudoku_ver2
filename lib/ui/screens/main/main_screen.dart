@@ -135,7 +135,19 @@ class MainScreen extends HookConsumerWidget {
                       progressText: '',
                       progressValue: 0.65,
                       difficulty: Difficulty.medium,
-                      onTap: _onContinuePlayTap,
+                      onTap: () {
+                        // MainNotifier를 통해 저장된 게임 이어서 하기 설정
+                        mainNotifier
+                            .handleIntent(const ContinueSavedGameIntent());
+
+                        // GameScreen으로 이동
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const GameScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 const SizedBox(height: 16),
@@ -147,7 +159,14 @@ class MainScreen extends HookConsumerWidget {
                   statusText: translate('challenge_status', '이번 주 진행 상황'),
                   messageText: translate(
                       'special_puzzle_message', '매일 특별한 퍼즐로 연속 기록을 쌓아보세요!'),
-                  onDayTap: (day) => _onDayProgressTap(context, day),
+                  onDayTap: (day) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GameScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
 
@@ -184,7 +203,18 @@ class MainScreen extends HookConsumerWidget {
 
                 // 빠른 플레이 버튼 그리드
                 QuickPlayGrid(
-                  onQuickPlayTap: _onQuickPlayTap,
+                  onQuickPlayTap: (difficulty) {
+                    // MainNotifier를 통해 새 게임 시작 설정
+                    mainNotifier.handleIntent(StartNewGameIntent(difficulty));
+
+                    // GameScreen으로 이동
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GameScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -192,24 +222,5 @@ class MainScreen extends HookConsumerWidget {
         ),
       ),
     );
-  }
-
-  void _onDayProgressTap(BuildContext context, String day) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const GameScreen(),
-      ),
-    );
-  }
-
-  void _onContinuePlayTap() {
-    // TODO: 이어서 플레이 게임 화면으로 이동
-    print('이어서 플레이 게임 진입');
-  }
-
-  void _onQuickPlayTap(Difficulty difficulty) {
-    // TODO: 빠른 플레이 게임 화면으로 이동
-    print('${difficulty.name} 난이도 빠른 플레이 진입');
   }
 }

@@ -4,12 +4,9 @@ import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/domain/states/game_state.dart';
 import 'package:chessudoku/data/models/game_board.dart';
-import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 
 class GameNotifier extends BaseNotifier<GameIntent, GameState>
@@ -28,14 +25,22 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     // TODO: 게임 상태 자동 저장 구현
   }
 
-  /// 저장된 게임 로드
-  Future<void> loadSavedGame() async {
-    // TODO: 저장된 게임 로드 구현
-  }
+  /// 게임 초기화 (MainNotifier에서 호출)
+  void initializeGame(GameBoard gameBoard) {
+    state = state.copyWith(
+      currentBoard: gameBoard,
+      history: [],
+      redoHistory: [],
+      canUndo: false,
+      canRedo: false,
+      elapsedSeconds: 0,
+      isPaused: false,
+      isGameCompleted: false,
+      showCompletionDialog: false,
+    );
 
-  /// 저장된 게임 삭제
-  Future<void> clearSavedGame() async {
-    // TODO: 저장된 게임 삭제 구현
+    // 타이머 시작
+    _handleStartTimer();
   }
 
   @override
@@ -67,8 +72,6 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         _handleRestoreCheckpoint(intent.checkpointId);
       case DeleteCheckpointIntent():
         _handleDeleteCheckpoint(intent.checkpointId);
-      case InitializeTestBoardIntent():
-        _handleInitializeTestBoard();
       case StartTimerIntent():
         _handleStartTimer();
       case PauseTimerIntent():
@@ -365,72 +368,18 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     state = state.copyWith(checkpoints: newCheckpoints);
   }
 
-  void _handleInitializeTestBoard() {
-    // 완성된 스도쿠 답안 (체스 기물 위치는 빈 칸으로)
-    final solutionPuzzle = [
-      [5, 3, 4, 6, 7, 8, 9, 1, 2],
-      [6, null, 2, 1, 9, 5, 3, 4, 8], // (1,1) knight 위치
-      [1, 9, 8, 3, null, 2, 5, 6, 7], // (2,4) bishop 위치
-      [8, 5, 9, 7, 6, 1, 4, 2, 3],
-      [4, 2, 6, 8, null, 3, 7, 9, 1], // (4,4) queen 위치
-      [7, 1, 3, 9, 2, 4, 8, 5, 6],
-      [9, 6, 1, 5, null, 7, 2, 8, 4], // (6,4) rook 위치
-      [2, 8, 7, 4, 1, 9, 6, 3, 5], // (7,2) pawn 위치
-      [3, 4, 5, 2, 8, 6, 1, 7, 9],
-    ];
-
-    // 빈칸이 있는 퍼즐 (일부 셀을 null로 설정)
-    final puzzleWithBlanks = [
-      [5, 3, null, 6, 7, 8, 9, null, 2],
-      [6, null, 2, 1, 9, null, 3, 4, 8], // (1,1) knight 위치
-      [null, 9, 8, 3, null, 2, 5, 6, null], // (2,4) bishop 위치
-      [8, 5, null, 7, 6, 1, null, 2, 3],
-      [4, null, 6, 8, null, 3, 7, null, 1], // (4,4) queen 위치
-      [7, 1, null, 9, 2, null, 8, 5, 6],
-      [null, 6, 1, 5, null, 7, 2, 8, null], // (6,4) rook 위치
-      [2, 8, null, 4, 1, null, 6, 3, 5], // (7,2) pawn 위치
-      [3, null, 5, 2, 8, 6, null, 7, 9],
-    ];
-
-    // 체스 기물 배치 (일부 셀에만)
-    final chessPieces = <Position, ChessPiece>{
-      const Position(row: 1, col: 1): ChessPiece.knight,
-      const Position(row: 2, col: 4): ChessPiece.bishop,
-      const Position(row: 4, col: 4): ChessPiece.queen,
-      const Position(row: 6, col: 4): ChessPiece.rook,
-      const Position(row: 7, col: 2): ChessPiece.pawn,
-    };
-
-    // 체스 기물을 포함한 보드 생성
-    final puzzleBoard = SudokuBoard.fromPuzzleWithChess(
-      puzzle: puzzleWithBlanks,
-      chessPieces: chessPieces,
-    );
-
-    final solutionBoard = SudokuBoard.fromPuzzle(solutionPuzzle);
-
-    final gameBoard = GameBoard(
-      board: puzzleBoard,
-      solutionBoard: solutionBoard,
-      difficulty: Difficulty.medium,
-      puzzleId: 'test_puzzle_with_chess',
-    );
-
-    state = state.copyWith(
-      currentBoard: gameBoard,
-      history: [],
-      redoHistory: [],
-      canUndo: false,
-      canRedo: false,
-    );
-  }
-
   void _handleStartTimer() {
-    if (state.isPaused) {
+    // 이미 타이머가 실행 중이면 중복 실행 방지
+    if (_timer != null) return;
+
+    // 게임이 완료되지 않았을 때만 타이머 시작
+    if (!state.isGameCompleted) {
+      // 타이머 시작 시 일시정지 상태 해제
+      state = state.copyWith(isPaused: false);
+
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
       });
-      state = state.copyWith(isPaused: false);
     }
   }
 

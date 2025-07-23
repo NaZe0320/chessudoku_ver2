@@ -4,7 +4,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/game_provider.dart';
+import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
+import 'package:chessudoku/domain/intents/main_intent.dart';
+import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/ui/common/widgets/exit_game_dialog.dart';
 import 'widgets/game_timer.dart';
@@ -20,26 +23,36 @@ class GameScreen extends HookConsumerWidget {
     final translate = ref.watch(translationProvider);
     final gameState = ref.watch(gameNotifierProvider);
     final gameNotifier = ref.read(gameNotifierProvider.notifier);
+    final mainState = ref.watch(mainNotifierProvider);
+    final mainNotifier = ref.read(mainNotifierProvider.notifier);
 
-    // 화면 진입 시 저장된 게임 로드 및 초기화
+    // 화면 진입 시 MainNotifier의 정보를 받아 GameNotifier 초기화
     useEffect(() {
       Future(() async {
-        // 저장된 게임 로드 시도
-        await gameNotifier.loadSavedGame();
-
-        // 로드 후 현재 상태 확인
-        final currentState = ref.read(gameNotifierProvider);
-
-        // 저장된 게임이 없거나 완료된 경우에만 새 게임 시작
-        if (currentState.currentBoard == null || currentState.isGameCompleted) {
-          gameNotifier.handleIntent(const InitializeTestBoardIntent());
-          // 새 게임인 경우 타이머 시작
-          gameNotifier.handleIntent(const StartTimerIntent());
+        // MainNotifier에서 게임 시작 정보 확인
+        if (mainState.shouldStartNewGame && mainState.savedGameBoard != null) {
+          // 새 게임 시작
+          gameNotifier.initializeGame(mainState.savedGameBoard!);
+          // 게임 시작 정보 초기화
+          mainNotifier.handleIntent(const GetGameStartInfoIntent());
+        } else if (mainState.shouldContinueGame &&
+            mainState.savedGameBoard != null) {
+          // 저장된 게임 이어서 하기
+          gameNotifier.initializeGame(mainState.savedGameBoard!);
+          // 게임 시작 정보 초기화
+          mainNotifier.handleIntent(const GetGameStartInfoIntent());
         } else {
-          // 기존 게임이 있고 완료되지 않은 경우 타이머 시작
-          if (!currentState.isGameCompleted && currentState.isPaused) {
-            gameNotifier.handleIntent(const StartTimerIntent());
-          }
+          // 기본 테스트 보드로 시작 (기존 로직 유지)
+          mainNotifier
+              .handleIntent(const StartNewGameIntent(Difficulty.medium));
+          // 다음 프레임에서 다시 확인
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final updatedMainState = ref.read(mainNotifierProvider);
+            if (updatedMainState.savedGameBoard != null) {
+              gameNotifier.initializeGame(updatedMainState.savedGameBoard!);
+              mainNotifier.handleIntent(const GetGameStartInfoIntent());
+            }
+          });
         }
       });
       return null;

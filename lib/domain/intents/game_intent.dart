@@ -71,10 +71,6 @@ class DeleteCheckpointIntent extends GameIntent {
   const DeleteCheckpointIntent(this.checkpointId);
 }
 
-class InitializeTestBoardIntent extends GameIntent {
-  const InitializeTestBoardIntent();
-}
-
 class StartTimerIntent extends GameIntent {
   const StartTimerIntent();
 }
