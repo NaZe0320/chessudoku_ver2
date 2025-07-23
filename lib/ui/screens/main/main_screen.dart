@@ -1,8 +1,8 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/ui/common/widgets/continue_play_card.dart';
-import 'package:chessudoku/ui/common/widgets/daily_challenge_card.dart';
-import 'package:chessudoku/ui/common/widgets/quick_play_grid.dart';
+import 'package:chessudoku/ui/screens/main/widgets/continue_play_card.dart';
+import 'package:chessudoku/ui/screens/main/widgets/daily_challenge_card.dart';
+import 'package:chessudoku/ui/screens/main/widgets/quick_play_grid.dart';
 import 'package:chessudoku/ui/common/widgets/stat_card.dart';
 import 'package:chessudoku/ui/screens/game/game_screen.dart';
 import 'package:chessudoku/ui/screens/profile/settings_screen.dart';

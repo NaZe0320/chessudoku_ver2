@@ -1,5 +1,5 @@
 import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/ui/common/widgets/quick_play_button.dart';
+import 'package:chessudoku/ui/screens/main/widgets/quick_play_button.dart';
 import 'package:flutter/material.dart';
 
 class QuickPlayGrid extends StatelessWidget {

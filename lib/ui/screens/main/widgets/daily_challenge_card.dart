@@ -1,4 +1,4 @@
-import 'package:chessudoku/ui/common/widgets/day_progress_button.dart';
+import 'package:chessudoku/ui/screens/main/widgets/day_progress_button.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 
