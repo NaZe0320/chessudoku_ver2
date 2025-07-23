@@ -12,6 +12,8 @@ import '../../domain/repositories/version_repository.dart';
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/notifiers/sync_notifier.dart';
 import '../../domain/states/sync_state.dart';
+import '../../domain/notifiers/main_notifier.dart';
+import '../../domain/states/main_state.dart';
 import './language_pack_provider.dart';
 
 /// TestService Provider
@@ -70,4 +72,11 @@ final testRepositoryProvider = Provider<TestRepository>((ref) {
 final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
   final cacheService = ref.watch(cacheServiceProvider);
   return GameSaveRepositoryImpl(cacheService);
+});
+
+/// MainNotifier Provider
+final mainNotifierProvider =
+    StateNotifierProvider<MainNotifier, MainState>((ref) {
+  final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
+  return MainNotifier(gameSaveRepository);
 });

@@ -1,8 +1,10 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
+import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/intents/main_intent.dart';
+import 'package:chessudoku/ui/screens/main/widgets/quick_play_grid.dart';
 import 'package:chessudoku/ui/screens/main/widgets/continue_play_card.dart';
 import 'package:chessudoku/ui/screens/main/widgets/daily_challenge_card.dart';
-import 'package:chessudoku/ui/screens/main/widgets/quick_play_grid.dart';
 import 'package:chessudoku/ui/common/widgets/stat_card.dart';
 import 'package:chessudoku/ui/screens/game/game_screen.dart';
 import 'package:chessudoku/ui/screens/profile/settings_screen.dart';
@@ -16,6 +18,14 @@ class MainScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final translate = ref.watch(translationProvider);
+    final mainState = ref.watch(mainNotifierProvider);
+    final mainNotifier = ref.read(mainNotifierProvider.notifier);
+
+    // 화면 진입 시 저장된 게임 확인 및 통계 로드
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      mainNotifier.handleIntent(const CheckSavedGameIntent());
+      mainNotifier.handleIntent(const LoadStatsIntent());
+    });
 
     return Scaffold(
       body: Container(
@@ -97,7 +107,7 @@ class MainScreen extends HookConsumerWidget {
                   children: [
                     Expanded(
                       child: StatCard(
-                        value: '47',
+                        value: mainState.completedPuzzles.toString(),
                         label: translate('completed_puzzles', '완료한 퍼즐'),
                         icon: Icons.check_circle,
                       ),
@@ -105,7 +115,7 @@ class MainScreen extends HookConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: StatCard(
-                        value: '5일',
+                        value: '${mainState.currentStreak}일',
                         label: translate('current_streak', '연속 기록'),
                         icon: Icons.local_fire_department,
                       ),
@@ -114,25 +124,26 @@ class MainScreen extends HookConsumerWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // 이어서 플레이 카드
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: ContinuePlayCard(
-                    title: translate('continue_playing', '이어서 플레이'),
-                    subtitle:
-                        '${translate('normal_difficulty', '보통 난이도')} • ${translate('puzzle_8', '8번 정답')} • ${translate('progress_65', '65% 완료')}',
-                    progressText: '',
-                    progressValue: 0.65,
-                    difficulty: Difficulty.medium,
-                    onTap: _onContinuePlayTap,
+                // 이어서 플레이 카드 (저장된 게임이 있을 때만 표시)
+                if (mainState.hasSavedGame)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ContinuePlayCard(
+                      title: translate('continue_playing', '이어서 플레이'),
+                      subtitle: mainState.savedGameInfo ??
+                          '${translate('normal_difficulty', '보통 난이도')} • ${translate('puzzle_8', '8번 정답')} • ${translate('progress_65', '65% 완료')}',
+                      progressText: '',
+                      progressValue: 0.65,
+                      difficulty: Difficulty.medium,
+                      onTap: _onContinuePlayTap,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 16),
 
                 // 일일 챌린지 카드
                 DailyChallengeCard(
                   title: translate('daily_challenge', '일일 챌린지'),
-                  streakText: translate('may_streak', '5월 연속'),
+                  streakText: translate('may_streak', '7월 3째주'),
                   statusText: translate('challenge_status', '이번 주 진행 상황'),
                   messageText: translate(
                       'special_puzzle_message', '매일 특별한 퍼즐로 연속 기록을 쌓아보세요!'),

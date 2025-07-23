@@ -25,4 +25,30 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
     // TODO: 게임 상태 삭제 구현
     return false;
   }
+
+  @override
+  Future<bool> hasSavedGame() async {
+    // TODO: 저장된 게임 존재 여부 확인 구현
+    // 임시로 true 반환 (테스트용)
+    return true;
+  }
+
+  @override
+  Future<String?> getSavedGameInfo() async {
+    // TODO: 저장된 게임 정보 가져오기 구현
+    // 임시로 테스트 데이터 반환
+    return '보통 난이도 • 8번 정답 • 65% 완료';
+  }
+
+  @override
+  Future<int> getCompletedPuzzlesCount() async {
+    // TODO: 완료한 퍼즐 수 가져오기 구현
+    return 0;
+  }
+
+  @override
+  Future<int> getCurrentStreak() async {
+    // TODO: 현재 연속 기록 가져오기 구현
+    return 0;
+  }
 }
