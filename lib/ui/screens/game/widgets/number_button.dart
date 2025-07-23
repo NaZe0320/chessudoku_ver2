@@ -4,28 +4,34 @@ class NumberButton extends StatelessWidget {
   final String text;
   final IconData? icon;
   final bool isSelected;
-  final VoidCallback onTap;
+  final bool isDisabled;
+  final VoidCallback? onTap;
 
   const NumberButton({
     super.key,
     required this.text,
     this.icon,
     this.isSelected = false,
-    required this.onTap,
+    this.isDisabled = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isDisabled ? null : onTap,
       child: Container(
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue[100] : Colors.grey[50],
+          color: isDisabled
+              ? Colors.grey[100]
+              : (isSelected ? Colors.blue[100] : Colors.grey[50]),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? Colors.blue[300]! : Colors.grey[300]!,
+            color: isDisabled
+                ? Colors.grey[200]!
+                : (isSelected ? Colors.blue[300]! : Colors.grey[300]!),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
@@ -40,13 +46,17 @@ class NumberButton extends StatelessWidget {
           child: icon != null
               ? Icon(
                   icon,
-                  color: isSelected ? Colors.blue[700] : Colors.grey[700],
+                  color: isDisabled
+                      ? Colors.grey[400]
+                      : (isSelected ? Colors.blue[700] : Colors.grey[700]),
                   size: 20,
                 )
               : Text(
                   text,
                   style: TextStyle(
-                    color: isSelected ? Colors.blue[800] : Colors.grey[800],
+                    color: isDisabled
+                        ? Colors.grey[400]
+                        : (isSelected ? Colors.blue[800] : Colors.grey[800]),
                     fontSize: 18,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                   ),

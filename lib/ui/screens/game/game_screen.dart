@@ -196,6 +196,7 @@ class GameScreen extends HookConsumerWidget {
                               gameState.currentBoard?.isNoteMode ?? false,
                           selectedCellNotes:
                               gameState.currentBoard?.selectedCellNotes,
+                          isPaused: gameState.isPaused,
                           onNumberTap: (number) {
                             // 숫자 입력 기능으로 변경
                             gameNotifier

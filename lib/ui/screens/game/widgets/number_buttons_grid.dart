@@ -10,6 +10,7 @@ class NumberButtonsGrid extends HookConsumerWidget {
   final VoidCallback onClearTap;
   final bool isNoteMode;
   final Set<int>? selectedCellNotes; // 선택된 셀의 메모 숫자들
+  final bool isPaused; // 일시정지 상태
 
   const NumberButtonsGrid({
     super.key,
@@ -18,6 +19,7 @@ class NumberButtonsGrid extends HookConsumerWidget {
     required this.onClearTap,
     this.isNoteMode = false,
     this.selectedCellNotes,
+    this.isPaused = false,
   });
 
   @override
@@ -44,7 +46,8 @@ class NumberButtonsGrid extends HookConsumerWidget {
             NumberButton(
               text: translate('clear', '취소'),
               icon: Icons.clear,
-              onTap: onClearTap,
+              isDisabled: isPaused,
+              onTap: isPaused ? null : onClearTap,
             ),
           ],
         ),
@@ -60,7 +63,8 @@ class NumberButtonsGrid extends HookConsumerWidget {
     return NumberButton(
       text: number.toString(),
       isSelected: isSelected,
-      onTap: () => onNumberTap(number),
+      isDisabled: isPaused,
+      onTap: isPaused ? null : () => onNumberTap(number),
     );
   }
 }

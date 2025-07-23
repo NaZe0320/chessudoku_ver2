@@ -8,21 +8,25 @@ import 'package:chessudoku/ui/common/widgets/selection_dialog.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 
 class CheckpointButton extends HookConsumerWidget {
-  const CheckpointButton({super.key});
+  final bool isPaused;
+
+  const CheckpointButton({super.key, this.isPaused = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final translate = ref.watch(translationProvider);
 
     return GestureDetector(
-      onTap: () => _showCheckpointBottomSheet(context, ref, translate),
+      onTap: isPaused
+          ? null
+          : () => _showCheckpointBottomSheet(context, ref, translate),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: isPaused ? Colors.grey[100] : Colors.grey[50],
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Colors.grey[300]!,
+            color: isPaused ? Colors.grey[200]! : Colors.grey[300]!,
             width: 1,
           ),
           boxShadow: [
@@ -38,14 +42,14 @@ class CheckpointButton extends HookConsumerWidget {
           children: [
             Icon(
               Icons.bookmark,
-              color: Colors.grey[700],
+              color: isPaused ? Colors.grey[400] : Colors.grey[700],
               size: 14,
             ),
             const SizedBox(width: 5),
             Text(
               translate('checkpoint', '분기점'),
               style: TextStyle(
-                color: Colors.grey[800],
+                color: isPaused ? Colors.grey[400] : Colors.grey[800],
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
@@ -53,7 +57,7 @@ class CheckpointButton extends HookConsumerWidget {
             const SizedBox(width: 6),
             Icon(
               Icons.expand_more,
-              color: Colors.grey[700],
+              color: isPaused ? Colors.grey[400] : Colors.grey[700],
               size: 14,
             ),
           ],

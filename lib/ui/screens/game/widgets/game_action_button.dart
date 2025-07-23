@@ -24,17 +24,18 @@ class GameActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isEnabled = buttonType == ButtonType.toggle ? true : isActive;
+    // 모든 버튼을 동일한 로직으로 처리
+    final isEnabled = isActive;
 
     return GestureDetector(
       onTap: isEnabled ? onTap : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: _getBackgroundColor(),
+          color: isEnabled ? Colors.grey[50] : Colors.grey[100],
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: _getBorderColor(),
+            color: isEnabled ? Colors.grey[300]! : Colors.grey[200]!,
             width: 1,
           ),
           boxShadow: [
@@ -50,14 +51,14 @@ class GameActionButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: _getIconColor(),
+              color: isEnabled ? Colors.grey[700] : Colors.grey[400],
               size: 14,
             ),
             const SizedBox(width: 5),
             Text(
               text,
               style: TextStyle(
-                color: _getTextColor(),
+                color: isEnabled ? Colors.grey[800] : Colors.grey[400],
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
@@ -66,47 +67,5 @@ class GameActionButton extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _getBackgroundColor() {
-    if (buttonType == ButtonType.toggle) {
-      // 메모 버튼: 활성화 시 primary 색상, 비활성화 시 기본 색상
-      return isActive
-          ? AppColors.primary.withValues(alpha: 0.1)
-          : Colors.grey[50]!;
-    } else {
-      // 되돌리기/다시 실행 버튼: 활성화 시 기본 색상, 비활성화 시 회색
-      return isActive ? Colors.grey[50]! : Colors.grey[200]!;
-    }
-  }
-
-  Color _getBorderColor() {
-    if (buttonType == ButtonType.toggle) {
-      // 메모 버튼: 활성화 시 primary 색상, 비활성화 시 회색
-      return isActive ? AppColors.primary : Colors.grey[300]!;
-    } else {
-      // 되돌리기/다시 실행 버튼: 활성화 시 기본 색상, 비활성화 시 연한 회색
-      return isActive ? Colors.grey[300]! : Colors.grey[400]!;
-    }
-  }
-
-  Color _getIconColor() {
-    if (buttonType == ButtonType.toggle) {
-      // 메모 버튼: 활성화 시 primary 색상, 비활성화 시 회색
-      return isActive ? AppColors.primary : Colors.grey[700]!;
-    } else {
-      // 되돌리기/다시 실행 버튼: 활성화 시 기본 색상, 비활성화 시 연한 회색
-      return isActive ? Colors.grey[700]! : Colors.grey[500]!;
-    }
-  }
-
-  Color _getTextColor() {
-    if (buttonType == ButtonType.toggle) {
-      // 메모 버튼: 활성화 시 primary 색상, 비활성화 시 회색
-      return isActive ? AppColors.primary : Colors.grey[800]!;
-    } else {
-      // 되돌리기/다시 실행 버튼: 활성화 시 기본 색상, 비활성화 시 연한 회색
-      return isActive ? Colors.grey[800]! : Colors.grey[600]!;
-    }
   }
 }
