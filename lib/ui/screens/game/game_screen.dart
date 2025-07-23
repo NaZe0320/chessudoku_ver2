@@ -33,10 +33,14 @@ class GameScreen extends HookConsumerWidget {
         // 저장된 게임이 없거나 완료된 경우에만 새 게임 시작
         if (currentState.currentBoard == null || currentState.isGameCompleted) {
           gameNotifier.handleIntent(const InitializeTestBoardIntent());
-          // 새 게임인 경우에만 타이머 시작
+          // 새 게임인 경우 타이머 시작
           gameNotifier.handleIntent(const StartTimerIntent());
+        } else {
+          // 기존 게임이 있고 완료되지 않은 경우 타이머 시작
+          if (!currentState.isGameCompleted && !currentState.isTimerRunning) {
+            gameNotifier.handleIntent(const StartTimerIntent());
+          }
         }
-        // 기존 게임이 있는 경우 타이머는 생명주기에서 관리
       });
       return null;
     }, []);
@@ -158,17 +162,9 @@ class GameScreen extends HookConsumerWidget {
                   child: Center(
                     child: GameCompletionDialog(
                       elapsedSeconds: gameState.elapsedSeconds,
-                      onNewGame: () async {
-                        // 저장된 게임 삭제
-                        await gameNotifier.clearSavedGame();
-
-                        // 새 게임 시작 로직
-                        gameNotifier
-                            .handleIntent(const InitializeTestBoardIntent());
-                        gameNotifier.handleIntent(const StartTimerIntent());
-                      },
                       onContinue: () {
-                        // 계속하기 - 다이얼로그만 닫기
+                        // 메인 화면으로 이동
+                        Navigator.of(context).pop();
                       },
                     ),
                   ),

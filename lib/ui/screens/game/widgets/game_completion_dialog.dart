@@ -8,13 +8,11 @@ import 'package:chessudoku/ui/theme/dimensions.dart';
 
 class GameCompletionDialog extends HookConsumerWidget {
   final int elapsedSeconds;
-  final VoidCallback? onNewGame;
   final VoidCallback? onContinue;
 
   const GameCompletionDialog({
     super.key,
     required this.elapsedSeconds,
-    this.onNewGame,
     this.onContinue,
   });
 
@@ -106,56 +104,30 @@ class GameCompletionDialog extends HookConsumerWidget {
             ),
             const SizedBox(height: Spacing.space6),
 
-            // 버튼들
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      notifier.handleIntent(const HideCompletionDialogIntent());
-                      onContinue?.call();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: Spacing.space4,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                      ),
-                    ),
-                    child: Text(
-                      '계속하기',
-                      style: AppTypography.buttonText.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
+            // 버튼
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  notifier.handleIntent(const HideCompletionDialogIntent());
+                  onContinue?.call();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: Spacing.space4,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Spacing.radiusMd),
                   ),
                 ),
-                const SizedBox(width: Spacing.space4),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      notifier.handleIntent(const HideCompletionDialogIntent());
-                      onNewGame?.call();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: Spacing.space4,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                      ),
-                    ),
-                    child: Text(
-                      '새 게임',
-                      style: AppTypography.buttonText.copyWith(
-                        color: AppColors.textWhite,
-                      ),
-                    ),
+                child: Text(
+                  '메인으로',
+                  style: AppTypography.buttonText.copyWith(
+                    color: AppColors.textWhite,
                   ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
