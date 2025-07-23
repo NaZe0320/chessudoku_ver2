@@ -100,7 +100,21 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     final currentBoard = state.currentBoard;
     if (currentBoard != null) {
       final newBoard = currentBoard.selectCell(position);
-      state = state.copyWith(currentBoard: newBoard);
+
+      // 선택된 셀의 숫자를 selectedNumbers에 추가
+      Set<int> newSelectedNumbers = {};
+      if (newBoard.selectedCell != null) {
+        final selectedCellContent =
+            newBoard.board.getCellContent(newBoard.selectedCell!);
+        if (selectedCellContent?.number != null) {
+          newSelectedNumbers.add(selectedCellContent!.number!);
+        }
+      }
+
+      state = state.copyWith(
+        currentBoard: newBoard,
+        selectedNumbers: newSelectedNumbers,
+      );
     }
   }
 
@@ -190,6 +204,11 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     );
 
     state = state.copyWith(currentBoard: updatedGameBoard);
+
+    // 입력한 숫자를 selectedNumbers에 추가
+    final newSelectedNumbers = Set<int>.from(state.selectedNumbers)
+      ..add(number);
+    state = state.copyWith(selectedNumbers: newSelectedNumbers);
 
     // 게임 완료 체크
     _handleCheckGameCompletion();
@@ -296,7 +315,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       state = state.copyWith(
         isGameCompleted: true,
         showCompletionDialog: true,
-        isTimerRunning: false,
+        isPaused: true,
       );
 
       // TODO: 게임 완료 시 자동 저장 구현
@@ -406,18 +425,18 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
   }
 
   void _handleStartTimer() {
-    if (!state.isTimerRunning) {
+    if (state.isPaused) {
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
       });
-      state = state.copyWith(isTimerRunning: true);
+      state = state.copyWith(isPaused: false);
     }
   }
 
   void _handlePauseTimer() {
     _timer?.cancel();
     _timer = null;
-    state = state.copyWith(isTimerRunning: false);
+    state = state.copyWith(isPaused: true);
   }
 
   void _handleResetTimer() {
@@ -425,7 +444,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     _timer = null;
     state = state.copyWith(
       elapsedSeconds: 0,
-      isTimerRunning: false,
+      isPaused: true,
     );
   }
 
@@ -509,8 +528,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     switch (state) {
       case AppLifecycleState.paused:
         // 앱이 백그라운드로 갈 때 타이머 상태 저장 후 일시정지
-        _wasTimerRunningBeforePause = this.state.isTimerRunning;
-        if (this.state.isTimerRunning) {
+        _wasTimerRunningBeforePause = !this.state.isPaused;
+        if (!this.state.isPaused) {
           _handlePauseTimer();
         }
         // TODO: 자동 저장 구현

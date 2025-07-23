@@ -56,14 +56,14 @@ class GameTimer extends HookConsumerWidget {
           const SizedBox(width: 6),
           GestureDetector(
             onTap: () {
-              if (gameState.isTimerRunning) {
-                gameNotifier.handleIntent(const PauseTimerIntent());
-              } else {
-                gameNotifier.handleIntent(const StartTimerIntent());
-              }
+                      if (!gameState.isPaused) {
+          gameNotifier.handleIntent(const PauseTimerIntent());
+        } else {
+          gameNotifier.handleIntent(const StartTimerIntent());
+        }
             },
             child: Icon(
-              gameState.isTimerRunning ? Icons.pause : Icons.play_arrow,
+              !gameState.isPaused ? Icons.pause : Icons.play_arrow,
               color: Colors.grey[700],
               size: 14,
             ),

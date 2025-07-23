@@ -10,7 +10,7 @@ class GameState with _$GameState {
     @Default(false) bool isLoading,
     @Default({}) Set<int> selectedNumbers,
     @Default(0) int elapsedSeconds,
-    @Default(false) bool isTimerRunning,
+    @Default(false) bool isPaused, // 일시 정지 상태 (isTimerRunning 대신 사용)
     GameBoard? currentBoard, // 현재 게임 보드
     @Default([]) List<GameBoard> history, // 되돌리기용 히스토리
     @Default([]) List<GameBoard> redoHistory, // 다시 실행용 히스토리

@@ -37,7 +37,7 @@ class GameScreen extends HookConsumerWidget {
           gameNotifier.handleIntent(const StartTimerIntent());
         } else {
           // 기존 게임이 있고 완료되지 않은 경우 타이머 시작
-          if (!currentState.isGameCompleted && !currentState.isTimerRunning) {
+          if (!currentState.isGameCompleted && currentState.isPaused) {
             gameNotifier.handleIntent(const StartTimerIntent());
           }
         }
@@ -130,7 +130,64 @@ class GameScreen extends HookConsumerWidget {
                     child: Column(
                       children: [
                         const GameTimer(),
-                        const Expanded(child: SudokuBoard()),
+                        // 일시 정지 상태일 때는 보드 대신 일시 정지 메시지 표시
+                        if (gameState.isPaused && !gameState.isGameCompleted)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                gameNotifier
+                                    .handleIntent(const StartTimerIntent());
+                              },
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.pause_circle_outline,
+                                        size: 48,
+                                        color: Colors.grey[600],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        translate(
+                                            'game_paused', '게임이 일시정지되었습니다'),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        translate(
+                                            'tap_to_resume', '화면을 탭하여 계속하기'),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          const Expanded(child: SudokuBoard()),
                         const GameActionButtons(),
                         const SizedBox(height: 16),
                         NumberButtonsGrid(
