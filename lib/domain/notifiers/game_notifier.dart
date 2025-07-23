@@ -101,13 +101,14 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     if (currentBoard != null) {
       final newBoard = currentBoard.selectCell(position);
 
-      // 선택된 셀의 숫자를 selectedNumbers에 추가
+      // 선택된 셀의 숫자를 selectedNumbers에 추가 (초기값 제외)
       Set<int> newSelectedNumbers = {};
       if (newBoard.selectedCell != null) {
         final selectedCellContent =
             newBoard.board.getCellContent(newBoard.selectedCell!);
-        if (selectedCellContent?.number != null) {
-          newSelectedNumbers.add(selectedCellContent!.number!);
+        if (selectedCellContent?.number != null &&
+            !selectedCellContent!.isInitial) {
+          newSelectedNumbers.add(selectedCellContent.number!);
         }
       }
 

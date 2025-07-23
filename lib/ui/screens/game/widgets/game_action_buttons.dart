@@ -23,7 +23,8 @@ class GameActionButtons extends HookConsumerWidget {
         GameActionButton(
           icon: Icons.undo,
           text: translate('undo', '되돌리기'),
-          isActive: gameState.canUndo && !gameState.isPaused,
+          isActive: gameState.canUndo,
+          isPaused: gameState.isPaused,
           buttonType: ButtonType.action,
           onTap: () {
             gameNotifier.handleIntent(const UndoIntent());
@@ -32,8 +33,8 @@ class GameActionButtons extends HookConsumerWidget {
         GameActionButton(
           icon: Icons.edit_note,
           text: translate('memo', '메모'),
-          isActive: (gameState.currentBoard?.isNoteMode ?? false) &&
-              !gameState.isPaused,
+          isActive: gameState.currentBoard?.isNoteMode ?? false,
+          isPaused: gameState.isPaused,
           buttonType: ButtonType.toggle,
           onTap: () {
             gameNotifier.handleIntent(const ToggleNoteModeIntent());
@@ -42,7 +43,8 @@ class GameActionButtons extends HookConsumerWidget {
         GameActionButton(
           icon: Icons.redo,
           text: translate('redo', '다시 실행'),
-          isActive: gameState.canRedo && !gameState.isPaused,
+          isActive: gameState.canRedo,
+          isPaused: gameState.isPaused,
           buttonType: ButtonType.action,
           onTap: () {
             gameNotifier.handleIntent(const RedoIntent());
@@ -51,7 +53,8 @@ class GameActionButtons extends HookConsumerWidget {
         GameActionButton(
           icon: Icons.error_outline,
           text: translate('check_error', '오류 검사'),
-          isActive: !gameState.isPaused,
+          isActive: true,
+          isPaused: gameState.isPaused,
           buttonType: ButtonType.action,
           onTap: () {
             gameNotifier.handleIntent(const CheckErrorsIntent());
