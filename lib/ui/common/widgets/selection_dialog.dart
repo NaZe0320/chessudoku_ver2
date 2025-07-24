@@ -62,7 +62,6 @@ class SelectionDialog extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.of(context).pop();
                       onCancel?.call();
                     },
                     style: OutlinedButton.styleFrom(
@@ -89,7 +88,6 @@ class SelectionDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pop();
                       onConfirm?.call();
                     },
                     style: ElevatedButton.styleFrom(

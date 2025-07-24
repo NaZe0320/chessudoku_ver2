@@ -266,7 +266,7 @@ class CheckpointButton extends HookConsumerWidget {
       if (confirmed == true) {
         // 체크포인트 복원 실행
         notifier.handleIntent(RestoreCheckpointIntent(checkpointId));
-        
+
         // 복원 후 UI 업데이트를 위해 잠시 대기
         Future.delayed(const Duration(milliseconds: 100), () {
           if (context.mounted) {
