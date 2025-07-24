@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -10,10 +11,12 @@ class DatabaseService {
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
   // 데이터베이스 버전
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
 
   // 테이블 이름
-  static const String tablePuzzleRecords = 'puzzle_records';
+  static const String tableDataVersions = 'data_versions';
+  static const String tableLanguagePacks = 'language_packs';
+  static const String tableSettings = 'settings';
 
   // 싱글톤 패턴 적용
   factory DatabaseService() {
@@ -34,32 +37,84 @@ class DatabaseService {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _dbName);
 
-    print('데이터베이스 초기화: $path (버전 $_dbVersion)');
+    debugPrint('데이터베이스 초기화: $path (버전 $_dbVersion)');
 
     return await openDatabase(
       path,
       version: _dbVersion,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
       onOpen: (db) {
-        print('데이터베이스 열림: ${db.path}, 테이블: $tablePuzzleRecords');
+        debugPrint('데이터베이스 열림: ${db.path}');
       },
     );
   }
 
   /// 데이터베이스 생성
   Future<void> _createDB(Database db, int version) async {
-    print('새 데이터베이스 생성 중... 버전: $version');
-    // 퍼즐 기록 테이블 생성
+    debugPrint('새 데이터베이스 생성 중... 버전: $version');
+    await _createTables(db);
+  }
+
+  /// 데이터베이스 업그레이드
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    debugPrint('데이터베이스 업그레이드: $oldVersion -> $newVersion');
+
+    if (oldVersion < 2) {
+      await _createDataVersionsTable(db);
+      await _createLanguageTables(db);
+    }
+  }
+
+  Future<void> _createTables(Database db) async {
+    await _createDataVersionsTable(db);
+    await _createLanguageTables(db);
+    await _createSettingsTable(db);
+  }
+
+  Future<void> _createDataVersionsTable(Database db) async {
+    // 데이터 버전 관리 테이블 생성
     await db.execute('''
-      CREATE TABLE $tablePuzzleRecords (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        difficulty TEXT NOT NULL,
-        boardData TEXT NOT NULL,
-        completionTime INTEGER NOT NULL,
-        createdAt TEXT NOT NULL
+      CREATE TABLE $tableDataVersions (
+        dataType TEXT PRIMARY KEY,
+        version INTEGER NOT NULL,
+        updatedAt TEXT NOT NULL
       )
     ''');
-    print('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
+    debugPrint('데이터 버전 테이블 생성 완료: $tableDataVersions');
+  }
+
+  Future<void> _createLanguageTables(Database db) async {
+    // 언어팩 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tableLanguagePacks (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        nativeName TEXT NOT NULL,
+        languageCode TEXT NOT NULL,
+        countryCode TEXT NOT NULL,
+        isDownloaded INTEGER NOT NULL DEFAULT 0,
+        isDefault INTEGER NOT NULL DEFAULT 0,
+        version TEXT,
+        lastUpdated INTEGER,
+        downloadSize INTEGER NOT NULL,
+        translations TEXT
+      )
+    ''');
+    debugPrint('언어팩 테이블 생성 완료: $tableLanguagePacks');
+  }
+
+  Future<void> _createSettingsTable(Database db) async {
+    // 설정 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tableSettings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        currentLanguageId TEXT NOT NULL,
+        systemLanguage TEXT,
+        lastUpdated INTEGER NOT NULL
+      )
+    ''');
+    debugPrint('설정 테이블 생성 완료: $tableSettings');
   }
 
   /// 데이터베이스 닫기
@@ -134,6 +189,6 @@ class DatabaseService {
   /// 데이터베이스 초기화 (모든 데이터 삭제)
   Future<void> resetDatabase() async {
     final db = await database;
-    await db.delete(tablePuzzleRecords);
+    // 퍼즐 관련 테이블 제거됨
   }
 }

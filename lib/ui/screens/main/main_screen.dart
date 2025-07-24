@@ -1,66 +1,227 @@
-import 'package:chessudoku/ui/common/widgets/bottom_nav_bar/bottom_nav_bar.dart';
-import 'package:chessudoku/ui/screens/home/home_screen.dart';
-import 'package:chessudoku/ui/screens/pack/pack_screen.dart';
-import 'package:chessudoku/ui/screens/profile/profile_screen.dart';
-import 'package:chessudoku/ui/screens/puzzle/create_puzzle_bottom_sheet.dart';
-import 'package:chessudoku/ui/screens/test/test_page.dart';
+import 'package:chessudoku/core/di/language_pack_provider.dart';
+import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/intents/main_intent.dart';
+import 'package:chessudoku/ui/screens/main/widgets/quick_play_grid.dart';
+import 'package:chessudoku/ui/screens/main/widgets/continue_play_card.dart';
+import 'package:chessudoku/ui/screens/main/widgets/daily_challenge_card.dart';
+import 'package:chessudoku/ui/common/widgets/stat_card.dart';
+import 'package:chessudoku/ui/screens/game/game_screen.dart';
+import 'package:chessudoku/ui/screens/profile/settings_screen.dart';
+import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends HookConsumerWidget {
   const MainScreen({super.key});
 
   @override
-  MainScreenState createState() => MainScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final translate = ref.watch(translationProvider);
+    final mainState = ref.watch(mainNotifierProvider);
+    final mainNotifier = ref.read(mainNotifierProvider.notifier);
 
-class MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+    // 화면 진입 시 저장된 게임 확인 및 통계 로드 (한 번만 실행)
+    useEffect(() {
+      mainNotifier.handleIntent(const CheckSavedGameIntent());
+      mainNotifier.handleIntent(const LoadStatsIntent());
+      return null;
+    }, []);
 
-  // 각 탭에 해당하는 스크린들
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const PackScreen(),
-    const TestPage(),
-    const ProfileScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // 현재 선택된 인덱스에 따라 화면 전환 (하단 패딩 추가)
-          Padding(
-            padding:
-                const EdgeInsets.only(bottom: 60), // BottomNavBar 높이만큼 패딩 추가
-            child: _screens[_currentIndex],
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primary,
+              AppColors.primaryLight,
+            ],
           ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 앱 이름과 설정
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      translate('app_name', 'ChesSudoku'),
+                      style: const TextStyle(
+                        color: AppColors.textWhite,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0,
+                            vertical: 6.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          child: const Text(
+                            'PRO',
+                            style: TextStyle(
+                              color: AppColors.textWhite,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SettingsScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.settings,
+                            color: AppColors.textWhite,
+                            size: 24,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
 
-          // 바텀 네비게이션을 화면 하단에 배치
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNavBar(
-              selectedIndex: _currentIndex,
-              onItemSelected: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              items: [
-                BottomNavItem(icon: Icons.home, label: '홈'),
-                BottomNavItem(icon: Icons.grid_view, label: '퍼즐 팩'),
-                BottomNavItem(icon: Icons.people, label: '친구'),
-                BottomNavItem(icon: Icons.person, label: '프로필'),
+                // 통계 카드들
+                Row(
+                  children: [
+                    Expanded(
+                      child: StatCard(
+                        value: mainState.completedPuzzles.toString(),
+                        label: translate('completed_puzzles', '완료한 퍼즐'),
+                        icon: Icons.check_circle,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: StatCard(
+                        value: '${mainState.currentStreak}일',
+                        label: translate('current_streak', '연속 기록'),
+                        icon: Icons.local_fire_department,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // 이어서 플레이 카드 (저장된 게임이 있을 때만 표시)
+                if (mainState.hasSavedGame)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ContinuePlayCard(
+                      title: translate('continue_playing', '이어서 플레이'),
+                      subtitle: mainState.savedGameInfo ??
+                          '${translate('normal_difficulty', '보통 난이도')} • ${translate('time_00_00', '00:00')}',
+                      progressText: '',
+                      progressValue: 0.0,
+                      difficulty: Difficulty.medium,
+                      onTap: () {
+                        // MainNotifier를 통해 저장된 게임 이어서 하기 설정
+                        mainNotifier
+                            .handleIntent(const ContinueSavedGameIntent());
+
+                        // GameScreen으로 이동
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const GameScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 16),
+
+                // 일일 챌린지 카드
+                DailyChallengeCard(
+                  title: translate('daily_challenge', '일일 챌린지'),
+                  streakText: translate('may_streak', '7월 3째주'),
+                  statusText: translate('challenge_status', '이번 주 진행 상황'),
+                  messageText: translate(
+                      'special_puzzle_message', '매일 특별한 퍼즐로 연속 기록을 쌓아보세요!'),
+                  onDayTap: (day) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GameScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                // 빠른 플레이 섹션
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.flash_on,
+                      color: AppColors.textWhite,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      translate('quick_play', '빠른 플레이'),
+                      style: const TextStyle(
+                        color: AppColors.textWhite,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  translate(
+                      'quick_play_subtitle', '난이도를 선택해 바로 시작할 수 있는 새로운 퍼즐'),
+                  style: const TextStyle(
+                    color: AppColors.textWhite,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 빠른 플레이 버튼 그리드
+                QuickPlayGrid(
+                  onQuickPlayTap: (difficulty) {
+                    // MainNotifier를 통해 새 게임 시작 설정
+                    mainNotifier.handleIntent(StartNewGameIntent(difficulty));
+
+                    // GameScreen으로 이동
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GameScreen(),
+                      ),
+                    );
+                  },
+                ),
               ],
-              onCenterButtonPressed: () {
-                // 새 퍼즐 생성 바텀 시트 표시
-                showCreatePuzzleBottomSheet(context);
-              },
             ),
           ),
-        ],
+        ),
       ),
     );
   }
