@@ -42,20 +42,23 @@ class GameActionButton extends StatelessWidget {
       child: InkWell(
         onTap: isEnabled ? onTap : null,
         borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        splashColor:
+            isEnabled ? AppColors.primary.withValues(alpha: 0.2) : null,
+        highlightColor:
+            isEnabled ? AppColors.primary.withValues(alpha: 0.1) : null,
+        child: Ink(
           decoration: BoxDecoration(
             color: isEnabled
                 ? (isMemoMode
-                    ? AppColors.infoLight
-                    : AppColors.neutral50) // 메모 모드일 때 infoLight 배경
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : AppColors.neutral50) // 메모 모드일 때 primary 배경
                 : AppColors.neutral100, // 일시정지 시 neutral100 배경
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isEnabled
                   ? (isMemoMode
-                      ? AppColors.info
-                      : AppColors.neutral300) // 메모 모드일 때 info 테두리
+                      ? AppColors.primary
+                      : AppColors.neutral300) // 메모 모드일 때 primary 테두리
                   : AppColors.neutral200, // 일시정지 시 neutral200 테두리
               width: 1,
             ),
@@ -67,32 +70,35 @@ class GameActionButton extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: isEnabled
-                    ? (isMemoMode
-                        ? AppColors.info
-                        : AppColors.neutral700) // 메모 모드일 때 info 아이콘
-                    : AppColors.neutral400, // 일시정지 시 neutral400 아이콘
-                size: 14,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                text,
-                style: TextStyle(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
                   color: isEnabled
                       ? (isMemoMode
-                          ? AppColors.info
-                          : AppColors.neutral800) // 메모 모드일 때 info 텍스트
-                      : AppColors.neutral400, // 일시정지 시 neutral400 텍스트
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                          ? AppColors.primary
+                          : AppColors.neutral700) // 메모 모드일 때 primary 아이콘
+                      : AppColors.neutral400, // 일시정지 시 neutral400 아이콘
+                  size: 14,
                 ),
-              ),
-            ],
+                const SizedBox(width: 5),
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: isEnabled
+                        ? (isMemoMode
+                            ? AppColors.primary
+                            : AppColors.neutral800) // 메모 모드일 때 primary 텍스트
+                        : AppColors.neutral400, // 일시정지 시 neutral400 텍스트
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

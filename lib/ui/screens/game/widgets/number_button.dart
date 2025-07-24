@@ -24,9 +24,11 @@ class NumberButton extends StatelessWidget {
       child: InkWell(
         onTap: isDisabled ? null : onTap,
         borderRadius: BorderRadius.circular(24),
-        child: Container(
-          width: 48,
-          height: 48,
+        splashColor:
+            !isDisabled ? AppColors.primary.withValues(alpha: 0.2) : null,
+        highlightColor:
+            !isDisabled ? AppColors.primary.withValues(alpha: 0.1) : null,
+        child: Ink(
           decoration: BoxDecoration(
             color: isDisabled
                 ? AppColors.neutral100
@@ -48,30 +50,34 @@ class NumberButton extends StatelessWidget {
               ),
             ],
           ),
-          child: Center(
-            child: icon != null
-                ? Icon(
-                    icon,
-                    color: isDisabled
-                        ? AppColors.neutral400
-                        : (isSelected
-                            ? AppColors.primary
-                            : AppColors.neutral700),
-                    size: 20,
-                  )
-                : Text(
-                    text,
-                    style: TextStyle(
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: icon != null
+                  ? Icon(
+                      icon,
                       color: isDisabled
                           ? AppColors.neutral400
                           : (isSelected
                               ? AppColors.primary
-                              : AppColors.neutral800),
-                      fontSize: 18,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w600,
+                              : AppColors.neutral700),
+                      size: 20,
+                    )
+                  : Text(
+                      text,
+                      style: TextStyle(
+                        color: isDisabled
+                            ? AppColors.neutral400
+                            : (isSelected
+                                ? AppColors.primary
+                                : AppColors.neutral800),
+                        fontSize: 18,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w600,
+                      ),
                     ),
-                  ),
+            ),
           ),
         ),
       ),

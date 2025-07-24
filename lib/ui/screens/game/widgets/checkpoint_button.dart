@@ -16,51 +16,62 @@ class CheckpointButton extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final translate = ref.watch(translationProvider);
 
-    return GestureDetector(
-      onTap: isPaused
-          ? null
-          : () => _showCheckpointBottomSheet(context, ref, translate),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isPaused ? Colors.grey[100] : Colors.grey[50],
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isPaused ? Colors.grey[200]! : Colors.grey[300]!,
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isPaused
+            ? null
+            : () => _showCheckpointBottomSheet(context, ref, translate),
+        borderRadius: BorderRadius.circular(20),
+        splashColor:
+            !isPaused ? AppColors.primary.withValues(alpha: 0.2) : null,
+        highlightColor:
+            !isPaused ? AppColors.primary.withValues(alpha: 0.1) : null,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: isPaused ? AppColors.neutral100 : AppColors.neutral50,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isPaused ? AppColors.neutral200 : AppColors.neutral300,
+              width: 1,
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.bookmark,
-              color: isPaused ? Colors.grey[400] : Colors.grey[700],
-              size: 14,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              translate('checkpoint', '분기점'),
-              style: TextStyle(
-                color: isPaused ? Colors.grey[400] : Colors.grey[800],
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.bookmark,
+                  color: isPaused ? AppColors.neutral400 : AppColors.neutral700,
+                  size: 14,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  translate('checkpoint', '분기점'),
+                  style: TextStyle(
+                    color:
+                        isPaused ? AppColors.neutral400 : AppColors.neutral800,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.expand_more,
+                  color: isPaused ? AppColors.neutral400 : AppColors.neutral700,
+                  size: 14,
+                ),
+              ],
             ),
-            const SizedBox(width: 6),
-            Icon(
-              Icons.expand_more,
-              color: isPaused ? Colors.grey[400] : Colors.grey[700],
-              size: 14,
-            ),
-          ],
+          ),
         ),
       ),
     );
