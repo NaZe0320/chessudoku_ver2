@@ -212,11 +212,9 @@ class GameScreen extends HookConsumerWidget {
                         const GameActionButtons(),
                         const SizedBox(height: 16),
                         NumberButtonsGrid(
-                          selectedNumbers: gameState.selectedNumbers,
+                          selectedCellContent: gameState.selectedCellContent,
                           isNoteMode:
                               gameState.currentBoard?.isNoteMode ?? false,
-                          selectedCellNotes:
-                              gameState.currentBoard?.selectedCellNotes,
                           isPaused: gameState.isPaused,
                           onNumberTap: (number) {
                             // 숫자 입력 기능으로 변경

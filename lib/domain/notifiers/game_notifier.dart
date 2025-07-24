@@ -62,7 +62,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       isGameCompleted: false,
       showCompletionDialog: false,
       checkpoints: {}, // 새 게임 시작 시 체크포인트 초기화
-      selectedNumbers: {}, // 선택된 숫자 초기화
+      selectedCellContent: null, // 선택된 셀 내용 초기화
     );
 
     // 타이머 시작
@@ -96,7 +96,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isGameCompleted: false,
         showCompletionDialog: false,
         checkpoints: savedGameData.checkpoints, // 저장된 체크포인트 복원
-        selectedNumbers: {}, // 선택된 숫자 초기화
+        selectedCellContent: null, // 선택된 셀 내용 초기화
       );
 
       developer.log(
@@ -115,10 +115,6 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
   @override
   void onIntent(GameIntent intent) {
     switch (intent) {
-      case SelectNumberIntent():
-        _handleSelectNumber(intent.number);
-      case ClearSelectionIntent():
-        _handleClearSelection();
       case SelectCellIntent():
         _handleSelectCell(intent.position);
       case InputNumberIntent():
@@ -154,20 +150,6 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     }
   }
 
-  void _handleSelectNumber(int number) {
-    final newSelected = Set<int>.from(state.selectedNumbers);
-    if (newSelected.contains(number)) {
-      newSelected.remove(number);
-    } else {
-      newSelected.add(number);
-    }
-    state = state.copyWith(selectedNumbers: newSelected);
-  }
-
-  void _handleClearSelection() {
-    state = state.copyWith(selectedNumbers: {});
-  }
-
   void _handleSelectCell(position) {
     final currentBoard = state.currentBoard;
     if (currentBoard != null) {
@@ -176,34 +158,20 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
       final newBoard = currentBoard.selectCell(position);
 
-      // 선택된 셀의 숫자나 메모를 selectedNumbers에 추가 (초기값 제외)
-      Set<int> newSelectedNumbers = {};
+      // 선택된 셀의 내용을 selectedCellContent에 저장
+      CellContent? selectedCellContent;
       if (newBoard.selectedCell != null) {
-        final selectedCellContent =
+        selectedCellContent =
             newBoard.board.getCellContent(newBoard.selectedCell!);
-        if (selectedCellContent != null && !selectedCellContent.isInitial) {
-          if (newBoard.isNoteMode) {
-            // 메모 모드: 기존 메모들을 모두 표시
-            developer.log(
-                '메모 모드 - 셀 선택: 메모 개수: ${selectedCellContent.notes.length}',
-                name: 'GameNotifier');
-            developer.log('메모 내용: ${selectedCellContent.notes}',
-                name: 'GameNotifier');
-            newSelectedNumbers.addAll(selectedCellContent.notes);
-          } else {
-            // 일반 모드: 숫자가 있으면 해당 숫자만 표시
-            if (selectedCellContent.number != null) {
-              newSelectedNumbers.add(selectedCellContent.number!);
-            }
-          }
+        // 초기값인 경우 selectedCellContent를 null로 설정
+        if (selectedCellContent?.isInitial == true) {
+          selectedCellContent = null;
         }
       }
 
-      developer.log('최종 selectedNumbers: $newSelectedNumbers',
-          name: 'GameNotifier');
       state = state.copyWith(
         currentBoard: newBoard,
-        selectedNumbers: newSelectedNumbers,
+        selectedCellContent: selectedCellContent,
       );
     }
   }
@@ -281,11 +249,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
       state = state.copyWith(currentBoard: updatedGameBoard);
 
-      // 숫자를 selectedNumbers에서 제거하고 메모를 추가
-      final newSelectedNumbers = Set<int>.from(state.selectedNumbers)
-        ..remove(currentContent!.number!)
-        ..add(number);
-      state = state.copyWith(selectedNumbers: newSelectedNumbers);
+      // selectedCellContent 업데이트
+      state = state.copyWith(selectedCellContent: newContent);
     } else {
       // 기존 메모 토글
       final newContent =
@@ -301,15 +266,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
       state = state.copyWith(currentBoard: updatedGameBoard);
 
-      // 메모 상태에 따라 selectedNumbers 업데이트 (모든 메모 표시)
-      final newSelectedNumbers = Set<int>.from(state.selectedNumbers);
-      // 현재 입력한 숫자의 상태만 토글
-      if (newContent.notes.contains(number)) {
-        newSelectedNumbers.add(number);
-      } else {
-        newSelectedNumbers.remove(number);
-      }
-      state = state.copyWith(selectedNumbers: newSelectedNumbers);
+      // selectedCellContent 업데이트
+      state = state.copyWith(selectedCellContent: newContent);
     }
   }
 
@@ -345,10 +303,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
       state = state.copyWith(currentBoard: updatedGameBoard);
 
-      // 제거한 숫자를 selectedNumbers에서도 제거
-      final newSelectedNumbers = Set<int>.from(state.selectedNumbers)
-        ..remove(number);
-      state = state.copyWith(selectedNumbers: newSelectedNumbers);
+      // selectedCellContent 업데이트
+      state = state.copyWith(selectedCellContent: newContent);
     } else {
       // 새로운 숫자 입력 (메모는 유지)
       final newContent = CellContent(
@@ -368,14 +324,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
       state = state.copyWith(currentBoard: updatedGameBoard);
 
-      // 입력한 숫자를 selectedNumbers에 추가 (일반 모드에서는 하나만)
-      final newSelectedNumbers = Set<int>.from(state.selectedNumbers);
-      if (!currentBoard.isNoteMode) {
-        // 일반 모드: 기존 선택된 숫자들을 모두 제거하고 새로운 숫자만 추가
-        newSelectedNumbers.clear();
-      }
-      newSelectedNumbers.add(number);
-      state = state.copyWith(selectedNumbers: newSelectedNumbers);
+      // selectedCellContent 업데이트
+      state = state.copyWith(selectedCellContent: newContent);
     }
 
     // 게임 완료 체크
@@ -387,27 +337,20 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     if (currentBoard != null) {
       final newBoard = currentBoard.toggleNoteMode();
 
-      // 선택된 셀의 상태에 따라 selectedNumbers 업데이트
-      Set<int> newSelectedNumbers = {};
+      // 선택된 셀의 내용을 selectedCellContent에 저장
+      CellContent? selectedCellContent;
       if (newBoard.selectedCell != null) {
-        final selectedCellContent =
+        selectedCellContent =
             newBoard.board.getCellContent(newBoard.selectedCell!);
-        if (selectedCellContent != null && !selectedCellContent.isInitial) {
-          if (newBoard.isNoteMode) {
-            // 메모 모드로 전환: 기존 메모들을 표시
-            newSelectedNumbers.addAll(selectedCellContent.notes);
-          } else {
-            // 일반 모드로 전환: 숫자가 있으면 해당 숫자만 표시
-            if (selectedCellContent.number != null) {
-              newSelectedNumbers.add(selectedCellContent.number!);
-            }
-          }
+        // 초기값인 경우 selectedCellContent를 null로 설정
+        if (selectedCellContent?.isInitial == true) {
+          selectedCellContent = null;
         }
       }
 
       state = state.copyWith(
         currentBoard: newBoard,
-        selectedNumbers: newSelectedNumbers,
+        selectedCellContent: selectedCellContent,
       );
     }
   }
@@ -662,24 +605,16 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     }
   }
 
-  // 선택된 셀의 상태에 따라 selectedNumbers 업데이트
+  // 선택된 셀의 상태에 따라 selectedCellContent 업데이트
   void _updateSelectedNumbersFromCurrentCell() {
     final currentBoard = state.currentBoard;
     if (currentBoard?.selectedCell != null) {
       final selectedCellContent =
           currentBoard!.board.getCellContent(currentBoard.selectedCell!);
       if (selectedCellContent != null && !selectedCellContent.isInitial) {
-        Set<int> newSelectedNumbers = {};
-        if (currentBoard.isNoteMode) {
-          // 메모 모드: 기존 메모들을 모두 표시
-          newSelectedNumbers.addAll(selectedCellContent.notes);
-        } else {
-          // 일반 모드: 숫자가 있으면 해당 숫자만 표시
-          if (selectedCellContent.number != null) {
-            newSelectedNumbers.add(selectedCellContent.number!);
-          }
-        }
-        state = state.copyWith(selectedNumbers: newSelectedNumbers);
+        state = state.copyWith(selectedCellContent: selectedCellContent);
+      } else {
+        state = state.copyWith(selectedCellContent: null);
       }
     }
   }

@@ -5,16 +5,6 @@ abstract class GameIntent extends BaseIntent {
   const GameIntent();
 }
 
-class SelectNumberIntent extends GameIntent {
-  final int number;
-
-  const SelectNumberIntent(this.number);
-}
-
-class ClearSelectionIntent extends GameIntent {
-  const ClearSelectionIntent();
-}
-
 class SelectCellIntent extends GameIntent {
   final Position position;
 

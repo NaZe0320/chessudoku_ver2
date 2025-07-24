@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
+import 'package:chessudoku/data/models/cell_content.dart';
 
 part 'game_state.freezed.dart';
 
@@ -8,7 +9,7 @@ part 'game_state.freezed.dart';
 class GameState with _$GameState {
   const factory GameState({
     @Default(false) bool isLoading,
-    @Default({}) Set<int> selectedNumbers,
+    CellContent? selectedCellContent, // 현재 선택된 셀의 내용
     @Default(0) int elapsedSeconds,
     @Default(false) bool isPaused, // 일시 정지 상태 (isTimerRunning 대신 사용)
     GameBoard? currentBoard, // 현재 게임 보드
