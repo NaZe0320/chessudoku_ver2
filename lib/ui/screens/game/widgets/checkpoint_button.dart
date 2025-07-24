@@ -264,10 +264,15 @@ class CheckpointButton extends HookConsumerWidget {
       confirmColor: AppColors.primary,
     ).then((confirmed) {
       if (confirmed == true) {
+        // 체크포인트 복원 실행
         notifier.handleIntent(RestoreCheckpointIntent(checkpointId));
-        if (context.mounted) {
-          Navigator.of(context).pop(); // 하단 시트 닫기
-        }
+        
+        // 복원 후 UI 업데이트를 위해 잠시 대기
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (context.mounted) {
+            Navigator.of(context).pop(); // 하단 시트 닫기
+          }
+        });
       }
     });
   }

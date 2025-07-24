@@ -44,8 +44,11 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     developer.log('게임 초기화 시작 - 난이도: $difficulty', name: 'GameNotifier');
     _currentDifficulty = difficulty;
 
+    // 선택된 셀을 초기화한 보드 생성
+    final boardWithoutSelection = gameBoard.selectCell(null);
+
     state = state.copyWith(
-      currentBoard: gameBoard,
+      currentBoard: boardWithoutSelection,
       history: [],
       redoHistory: [],
       canUndo: false,
@@ -54,6 +57,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       isPaused: false,
       isGameCompleted: false,
       showCompletionDialog: false,
+      checkpoints: {}, // 체크포인트 초기화
+      selectedNumbers: {}, // 선택된 숫자 초기화
     );
 
     // 타이머 시작
@@ -73,8 +78,11 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
           name: 'GameNotifier');
       _currentDifficulty = savedGameData.difficulty;
 
+      // 선택된 셀을 초기화한 보드 생성
+      final boardWithoutSelection = savedGameData.board.selectCell(null);
+
       state = state.copyWith(
-        currentBoard: savedGameData.board,
+        currentBoard: boardWithoutSelection,
         history: savedGameData.history,
         redoHistory: savedGameData.redoHistory,
         elapsedSeconds: savedGameData.elapsedSeconds,
@@ -83,6 +91,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isPaused: false,
         isGameCompleted: false,
         showCompletionDialog: false,
+        checkpoints: {}, // 체크포인트 초기화
+        selectedNumbers: {}, // 선택된 숫자 초기화
       );
 
       developer.log(
@@ -387,8 +397,13 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
   }
 
   void _handleCreateCheckpoint(String checkpointId) {
+    developer.log('체크포인트 생성 시작 - ID: $checkpointId', name: 'GameNotifier');
+
     final currentBoard = state.currentBoard;
-    if (currentBoard == null) return;
+    if (currentBoard == null) {
+      developer.log('현재 보드가 null이므로 체크포인트 생성 불가', name: 'GameNotifier');
+      return;
+    }
 
     final checkpoint = Checkpoint.create(
       board: currentBoard,
@@ -401,13 +416,26 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     newCheckpoints[checkpointId] = checkpoint;
 
     state = state.copyWith(checkpoints: newCheckpoints);
+
+    developer.log('체크포인트 생성 완료 - 경과시간: ${checkpoint.elapsedSeconds}초',
+        name: 'GameNotifier');
+    developer.log('현재 체크포인트 개수: ${newCheckpoints.length}',
+        name: 'GameNotifier');
   }
 
   void _handleRestoreCheckpoint(String checkpointId) {
-    final checkpoint = state.checkpoints[checkpointId];
-    if (checkpoint == null) return;
+    developer.log('체크포인트 복원 시작 - ID: $checkpointId', name: 'GameNotifier');
 
-    // 체크포인트에서 보드와 히스토리 복원 (시간은 복원하지 않음)
+    final checkpoint = state.checkpoints[checkpointId];
+    if (checkpoint == null) {
+      developer.log('체크포인트를 찾을 수 없음: $checkpointId', name: 'GameNotifier');
+      return;
+    }
+
+    developer.log('체크포인트 복원 중 - 히스토리 개수: ${checkpoint.history.length}',
+        name: 'GameNotifier');
+
+    // 체크포인트에서 보드와 히스토리만 복원
     state = state.copyWith(
       currentBoard: checkpoint.board,
       history: checkpoint.history,
@@ -415,6 +443,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       canUndo: checkpoint.history.isNotEmpty,
       canRedo: checkpoint.redoHistory.isNotEmpty,
     );
+
+    developer.log('체크포인트 복원 완료', name: 'GameNotifier');
   }
 
   void _handleDeleteCheckpoint(String checkpointId) {
