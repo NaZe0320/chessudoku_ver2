@@ -9,12 +9,16 @@ import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
+import 'package:chessudoku/domain/repositories/user_account_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/data/services/device_service.dart';
 
 class GameNotifier extends BaseNotifier<GameIntent, GameState>
     with WidgetsBindingObserver {
   Timer? _timer;
   final GameSaveRepository _gameSaveRepository;
+  final UserAccountRepository _userAccountRepository;
+  final DeviceService _deviceService = DeviceService();
   bool _wasTimerRunningBeforePause = false; // 앱이 백그라운드로 가기 전 타이머 상태
   Difficulty? _currentDifficulty; // 현재 게임 난이도
 
@@ -22,7 +26,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
   Position? _lastMemoPosition; // 마지막 메모 입력 위치
   bool _isMemoGroupActive = false; // 메모 그룹 활성화 상태
 
-  GameNotifier(this._gameSaveRepository) : super(const GameState()) {
+  GameNotifier(this._gameSaveRepository, this._userAccountRepository)
+      : super(const GameState()) {
     // 생명주기 관찰자 등록
     WidgetsBinding.instance.addObserver(this);
   }
@@ -456,6 +461,29 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
       // 게임 완료 시 저장된 게임 삭제
       _gameSaveRepository.clearCurrentGame();
+
+      // 게임 완료 시 통계 업데이트
+      _updateGameCompletionStats();
+    }
+  }
+
+  /// 게임 완료 시 통계 업데이트
+  Future<void> _updateGameCompletionStats() async {
+    try {
+      final deviceId = await _deviceService.getDeviceId();
+      developer.log('게임 완료 통계 업데이트 시작 - 디바이스 ID: $deviceId',
+          name: 'GameNotifier');
+
+      // 퍼즐 완료 통계 업데이트 (경과 시간 포함)
+      await _userAccountRepository.updatePuzzleCompletion(
+          deviceId,
+          state.currentBoard?.puzzleId ?? 'unknown',
+          _currentDifficulty ?? Difficulty.medium,
+          state.elapsedSeconds);
+
+      developer.log('게임 완료 통계 업데이트 완료', name: 'GameNotifier');
+    } catch (e) {
+      developer.log('게임 완료 통계 업데이트 실패: $e', name: 'GameNotifier');
     }
   }
 

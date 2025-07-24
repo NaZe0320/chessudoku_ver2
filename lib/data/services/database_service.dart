@@ -11,12 +11,14 @@ class DatabaseService {
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
   // 데이터베이스 버전
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
 
   // 테이블 이름
   static const String tableDataVersions = 'data_versions';
   static const String tableLanguagePacks = 'language_packs';
   static const String tableSettings = 'settings';
+  static const String tableUserProfiles = 'user_profiles';
+  static const String tableGameHistory = 'game_history';
 
   // 싱글톤 패턴 적용
   factory DatabaseService() {
@@ -64,12 +66,17 @@ class DatabaseService {
       await _createDataVersionsTable(db);
       await _createLanguageTables(db);
     }
+
+    if (oldVersion < 3) {
+      await _createUserTables(db);
+    }
   }
 
   Future<void> _createTables(Database db) async {
     await _createDataVersionsTable(db);
     await _createLanguageTables(db);
     await _createSettingsTable(db);
+    await _createUserTables(db);
   }
 
   Future<void> _createDataVersionsTable(Database db) async {
@@ -115,6 +122,34 @@ class DatabaseService {
       )
     ''');
     debugPrint('설정 테이블 생성 완료: $tableSettings');
+  }
+
+  Future<void> _createUserTables(Database db) async {
+    // 사용자 프로필 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tableUserProfiles (
+        deviceId TEXT PRIMARY KEY,
+        completedPuzzles INTEGER NOT NULL DEFAULT 0,
+        currentStreak INTEGER NOT NULL DEFAULT 0,
+        longestStreak INTEGER NOT NULL DEFAULT 0,
+        totalPlayTime INTEGER NOT NULL DEFAULT 0,
+        lastCompletedDate TEXT
+      )
+    ''');
+    debugPrint('사용자 프로필 테이블 생성 완료: $tableUserProfiles');
+
+    // 게임 히스토리 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tableGameHistory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        puzzleId TEXT NOT NULL,
+        difficulty TEXT NOT NULL,
+        completedAt INTEGER NOT NULL,
+        playTimeSeconds INTEGER NOT NULL,
+        isCompleted INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    debugPrint('게임 히스토리 테이블 생성 완료: $tableGameHistory');
   }
 
   /// 데이터베이스 닫기

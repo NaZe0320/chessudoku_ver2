@@ -6,5 +6,6 @@ import '../di/providers.dart';
 final gameNotifierProvider =
     StateNotifierProvider<GameNotifier, GameState>((ref) {
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
-  return GameNotifier(gameSaveRepository);
+  final userAccountRepository = ref.watch(userAccountRepositoryProvider);
+  return GameNotifier(gameSaveRepository, userAccountRepository);
 });

@@ -2,18 +2,22 @@ import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/domain/states/main_state.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
+import 'package:chessudoku/domain/repositories/user_account_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
-import 'package:chessudoku/data/models/saved_game_data.dart';
+import 'package:chessudoku/data/services/device_service.dart';
 import 'dart:developer' as developer;
 
 class MainNotifier extends BaseNotifier<MainIntent, MainState> {
   final GameSaveRepository _gameSaveRepository;
+  final UserAccountRepository _userAccountRepository;
+  final DeviceService _deviceService = DeviceService();
 
-  MainNotifier(this._gameSaveRepository) : super(const MainState());
+  MainNotifier(this._gameSaveRepository, this._userAccountRepository)
+      : super(const MainState());
 
   @override
   void onIntent(MainIntent intent) {
@@ -100,15 +104,20 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
 
   Future<void> _handleLoadStats() async {
     try {
+      final deviceId = await _deviceService.getDeviceId();
+      developer.log('디바이스 ID: $deviceId', name: 'MainNotifier');
+
       final completedPuzzles =
-          await _gameSaveRepository.getCompletedPuzzlesCount();
-      final currentStreak = await _gameSaveRepository.getCurrentStreak();
+          await _userAccountRepository.getCompletedPuzzlesCount(deviceId);
+      final currentStreak =
+          await _userAccountRepository.getCurrentStreak(deviceId);
 
       state = state.copyWith(
         completedPuzzles: completedPuzzles,
         currentStreak: currentStreak,
       );
     } catch (e) {
+      developer.log('통계 로드 중 오류: $e', name: 'MainNotifier');
       // 에러 처리
     }
   }
