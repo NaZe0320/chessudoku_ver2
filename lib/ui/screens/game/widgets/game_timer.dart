@@ -19,7 +19,6 @@ class GameTimer extends HookConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(20),
@@ -35,40 +34,47 @@ class GameTimer extends HookConsumerWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.timer,
-            color: Colors.grey[700],
-            size: 14,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            formatTime(gameState.elapsedSeconds),
-            style: TextStyle(
-              color: Colors.grey[800],
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            if (!gameState.isPaused) {
+              gameNotifier.handleIntent(const PauseTimerIntent());
+            } else {
+              gameNotifier.handleIntent(const StartTimerIntent());
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.timer,
+                  color: Colors.grey[700],
+                  size: 14,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  formatTime(gameState.elapsedSeconds),
+                  style: TextStyle(
+                    color: Colors.grey[800],
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  !gameState.isPaused ? Icons.pause : Icons.play_arrow,
+                  color: Colors.grey[700],
+                  size: 14,
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 6),
-          GestureDetector(
-            onTap: () {
-                      if (!gameState.isPaused) {
-          gameNotifier.handleIntent(const PauseTimerIntent());
-        } else {
-          gameNotifier.handleIntent(const StartTimerIntent());
-        }
-            },
-            child: Icon(
-              !gameState.isPaused ? Icons.pause : Icons.play_arrow,
-              color: Colors.grey[700],
-              size: 14,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
