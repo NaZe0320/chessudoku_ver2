@@ -40,7 +40,7 @@ class NumberButton extends StatelessWidget {
               color: isDisabled
                   ? AppColors.neutral200
                   : (isSelected ? AppColors.primary : AppColors.neutral300),
-              width: isSelected ? 2 : 1,
+              width: 1,
             ),
             boxShadow: [
               BoxShadow(
