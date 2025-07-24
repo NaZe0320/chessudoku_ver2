@@ -176,6 +176,8 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
 
   // 테스트용 보드 생성 (GameNotifier의 _handleInitializeTestBoard 로직을 여기로 이동)
   GameBoard _createTestBoard(Difficulty difficulty) {
+    developer.log('테스트 보드 생성 시작', name: 'MainNotifier');
+
     // 완성된 스도쿠 답안 (체스 기물 위치는 빈 칸으로)
     final solutionPuzzle = [
       [5, 3, 4, 6, 7, 8, 9, 1, 2],
@@ -211,19 +213,34 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
       const Position(row: 7, col: 2): ChessPiece.pawn,
     };
 
+    developer.log('체스 기물 개수: ${chessPieces.length}', name: 'MainNotifier');
+    for (final entry in chessPieces.entries) {
+      developer.log('체스 기물: ${entry.key} -> ${entry.value}',
+          name: 'MainNotifier');
+    }
+
     // 체스 기물을 포함한 보드 생성
     final puzzleBoard = SudokuBoard.fromPuzzleWithChess(
       puzzle: puzzleWithBlanks,
       chessPieces: chessPieces,
     );
 
-    final solutionBoard = SudokuBoard.fromPuzzle(solutionPuzzle);
+    developer.log('퍼즐 보드 생성 완료 - 셀 수: ${puzzleBoard.cells.length}',
+        name: 'MainNotifier');
 
-    return GameBoard(
+    final solutionBoard = SudokuBoard.fromPuzzle(solutionPuzzle);
+    developer.log('솔루션 보드 생성 완료 - 셀 수: ${solutionBoard.cells.length}',
+        name: 'MainNotifier');
+
+    final gameBoard = GameBoard(
       board: puzzleBoard,
       solutionBoard: solutionBoard,
       difficulty: difficulty,
       puzzleId: 'test_puzzle_with_chess',
     );
+
+    developer.log('게임 보드 생성 완료 - 최종 셀 수: ${gameBoard.board.cells.length}',
+        name: 'MainNotifier');
+    return gameBoard;
   }
 }

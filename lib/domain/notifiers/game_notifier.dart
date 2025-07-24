@@ -67,6 +67,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     final savedGameData = _gameSaveRepository.loadCurrentGame();
     if (savedGameData != null) {
       developer.log('저장된 게임 데이터 로드 성공', name: 'GameNotifier');
+      developer.log('로드된 보드 셀 수: ${savedGameData.board.board.cells.length}',
+          name: 'GameNotifier');
+      developer.log('로드된 보드 선택된 셀: ${savedGameData.board.selectedCell}',
+          name: 'GameNotifier');
       _currentDifficulty = savedGameData.difficulty;
 
       state = state.copyWith(
@@ -80,6 +84,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isGameCompleted: false,
         showCompletionDialog: false,
       );
+
+      developer.log(
+          '상태 업데이트 완료 - 현재 보드 셀 수: ${state.currentBoard?.board.cells.length}',
+          name: 'GameNotifier');
 
       // 타이머 시작
       _handleStartTimer();

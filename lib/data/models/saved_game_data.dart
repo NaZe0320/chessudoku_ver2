@@ -4,6 +4,8 @@ import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/enums/chess_piece.dart';
+import 'dart:developer' as developer;
 
 part 'saved_game_data.freezed.dart';
 
@@ -110,6 +112,7 @@ class SavedGameData with _$SavedGameData {
           'row': row,
           'col': col,
           'number': content?.number,
+          'chessPiece': content?.chessPiece?.name,
           'notes': content?.notes.toList() ?? [],
           'isInitial': content?.isInitial ?? false,
         });
@@ -119,37 +122,51 @@ class SavedGameData with _$SavedGameData {
   }
 
   static SudokuBoard _sudokuBoardFromJson(Map<String, dynamic> json) {
-    final board = SudokuBoard.empty();
+    SudokuBoard board = SudokuBoard.empty();
     final cells = json['cells'] as List<dynamic>;
 
-    for (final cell in cells) {
+    developer.log('SudokuBoard 역직렬화 시작 - 셀 개수: ${cells.length}',
+        name: 'SavedGameData');
+
+    for (int i = 0; i < cells.length; i++) {
+      final cell = cells[i];
       final row = cell['row'] as int;
       final col = cell['col'] as int;
       final number = cell['number'] as int?;
+      final chessPieceName = cell['chessPiece'] as String?;
       final notes = (cell['notes'] as List<dynamic>).cast<int>().toSet();
       final isInitial = cell['isInitial'] as bool? ?? false;
 
-      if (number != null) {
-        board.setCellContent(
-          Position(row: row, col: col),
-          CellContent(
-            number: number,
-            notes: notes,
-            isInitial: isInitial,
-          ),
+      // 체스 기물 파싱
+      ChessPiece? chessPiece;
+      if (chessPieceName != null) {
+        chessPiece = ChessPiece.values.firstWhere(
+          (e) => e.name == chessPieceName,
+          orElse: () => ChessPiece.pawn, // 기본값
         );
-      } else if (notes.isNotEmpty) {
-        board.setCellContent(
-          Position(row: row, col: col),
-          CellContent(
-            number: null,
-            notes: notes,
-            isInitial: isInitial,
-          ),
-        );
+      }
+
+      // 모든 셀을 생성 (빈 셀도 포함)
+      board = board.setCellContent(
+        Position(row: row, col: col),
+        CellContent(
+          number: number,
+          chessPiece: chessPiece,
+          notes: notes,
+          isInitial: isInitial,
+        ),
+      );
+
+      if (i < 5) {
+        // 처음 5개 셀만 로그 출력
+        developer.log(
+            '셀 설정: ($row, $col) - 숫자: $number, 체스기물: $chessPieceName, 초기값: $isInitial, 현재 셀 수: ${board.cells.length}',
+            name: 'SavedGameData');
       }
     }
 
+    developer.log('SudokuBoard 역직렬화 완료 - 최종 셀 수: ${board.cells.length}',
+        name: 'SavedGameData');
     return board;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
+import 'dart:developer' as developer;
 
 /// 9x9 스도쿠 보드를 나타내는 모델
 class SudokuBoard {
@@ -60,6 +61,7 @@ class SudokuBoard {
     required Map<Position, ChessPiece> chessPieces,
   }) {
     final cells = <Position, CellContent>{};
+    int cellCount = 0;
 
     for (int row = 0; row < 9; row++) {
       for (int col = 0; col < 9; col++) {
@@ -73,10 +75,18 @@ class SudokuBoard {
             chessPiece: chessPiece,
             isInitial: value != null, // 숫자가 있으면 초기값
           );
+          cellCount++;
+
+          if (chessPiece != null) {
+            developer.log('체스 기물 셀 생성: ($row, $col) -> $chessPiece',
+                name: 'SudokuBoard');
+          }
         }
       }
     }
 
+    developer.log('SudokuBoard.fromPuzzleWithChess 완료 - 총 셀 수: $cellCount',
+        name: 'SudokuBoard');
     return SudokuBoard(cells: cells);
   }
 

@@ -81,12 +81,16 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
           name: 'GameSaveRepository');
 
       final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      developer.log('JSON 파싱 완료: ${jsonMap.keys}', name: 'GameSaveRepository');
+
       final savedGameData = SavedGameData.fromJson(jsonMap);
 
       developer.log('게임 로드 성공', name: 'GameSaveRepository');
       developer.log('로드된 경과 시간: ${savedGameData.elapsedSeconds}초',
           name: 'GameSaveRepository');
       developer.log('로드된 난이도: ${savedGameData.difficulty}',
+          name: 'GameSaveRepository');
+      developer.log('로드된 보드 셀 수: ${savedGameData.board.board.cells.length}',
           name: 'GameSaveRepository');
 
       return savedGameData;
