@@ -57,7 +57,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       isPaused: false,
       isGameCompleted: false,
       showCompletionDialog: false,
-      checkpoints: {}, // 체크포인트 초기화
+      checkpoints: {}, // 새 게임 시작 시 체크포인트 초기화
       selectedNumbers: {}, // 선택된 숫자 초기화
     );
 
@@ -91,7 +91,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isPaused: false,
         isGameCompleted: false,
         showCompletionDialog: false,
-        checkpoints: {}, // 체크포인트 초기화
+        checkpoints: savedGameData.checkpoints, // 저장된 체크포인트 복원
         selectedNumbers: {}, // 선택된 숫자 초기화
       );
 

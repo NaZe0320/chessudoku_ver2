@@ -39,6 +39,7 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
         redoHistory: gameState.redoHistory,
         difficulty: difficulty,
         savedAt: DateTime.now(),
+        checkpoints: gameState.checkpoints, // 체크포인트 정보 추가
       );
 
       // JSON으로 직렬화

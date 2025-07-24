@@ -3,6 +3,7 @@ import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'dart:developer' as developer;
@@ -18,6 +19,7 @@ class SavedGameData with _$SavedGameData {
     required List<GameBoard> redoHistory,
     required Difficulty difficulty,
     required DateTime savedAt,
+    @Default({}) Map<String, Checkpoint> checkpoints, // 체크포인트 정보 추가
   }) = _SavedGameData;
 
   const SavedGameData._();
@@ -30,6 +32,8 @@ class SavedGameData with _$SavedGameData {
       'redoHistory': redoHistory.map(_gameBoardToJson).toList(),
       'difficulty': difficulty.name,
       'savedAt': savedAt.toIso8601String(),
+      'checkpoints': checkpoints.map(
+          (key, value) => MapEntry(key, _checkpointToJson(value))), // 체크포인트 직렬화
     };
   }
 
@@ -47,6 +51,10 @@ class SavedGameData with _$SavedGameData {
         (e) => e.name == json['difficulty'],
       ),
       savedAt: DateTime.parse(json['savedAt'] as String),
+      checkpoints: json['checkpoints'] != null
+          ? (json['checkpoints'] as Map<String, dynamic>).map((key, value) =>
+              MapEntry(key, _checkpointFromJson(value as Map<String, dynamic>)))
+          : {}, // 체크포인트 역직렬화
     );
   }
 
@@ -168,5 +176,31 @@ class SavedGameData with _$SavedGameData {
     developer.log('SudokuBoard 역직렬화 완료 - 최종 셀 수: ${board.cells.length}',
         name: 'SavedGameData');
     return board;
+  }
+
+  // 체크포인트 직렬화 메서드
+  static Map<String, dynamic> _checkpointToJson(Checkpoint checkpoint) {
+    return {
+      'board': _gameBoardToJson(checkpoint.board),
+      'elapsedSeconds': checkpoint.elapsedSeconds,
+      'history': checkpoint.history.map(_gameBoardToJson).toList(),
+      'redoHistory': checkpoint.redoHistory.map(_gameBoardToJson).toList(),
+      'createdAt': checkpoint.createdAt.toIso8601String(),
+    };
+  }
+
+  // 체크포인트 역직렬화 메서드
+  static Checkpoint _checkpointFromJson(Map<String, dynamic> json) {
+    return Checkpoint(
+      board: _gameBoardFromJson(json['board'] as Map<String, dynamic>),
+      elapsedSeconds: json['elapsedSeconds'] as int,
+      history: (json['history'] as List<dynamic>)
+          .map((e) => _gameBoardFromJson(e as Map<String, dynamic>))
+          .toList(),
+      redoHistory: (json['redoHistory'] as List<dynamic>)
+          .map((e) => _gameBoardFromJson(e as Map<String, dynamic>))
+          .toList(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
   }
 }
