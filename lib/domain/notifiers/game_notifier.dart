@@ -256,12 +256,17 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
     // 숫자가 이미 입력된 경우 숫자를 지우고 메모로 전환
     if (currentContent?.number != null) {
-      // 기존 메모들을 유지하면서 새로운 메모 추가
+      // 기존 메모들을 유지하면서 새로운 메모 토글
       final existingNotes = currentContent?.notes ?? {};
-      final newNotes = Set<int>.from(existingNotes)..add(number);
+      final newNotes = Set<int>.from(existingNotes);
+      if (newNotes.contains(number)) {
+        newNotes.remove(number); // 이미 있으면 제거
+      } else {
+        newNotes.add(number); // 없으면 추가
+      }
 
       final newContent = CellContent(
-        notes: newNotes, // 기존 메모 유지하면서 새로운 메모 추가
+        notes: newNotes, // 기존 메모 유지하면서 새로운 메모 토글
         chessPiece: currentContent?.chessPiece, // 기존 체스 기물 유지
         isInitial: false, // 사용자 입력
       );
@@ -602,6 +607,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       _completeMemoGroup(); // 기존 메모 그룹 완료
       _lastMemoPosition = position;
       _isMemoGroupActive = true;
+      // 첫 번째 메모인 경우 히스토리 저장
+      _saveToHistory();
     }
     // 같은 위치의 연속된 메모인 경우 히스토리 저장하지 않음 (그룹 유지)
   }
@@ -649,6 +656,31 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         canUndo: newHistory.isNotEmpty,
         canRedo: newRedoHistory.isNotEmpty,
       );
+
+      // 선택된 셀의 상태에 따라 selectedNumbers 업데이트
+      _updateSelectedNumbersFromCurrentCell();
+    }
+  }
+
+  // 선택된 셀의 상태에 따라 selectedNumbers 업데이트
+  void _updateSelectedNumbersFromCurrentCell() {
+    final currentBoard = state.currentBoard;
+    if (currentBoard?.selectedCell != null) {
+      final selectedCellContent =
+          currentBoard!.board.getCellContent(currentBoard.selectedCell!);
+      if (selectedCellContent != null && !selectedCellContent.isInitial) {
+        Set<int> newSelectedNumbers = {};
+        if (currentBoard.isNoteMode) {
+          // 메모 모드: 기존 메모들을 모두 표시
+          newSelectedNumbers.addAll(selectedCellContent.notes);
+        } else {
+          // 일반 모드: 숫자가 있으면 해당 숫자만 표시
+          if (selectedCellContent.number != null) {
+            newSelectedNumbers.add(selectedCellContent.number!);
+          }
+        }
+        state = state.copyWith(selectedNumbers: newSelectedNumbers);
+      }
     }
   }
 
@@ -676,6 +708,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         canUndo: newHistory.isNotEmpty,
         canRedo: newRedoHistory.isNotEmpty,
       );
+
+      // 선택된 셀의 상태에 따라 selectedNumbers 업데이트
+      _updateSelectedNumbersFromCurrentCell();
     }
   }
 
