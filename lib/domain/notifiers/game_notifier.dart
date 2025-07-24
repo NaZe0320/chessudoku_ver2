@@ -18,6 +18,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
   bool _wasTimerRunningBeforePause = false; // 앱이 백그라운드로 가기 전 타이머 상태
   Difficulty? _currentDifficulty; // 현재 게임 난이도
 
+  // 메모 히스토리 묶기 관련 변수들
+  Position? _lastMemoPosition; // 마지막 메모 입력 위치
+  bool _isMemoGroupActive = false; // 메모 그룹 활성화 상태
+
   GameNotifier(this._gameSaveRepository) : super(const GameState()) {
     // 생명주기 관찰자 등록
     WidgetsBinding.instance.addObserver(this);
@@ -167,19 +171,36 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
   void _handleSelectCell(position) {
     final currentBoard = state.currentBoard;
     if (currentBoard != null) {
+      // 메모 그룹 완료
+      _completeMemoGroup();
+
       final newBoard = currentBoard.selectCell(position);
 
-      // 선택된 셀의 숫자를 selectedNumbers에 추가 (초기값 제외)
+      // 선택된 셀의 숫자나 메모를 selectedNumbers에 추가 (초기값 제외)
       Set<int> newSelectedNumbers = {};
       if (newBoard.selectedCell != null) {
         final selectedCellContent =
             newBoard.board.getCellContent(newBoard.selectedCell!);
-        if (selectedCellContent?.number != null &&
-            !selectedCellContent!.isInitial) {
-          newSelectedNumbers.add(selectedCellContent.number!);
+        if (selectedCellContent != null && !selectedCellContent.isInitial) {
+          if (newBoard.isNoteMode) {
+            // 메모 모드: 기존 메모들을 모두 표시
+            developer.log(
+                '메모 모드 - 셀 선택: 메모 개수: ${selectedCellContent.notes.length}',
+                name: 'GameNotifier');
+            developer.log('메모 내용: ${selectedCellContent.notes}',
+                name: 'GameNotifier');
+            newSelectedNumbers.addAll(selectedCellContent.notes);
+          } else {
+            // 일반 모드: 숫자가 있으면 해당 숫자만 표시
+            if (selectedCellContent.number != null) {
+              newSelectedNumbers.add(selectedCellContent.number!);
+            }
+          }
         }
       }
 
+      developer.log('최종 selectedNumbers: $newSelectedNumbers',
+          name: 'GameNotifier');
       state = state.copyWith(
         currentBoard: newBoard,
         selectedNumbers: newSelectedNumbers,
@@ -206,7 +227,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       // 메모 모드인 경우 메모 토글
       _toggleNoteForCell(selectedCell, number);
     } else {
-      // 일반 모드인 경우 숫자 입력
+      // 일반 모드인 경우 숫자 입력/제거
       _inputNumberToCell(selectedCell, number);
     }
   }
@@ -230,21 +251,61 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     // 체스 기물이 있는 칸에는 메모 입력 불가
     if (currentContent?.chessPiece != null) return;
 
-    // 숫자가 이미 입력된 경우 메모 불가
-    if (currentContent?.number != null) return;
+    // 메모 히스토리 묶기 처리
+    _handleMemoHistoryGrouping(position);
 
-    final newContent =
-        currentContent?.toggleNote(number) ?? CellContent(notes: {number});
+    // 숫자가 이미 입력된 경우 숫자를 지우고 메모로 전환
+    if (currentContent?.number != null) {
+      // 기존 메모들을 유지하면서 새로운 메모 추가
+      final existingNotes = currentContent?.notes ?? {};
+      final newNotes = Set<int>.from(existingNotes)..add(number);
 
-    final newBoard = currentBoard.board.setCellContent(position, newContent);
+      final newContent = CellContent(
+        notes: newNotes, // 기존 메모 유지하면서 새로운 메모 추가
+        chessPiece: currentContent?.chessPiece, // 기존 체스 기물 유지
+        isInitial: false, // 사용자 입력
+      );
 
-    // 메모 입력 시 모든 오류 검사 내용 초기화
-    final updatedGameBoard = currentBoard.copyWith(
-      board: newBoard,
-      errorCells: {}, // 오류 검사 내용 초기화
-    );
+      final newBoard = currentBoard.board.setCellContent(position, newContent);
 
-    state = state.copyWith(currentBoard: updatedGameBoard);
+      // 메모 입력 시 모든 오류 검사 내용 초기화
+      final updatedGameBoard = currentBoard.copyWith(
+        board: newBoard,
+        errorCells: {}, // 오류 검사 내용 초기화
+      );
+
+      state = state.copyWith(currentBoard: updatedGameBoard);
+
+      // 숫자를 selectedNumbers에서 제거하고 메모를 추가
+      final newSelectedNumbers = Set<int>.from(state.selectedNumbers)
+        ..remove(currentContent!.number!)
+        ..add(number);
+      state = state.copyWith(selectedNumbers: newSelectedNumbers);
+    } else {
+      // 기존 메모 토글
+      final newContent =
+          currentContent?.toggleNote(number) ?? CellContent(notes: {number});
+
+      final newBoard = currentBoard.board.setCellContent(position, newContent);
+
+      // 메모 입력 시 모든 오류 검사 내용 초기화
+      final updatedGameBoard = currentBoard.copyWith(
+        board: newBoard,
+        errorCells: {}, // 오류 검사 내용 초기화
+      );
+
+      state = state.copyWith(currentBoard: updatedGameBoard);
+
+      // 메모 상태에 따라 selectedNumbers 업데이트 (모든 메모 표시)
+      final newSelectedNumbers = Set<int>.from(state.selectedNumbers);
+      // 현재 입력한 숫자의 상태만 토글
+      if (newContent.notes.contains(number)) {
+        newSelectedNumbers.add(number);
+      } else {
+        newSelectedNumbers.remove(number);
+      }
+      state = state.copyWith(selectedNumbers: newSelectedNumbers);
+    }
   }
 
   void _inputNumberToCell(Position position, int number) {
@@ -254,30 +315,63 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     // 초기값인 경우 수정 불가
     if (currentContent?.isInitial == true) return;
 
+    // 메모 그룹 완료
+    _completeMemoGroup();
+
     // 히스토리에 현재 상태 저장
     _saveToHistory();
 
-    // 새로운 셀 내용 생성 (메모는 지우고 숫자만)
-    final newContent = CellContent(
-      number: number,
-      chessPiece: currentContent?.chessPiece, // 기존 체스 기물 유지
-      isInitial: false, // 사용자 입력
-    );
+    // 이미 같은 숫자가 입력되어 있으면 제거
+    if (currentContent?.number == number) {
+      // 숫자만 제거하고 메모는 유지
+      final newContent = CellContent(
+        notes: currentContent?.notes ?? {},
+        chessPiece: currentContent?.chessPiece, // 기존 체스 기물 유지
+        isInitial: false, // 사용자 입력
+      );
 
-    final newBoard = currentBoard.board.setCellContent(position, newContent);
+      final newBoard = currentBoard.board.setCellContent(position, newContent);
 
-    // 숫자 입력 시 모든 오류 검사 내용 초기화
-    final updatedGameBoard = currentBoard.copyWith(
-      board: newBoard,
-      errorCells: {}, // 오류 검사 내용 초기화
-    );
+      // 숫자 제거 시 모든 오류 검사 내용 초기화
+      final updatedGameBoard = currentBoard.copyWith(
+        board: newBoard,
+        errorCells: {}, // 오류 검사 내용 초기화
+      );
 
-    state = state.copyWith(currentBoard: updatedGameBoard);
+      state = state.copyWith(currentBoard: updatedGameBoard);
 
-    // 입력한 숫자를 selectedNumbers에 추가
-    final newSelectedNumbers = Set<int>.from(state.selectedNumbers)
-      ..add(number);
-    state = state.copyWith(selectedNumbers: newSelectedNumbers);
+      // 제거한 숫자를 selectedNumbers에서도 제거
+      final newSelectedNumbers = Set<int>.from(state.selectedNumbers)
+        ..remove(number);
+      state = state.copyWith(selectedNumbers: newSelectedNumbers);
+    } else {
+      // 새로운 숫자 입력 (메모는 유지)
+      final newContent = CellContent(
+        number: number,
+        notes: currentContent?.notes ?? {}, // 기존 메모 유지
+        chessPiece: currentContent?.chessPiece, // 기존 체스 기물 유지
+        isInitial: false, // 사용자 입력
+      );
+
+      final newBoard = currentBoard.board.setCellContent(position, newContent);
+
+      // 숫자 입력 시 모든 오류 검사 내용 초기화
+      final updatedGameBoard = currentBoard.copyWith(
+        board: newBoard,
+        errorCells: {}, // 오류 검사 내용 초기화
+      );
+
+      state = state.copyWith(currentBoard: updatedGameBoard);
+
+      // 입력한 숫자를 selectedNumbers에 추가 (일반 모드에서는 하나만)
+      final newSelectedNumbers = Set<int>.from(state.selectedNumbers);
+      if (!currentBoard.isNoteMode) {
+        // 일반 모드: 기존 선택된 숫자들을 모두 제거하고 새로운 숫자만 추가
+        newSelectedNumbers.clear();
+      }
+      newSelectedNumbers.add(number);
+      state = state.copyWith(selectedNumbers: newSelectedNumbers);
+    }
 
     // 게임 완료 체크
     _handleCheckGameCompletion();
@@ -287,7 +381,29 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     final currentBoard = state.currentBoard;
     if (currentBoard != null) {
       final newBoard = currentBoard.toggleNoteMode();
-      state = state.copyWith(currentBoard: newBoard);
+
+      // 선택된 셀의 상태에 따라 selectedNumbers 업데이트
+      Set<int> newSelectedNumbers = {};
+      if (newBoard.selectedCell != null) {
+        final selectedCellContent =
+            newBoard.board.getCellContent(newBoard.selectedCell!);
+        if (selectedCellContent != null && !selectedCellContent.isInitial) {
+          if (newBoard.isNoteMode) {
+            // 메모 모드로 전환: 기존 메모들을 표시
+            newSelectedNumbers.addAll(selectedCellContent.notes);
+          } else {
+            // 일반 모드로 전환: 숫자가 있으면 해당 숫자만 표시
+            if (selectedCellContent.number != null) {
+              newSelectedNumbers.add(selectedCellContent.number!);
+            }
+          }
+        }
+      }
+
+      state = state.copyWith(
+        currentBoard: newBoard,
+        selectedNumbers: newSelectedNumbers,
+      );
     }
   }
 
@@ -304,6 +420,9 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
     // 체스 기물이 있는 칸은 지울 수 없음
     if (currentContent?.chessPiece != null) return;
+
+    // 메모 그룹 완료
+    _completeMemoGroup();
 
     // 히스토리에 현재 상태 저장
     _saveToHistory();
@@ -465,6 +584,26 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       elapsedSeconds: 0,
       isPaused: true,
     );
+  }
+
+  // 메모 그룹 완료
+  void _completeMemoGroup() {
+    if (_isMemoGroupActive && _lastMemoPosition != null) {
+      _saveToHistory();
+      _lastMemoPosition = null;
+      _isMemoGroupActive = false;
+    }
+  }
+
+  // 메모 히스토리 묶기 처리
+  void _handleMemoHistoryGrouping(Position position) {
+    // 다른 위치의 메모이거나 첫 번째 메모인 경우
+    if (_lastMemoPosition != position) {
+      _completeMemoGroup(); // 기존 메모 그룹 완료
+      _lastMemoPosition = position;
+      _isMemoGroupActive = true;
+    }
+    // 같은 위치의 연속된 메모인 경우 히스토리 저장하지 않음 (그룹 유지)
   }
 
   // 히스토리에 현재 상태 저장
