@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:flutter/widgets.dart';
 import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
@@ -8,12 +9,14 @@ import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
+import 'package:chessudoku/domain/enums/difficulty.dart';
 
 class GameNotifier extends BaseNotifier<GameIntent, GameState>
     with WidgetsBindingObserver {
   Timer? _timer;
   final GameSaveRepository _gameSaveRepository;
   bool _wasTimerRunningBeforePause = false; // 앱이 백그라운드로 가기 전 타이머 상태
+  Difficulty? _currentDifficulty; // 현재 게임 난이도
 
   GameNotifier(this._gameSaveRepository) : super(const GameState()) {
     // 생명주기 관찰자 등록
@@ -22,11 +25,25 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   /// 게임 상태 자동 저장
   Future<void> autoSave() async {
-    // TODO: 게임 상태 자동 저장 구현
+    developer.log('자동 저장 시작', name: 'GameNotifier');
+    if (state.currentBoard != null && _currentDifficulty != null) {
+      developer.log('저장 조건 충족 - 보드 존재, 난이도: $_currentDifficulty',
+          name: 'GameNotifier');
+      final success =
+          await _gameSaveRepository.saveCurrentGame(state, _currentDifficulty!);
+      developer.log('자동 저장 결과: $success', name: 'GameNotifier');
+    } else {
+      developer.log(
+          '저장 조건 불충족 - 보드: ${state.currentBoard != null}, 난이도: $_currentDifficulty',
+          name: 'GameNotifier');
+    }
   }
 
   /// 게임 초기화 (MainNotifier에서 호출)
-  void initializeGame(GameBoard gameBoard) {
+  void initializeGame(GameBoard gameBoard, {Difficulty? difficulty}) {
+    developer.log('게임 초기화 시작 - 난이도: $difficulty', name: 'GameNotifier');
+    _currentDifficulty = difficulty;
+
     state = state.copyWith(
       currentBoard: gameBoard,
       history: [],
@@ -41,6 +58,36 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
     // 타이머 시작
     _handleStartTimer();
+    developer.log('게임 초기화 완료', name: 'GameNotifier');
+  }
+
+  /// 저장된 게임 로드 (MainNotifier에서 호출)
+  void loadSavedGame() {
+    developer.log('저장된 게임 로드 시작', name: 'GameNotifier');
+    final savedGameData = _gameSaveRepository.loadCurrentGame();
+    if (savedGameData != null) {
+      developer.log('저장된 게임 데이터 로드 성공', name: 'GameNotifier');
+      _currentDifficulty = savedGameData.difficulty;
+
+      state = state.copyWith(
+        currentBoard: savedGameData.board,
+        history: savedGameData.history,
+        redoHistory: savedGameData.redoHistory,
+        elapsedSeconds: savedGameData.elapsedSeconds,
+        canUndo: savedGameData.history.isNotEmpty,
+        canRedo: savedGameData.redoHistory.isNotEmpty,
+        isPaused: false,
+        isGameCompleted: false,
+        showCompletionDialog: false,
+      );
+
+      // 타이머 시작
+      _handleStartTimer();
+      developer.log('저장된 게임 로드 완료 - 경과시간: ${savedGameData.elapsedSeconds}초',
+          name: 'GameNotifier');
+    } else {
+      developer.log('저장된 게임 데이터가 없습니다.', name: 'GameNotifier');
+    }
   }
 
   @override
@@ -322,7 +369,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isPaused: true,
       );
 
-      // TODO: 게임 완료 시 자동 저장 구현
+      // 게임 완료 시 저장된 게임 삭제
+      _gameSaveRepository.clearCurrentGame();
     }
   }
 
@@ -482,7 +530,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         if (!this.state.isPaused) {
           _handlePauseTimer();
         }
-        // TODO: 자동 저장 구현
+        // 자동 저장
+        autoSave();
         break;
       case AppLifecycleState.resumed:
         // 앱이 포그라운드로 돌아올 때 이전에 실행 중이었다면 재시작
@@ -491,10 +540,18 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         }
         break;
       case AppLifecycleState.detached:
-        // TODO: 앱 종료 시 자동 저장 구현
+        // 앱 종료 시 자동 저장
+        autoSave();
         break;
       default:
         break;
     }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 }

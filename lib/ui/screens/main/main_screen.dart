@@ -11,6 +11,7 @@ import 'package:chessudoku/ui/screens/profile/settings_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 class MainScreen extends HookConsumerWidget {
   const MainScreen({super.key});
@@ -21,11 +22,12 @@ class MainScreen extends HookConsumerWidget {
     final mainState = ref.watch(mainNotifierProvider);
     final mainNotifier = ref.read(mainNotifierProvider.notifier);
 
-    // 화면 진입 시 저장된 게임 확인 및 통계 로드
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // 화면 진입 시 저장된 게임 확인 및 통계 로드 (한 번만 실행)
+    useEffect(() {
       mainNotifier.handleIntent(const CheckSavedGameIntent());
       mainNotifier.handleIntent(const LoadStatsIntent());
-    });
+      return null;
+    }, []);
 
     return Scaffold(
       body: Container(
@@ -131,9 +133,9 @@ class MainScreen extends HookConsumerWidget {
                     child: ContinuePlayCard(
                       title: translate('continue_playing', '이어서 플레이'),
                       subtitle: mainState.savedGameInfo ??
-                          '${translate('normal_difficulty', '보통 난이도')} • ${translate('puzzle_8', '8번 정답')} • ${translate('progress_65', '65% 완료')}',
+                          '${translate('normal_difficulty', '보통 난이도')} • ${translate('time_00_00', '00:00')}',
                       progressText: '',
-                      progressValue: 0.65,
+                      progressValue: 0.0,
                       difficulty: Difficulty.medium,
                       onTap: () {
                         // MainNotifier를 통해 저장된 게임 이어서 하기 설정

@@ -157,6 +157,20 @@ class SudokuBoard {
     return true;
   }
 
+  /// 완료된 셀 수 가져오기 (숫자가 입력된 셀 수)
+  int getCompletedCellsCount() {
+    int count = 0;
+    for (int row = 0; row < 9; row++) {
+      for (int col = 0; col < 9; col++) {
+        final content = getCellContent(Position(row: row, col: col));
+        if (content?.number != null) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
   /// 보드 복사
   SudokuBoard copyWith({
     Map<Position, CellContent>? cells,

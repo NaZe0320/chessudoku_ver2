@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 /// 앱 전체에서 사용할 수 있는 캐시 서비스
 /// SharedPreferences를 싱글톤 패턴으로 래핑한 클래스
@@ -80,8 +81,11 @@ class CacheService {
 
   /// 지정된 키의 데이터 존재 여부 확인
   bool containsKey(String key) {
+    developer.log('containsKey 호출: $key', name: 'CacheService');
     _ensureInitializedSync();
-    return _prefs?.containsKey(key) ?? false;
+    final result = _prefs?.containsKey(key) ?? false;
+    developer.log('containsKey 결과: $result', name: 'CacheService');
+    return result;
   }
 
   /// 지정된 키의 데이터 삭제

@@ -7,6 +7,8 @@ import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
+import 'package:chessudoku/data/models/saved_game_data.dart';
+import 'dart:developer' as developer;
 
 class MainNotifier extends BaseNotifier<MainIntent, MainState> {
   final GameSaveRepository _gameSaveRepository;
@@ -34,24 +36,48 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
   }
 
   Future<void> _handleCheckSavedGame() async {
-    state = state.copyWith(isLoading: true);
+    developer.log('저장된 게임 확인 시작', name: 'MainNotifier');
 
     try {
-      final hasSavedGame = await _gameSaveRepository.hasSavedGame();
-      final savedGameInfo =
-          hasSavedGame ? await _gameSaveRepository.getSavedGameInfo() : null;
+      developer.log('상태 업데이트 없이 로직만 실행', name: 'MainNotifier');
 
+      developer.log('hasSavedGame 호출 전', name: 'MainNotifier');
+      final hasSavedGame = await _gameSaveRepository.hasSavedGame();
+      developer.log('저장된 게임 존재 여부: $hasSavedGame', name: 'MainNotifier');
+
+      String? savedGameInfo;
+      if (hasSavedGame) {
+        developer.log('getSavedGameInfo 호출 전', name: 'MainNotifier');
+        savedGameInfo = await _gameSaveRepository.getSavedGameInfo();
+        developer.log('저장된 게임 정보: $savedGameInfo', name: 'MainNotifier');
+      } else {
+        developer.log('저장된 게임이 없으므로 정보 가져오기 생략', name: 'MainNotifier');
+      }
+
+      developer.log(
+          '로직 실행 완료 - hasSavedGame: $hasSavedGame, savedGameInfo: $savedGameInfo',
+          name: 'MainNotifier');
+
+      // 상태 업데이트 다시 활성화
+      developer.log('상태 업데이트 시작', name: 'MainNotifier');
       state = state.copyWith(
         hasSavedGame: hasSavedGame,
         savedGameInfo: savedGameInfo,
         isLoading: false,
       );
+      developer.log('상태 업데이트 완료', name: 'MainNotifier');
     } catch (e) {
-      state = state.copyWith(
-        hasSavedGame: false,
-        savedGameInfo: null,
-        isLoading: false,
-      );
+      developer.log('저장된 게임 확인 중 오류: $e', name: 'MainNotifier');
+      // 오류 시에도 상태 업데이트
+      try {
+        state = state.copyWith(
+          hasSavedGame: false,
+          savedGameInfo: null,
+          isLoading: false,
+        );
+      } catch (stateError) {
+        developer.log('오류 상태 업데이트 중 오류: $stateError', name: 'MainNotifier');
+      }
     }
   }
 
@@ -102,16 +128,35 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
 
   // 저장된 게임 이어서 하기
   Future<void> _handleContinueSavedGame() async {
+    developer.log('저장된 게임 이어서 하기 시작', name: 'MainNotifier');
     try {
-      // 저장된 게임 보드 로드
-      final savedBoard = _gameSaveRepository.loadCurrentGame();
+      // 저장된 게임 데이터 로드
+      final savedGameData = _gameSaveRepository.loadCurrentGame();
 
-      state = state.copyWith(
-        savedGameBoard: savedBoard?.currentBoard,
-        shouldStartNewGame: false,
-        shouldContinueGame: true,
-      );
+      if (savedGameData != null) {
+        developer.log('저장된 게임 데이터 로드 성공', name: 'MainNotifier');
+        developer.log('로드된 난이도: ${savedGameData.difficulty}',
+            name: 'MainNotifier');
+        developer.log('로드된 경과 시간: ${savedGameData.elapsedSeconds}초',
+            name: 'MainNotifier');
+
+        state = state.copyWith(
+          savedGameBoard: savedGameData.board,
+          selectedDifficulty: savedGameData.difficulty,
+          shouldStartNewGame: false,
+          shouldContinueGame: true,
+        );
+      } else {
+        developer.log('저장된 게임 데이터가 없습니다.', name: 'MainNotifier');
+        // 저장된 게임이 없는 경우
+        state = state.copyWith(
+          savedGameBoard: null,
+          shouldStartNewGame: false,
+          shouldContinueGame: false,
+        );
+      }
     } catch (e) {
+      developer.log('저장된 게임 이어서 하기 중 오류: $e', name: 'MainNotifier');
       // 에러 처리 - 저장된 게임이 없거나 로드 실패
       state = state.copyWith(
         savedGameBoard: null,

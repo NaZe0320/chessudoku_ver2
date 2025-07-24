@@ -32,13 +32,16 @@ class GameScreen extends HookConsumerWidget {
         // MainNotifier에서 게임 시작 정보 확인
         if (mainState.shouldStartNewGame && mainState.savedGameBoard != null) {
           // 새 게임 시작
-          gameNotifier.initializeGame(mainState.savedGameBoard!);
+          gameNotifier.initializeGame(
+            mainState.savedGameBoard!,
+            difficulty: mainState.selectedDifficulty,
+          );
           // 게임 시작 정보 초기화
           mainNotifier.handleIntent(const GetGameStartInfoIntent());
         } else if (mainState.shouldContinueGame &&
             mainState.savedGameBoard != null) {
           // 저장된 게임 이어서 하기
-          gameNotifier.initializeGame(mainState.savedGameBoard!);
+          gameNotifier.loadSavedGame();
           // 게임 시작 정보 초기화
           mainNotifier.handleIntent(const GetGameStartInfoIntent());
         } else {
@@ -49,7 +52,10 @@ class GameScreen extends HookConsumerWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             final updatedMainState = ref.read(mainNotifierProvider);
             if (updatedMainState.savedGameBoard != null) {
-              gameNotifier.initializeGame(updatedMainState.savedGameBoard!);
+              gameNotifier.initializeGame(
+                updatedMainState.savedGameBoard!,
+                difficulty: updatedMainState.selectedDifficulty,
+              );
               mainNotifier.handleIntent(const GetGameStartInfoIntent());
             }
           });
@@ -126,6 +132,8 @@ class GameScreen extends HookConsumerWidget {
                 if (shouldExit == true) {
                   // 게임 저장 후 나가기
                   await gameNotifier.autoSave();
+                  // 메인 화면에서 저장된 게임 상태 업데이트
+                  mainNotifier.handleIntent(const CheckSavedGameIntent());
                   Navigator.of(context).pop();
                 }
               },
@@ -236,6 +244,8 @@ class GameScreen extends HookConsumerWidget {
                       onContinue: () {
                         // 메인 화면으로 이동
                         Navigator.of(context).pop();
+                        // 메인 화면에서 저장된 게임 상태 업데이트 (게임 완료로 삭제됨)
+                        mainNotifier.handleIntent(const CheckSavedGameIntent());
                       },
                     ),
                   ),
