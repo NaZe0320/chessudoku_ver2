@@ -5,17 +5,19 @@ class StatCard extends StatelessWidget {
   final String value;
   final String label;
   final IconData? icon;
+  final VoidCallback? onTap;
 
   const StatCard({
     super.key,
     required this.value,
     required this.label,
     this.icon,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    Widget cardContent = Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
@@ -62,5 +64,15 @@ class StatCard extends StatelessWidget {
         ],
       ),
     );
+
+    // onTap이 있으면 GestureDetector로 감싸기
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: onTap,
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 }

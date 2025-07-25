@@ -11,12 +11,14 @@ class DatabaseService {
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
   // 데이터베이스 버전
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
 
   // 테이블 이름
   static const String tableDataVersions = 'data_versions';
   static const String tableLanguagePacks = 'language_packs';
   static const String tableSettings = 'settings';
+  static const String tableUserProfiles = 'user_profiles';
+  static const String tablePuzzleRecords = 'puzzle_records';
 
   // 싱글톤 패턴 적용
   factory DatabaseService() {
@@ -64,12 +66,19 @@ class DatabaseService {
       await _createDataVersionsTable(db);
       await _createLanguageTables(db);
     }
+
+    if (oldVersion < 3) {
+      await _createUserProfileTable(db);
+      await _createPuzzleRecordsTable(db);
+    }
   }
 
   Future<void> _createTables(Database db) async {
     await _createDataVersionsTable(db);
     await _createLanguageTables(db);
     await _createSettingsTable(db);
+    await _createUserProfileTable(db);
+    await _createPuzzleRecordsTable(db);
   }
 
   Future<void> _createDataVersionsTable(Database db) async {
@@ -115,6 +124,38 @@ class DatabaseService {
       )
     ''');
     debugPrint('설정 테이블 생성 완료: $tableSettings');
+  }
+
+  Future<void> _createUserProfileTable(Database db) async {
+    // 사용자 프로필 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tableUserProfiles (
+        deviceId TEXT PRIMARY KEY,
+        username TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        lastLoginAt TEXT NOT NULL,
+        totalPlayTime INTEGER NOT NULL DEFAULT 0,
+        completedPuzzles INTEGER NOT NULL DEFAULT 0,
+        currentStreak INTEGER NOT NULL DEFAULT 0,
+        bestStreak INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    debugPrint('사용자 프로필 테이블 생성 완료: $tableUserProfiles');
+  }
+
+  Future<void> _createPuzzleRecordsTable(Database db) async {
+    // 퍼즐 기록 테이블 생성
+    await db.execute('''
+      CREATE TABLE $tablePuzzleRecords (
+        recordId TEXT PRIMARY KEY,
+        puzzleId TEXT NOT NULL,
+        difficulty TEXT NOT NULL,
+        completedAt TEXT NOT NULL,
+        elapsedSeconds INTEGER NOT NULL,
+        hintCount INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    debugPrint('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
   }
 
   /// 데이터베이스 닫기

@@ -1,5 +1,6 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/game_provider.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/ui/screens/main/widgets/quick_play_grid.dart';
@@ -26,8 +27,24 @@ class MainScreen extends HookConsumerWidget {
     useEffect(() {
       mainNotifier.handleIntent(const CheckSavedGameIntent());
       mainNotifier.handleIntent(const LoadStatsIntent());
+
+      // GameNotifier에 MainNotifier 업데이트 콜백 설정
+      final gameNotifier = ref.read(gameNotifierProvider.notifier);
+      gameNotifier.setOnMainIntent((intent) {
+        mainNotifier.handleIntent(intent);
+      });
+
       return null;
     }, []);
+
+    // 로딩 상태 표시
+    if (mainState.isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Container(
@@ -104,7 +121,59 @@ class MainScreen extends HookConsumerWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // 통계 카드들
+                // 사용자 환영 메시지
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.0),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        child: const Icon(
+                          Icons.person,
+                          color: AppColors.textWhite,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              translate('welcome_back', '다시 오신 것을 환영합니다!'),
+                              style: const TextStyle(
+                                color: AppColors.textWhite,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              translate('keep_playing', '오늘도 퍼즐을 풀어보세요!'),
+                              style: TextStyle(
+                                color:
+                                    AppColors.textWhite.withValues(alpha: 0.8),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 통계 카드들 (사용자 프로필 데이터 사용)
                 Row(
                   children: [
                     Expanded(
@@ -112,6 +181,17 @@ class MainScreen extends HookConsumerWidget {
                         value: mainState.completedPuzzles.toString(),
                         label: translate('completed_puzzles', '완료한 퍼즐'),
                         icon: Icons.check_circle,
+                        onTap: () {
+                          // 통계 새로고침 (테스트용)
+                          mainNotifier.handleIntent(const RefreshStatsIntent());
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  '통계 새로고침 완료: ${mainState.completedPuzzles}개 완료'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -120,6 +200,17 @@ class MainScreen extends HookConsumerWidget {
                         value: '${mainState.currentStreak}일',
                         label: translate('current_streak', '연속 기록'),
                         icon: Icons.local_fire_department,
+                        onTap: () {
+                          // 통계 새로고침 (테스트용)
+                          mainNotifier.handleIntent(const RefreshStatsIntent());
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  '통계 새로고침 완료: ${mainState.currentStreak}일 연속'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -148,7 +239,10 @@ class MainScreen extends HookConsumerWidget {
                           MaterialPageRoute(
                             builder: (context) => const GameScreen(),
                           ),
-                        );
+                        ).then((_) {
+                          // 게임 화면에서 돌아올 때 통계 새로고침
+                          mainNotifier.handleIntent(const LoadStatsIntent());
+                        });
                       },
                     ),
                   ),
@@ -167,7 +261,10 @@ class MainScreen extends HookConsumerWidget {
                       MaterialPageRoute(
                         builder: (context) => const GameScreen(),
                       ),
-                    );
+                    ).then((_) {
+                      // 게임 화면에서 돌아올 때 통계 새로고침
+                      mainNotifier.handleIntent(const LoadStatsIntent());
+                    });
                   },
                 ),
                 const SizedBox(height: 24),
@@ -215,7 +312,10 @@ class MainScreen extends HookConsumerWidget {
                       MaterialPageRoute(
                         builder: (context) => const GameScreen(),
                       ),
-                    );
+                    ).then((_) {
+                      // 게임 화면에서 돌아올 때 통계 새로고침
+                      mainNotifier.handleIntent(const LoadStatsIntent());
+                    });
                   },
                 ),
               ],

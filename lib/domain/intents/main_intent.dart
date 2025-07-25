@@ -34,3 +34,7 @@ class ContinueSavedGameIntent extends MainIntent {
 class GetGameStartInfoIntent extends MainIntent {
   const GetGameStartInfoIntent();
 }
+
+class RefreshStatsIntent extends MainIntent {
+  const RefreshStatsIntent();
+}
