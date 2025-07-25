@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:chessudoku/ui/theme/color_palette.dart';
 
 class NumberButton extends StatelessWidget {
   final String text;
@@ -18,49 +19,66 @@ class NumberButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: isDisabled ? null : onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: isDisabled
-              ? Colors.grey[100]
-              : (isSelected ? Colors.blue[100] : Colors.grey[50]),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isDisabled ? null : onTap,
+        borderRadius: BorderRadius.circular(24),
+        splashColor:
+            !isDisabled ? AppColors.primary.withValues(alpha: 0.2) : null,
+        highlightColor:
+            !isDisabled ? AppColors.primary.withValues(alpha: 0.1) : null,
+        child: Ink(
+          decoration: BoxDecoration(
             color: isDisabled
-                ? Colors.grey[200]!
-                : (isSelected ? Colors.blue[300]! : Colors.grey[300]!),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
+                ? AppColors.neutral100
+                : (isSelected
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : AppColors.neutral50),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDisabled
+                  ? AppColors.neutral200
+                  : (isSelected ? AppColors.primary : AppColors.neutral300),
+              width: 1,
             ),
-          ],
-        ),
-        child: Center(
-          child: icon != null
-              ? Icon(
-                  icon,
-                  color: isDisabled
-                      ? Colors.grey[400]
-                      : (isSelected ? Colors.blue[700] : Colors.grey[700]),
-                  size: 20,
-                )
-              : Text(
-                  text,
-                  style: TextStyle(
-                    color: isDisabled
-                        ? Colors.grey[400]
-                        : (isSelected ? Colors.blue[800] : Colors.grey[800]),
-                    fontSize: 18,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  ),
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: icon != null
+                  ? Icon(
+                      icon,
+                      color: isDisabled
+                          ? AppColors.neutral400
+                          : (isSelected
+                              ? AppColors.primary
+                              : AppColors.neutral700),
+                      size: 20,
+                    )
+                  : Text(
+                      text,
+                      style: TextStyle(
+                        color: isDisabled
+                            ? AppColors.neutral400
+                            : (isSelected
+                                ? AppColors.primary
+                                : AppColors.neutral800),
+                        fontSize: 18,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ),
         ),
       ),
     );

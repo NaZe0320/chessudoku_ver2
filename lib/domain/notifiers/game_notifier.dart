@@ -389,7 +389,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         board: newBoard,
         errorCells: {}, // 오류 검사 내용 초기화
       );
-      state = state.copyWith(currentBoard: updatedGameBoard);
+      state = state.copyWith(
+        currentBoard: updatedGameBoard,
+        selectedCellContent: newContent, // selectedCellContent 업데이트
+      );
 
       // 게임 완료 체크
       _handleCheckGameCompletion();
@@ -402,7 +405,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         board: newBoard,
         errorCells: {}, // 오류 검사 내용 초기화
       );
-      state = state.copyWith(currentBoard: updatedGameBoard);
+      state = state.copyWith(
+        currentBoard: updatedGameBoard,
+        selectedCellContent: null, // 셀이 완전히 제거되었으므로 null로 설정
+      );
 
       // 게임 완료 체크
       _handleCheckGameCompletion();

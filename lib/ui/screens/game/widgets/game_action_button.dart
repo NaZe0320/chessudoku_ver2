@@ -37,59 +37,69 @@ class GameActionButton extends StatelessWidget {
     // 다른 버튼들: 활성화 상태와 일시정지 상태를 별도로 처리
     final isEnabled = isButtonEnabled;
 
-    return GestureDetector(
-      onTap: isEnabled ? onTap : null,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isEnabled
-              ? (isMemoMode
-                  ? Colors.blue[50]
-                  : Colors.grey[50]) // 메모 모드일 때 파란색 배경
-              : Colors.grey[100], // 일시정지 시 회색 배경
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isEnabled ? onTap : null,
+        borderRadius: BorderRadius.circular(20),
+        splashColor:
+            isEnabled ? AppColors.primary.withValues(alpha: 0.2) : null,
+        highlightColor:
+            isEnabled ? AppColors.primary.withValues(alpha: 0.1) : null,
+        child: Ink(
+          decoration: BoxDecoration(
             color: isEnabled
                 ? (isMemoMode
-                    ? Colors.blue[300]!
-                    : Colors.grey[300]!) // 메모 모드일 때 파란색 테두리
-                : Colors.grey[200]!, // 일시정지 시 연한 회색 테두리
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : AppColors.neutral50) // 메모 모드일 때 primary 배경
+                : AppColors.neutral100, // 일시정지 시 neutral100 배경
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
               color: isEnabled
                   ? (isMemoMode
-                      ? Colors.blue[700]
-                      : Colors.grey[700]) // 메모 모드일 때 파란색 아이콘
-                  : Colors.grey[400], // 일시정지 시 연한 회색 아이콘
-              size: 14,
+                      ? AppColors.primary
+                      : AppColors.neutral300) // 메모 모드일 때 primary 테두리
+                  : AppColors.neutral200, // 일시정지 시 neutral200 테두리
+              width: 1,
             ),
-            const SizedBox(width: 5),
-            Text(
-              text,
-              style: TextStyle(
-                color: isEnabled
-                    ? (isMemoMode
-                        ? Colors.blue[800]
-                        : Colors.grey[800]) // 메모 모드일 때 파란색 텍스트
-                    : Colors.grey[400], // 일시정지 시 연한 회색 텍스트
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: isEnabled
+                      ? (isMemoMode
+                          ? AppColors.primary
+                          : AppColors.neutral700) // 메모 모드일 때 primary 아이콘
+                      : AppColors.neutral400, // 일시정지 시 neutral400 아이콘
+                  size: 14,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: isEnabled
+                        ? (isMemoMode
+                            ? AppColors.primary
+                            : AppColors.neutral800) // 메모 모드일 때 primary 텍스트
+                        : AppColors.neutral400, // 일시정지 시 neutral400 텍스트
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
