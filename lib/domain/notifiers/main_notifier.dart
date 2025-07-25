@@ -174,43 +174,39 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     );
   }
 
-  // 테스트용 보드 생성 (GameNotifier의 _handleInitializeTestBoard 로직을 여기로 이동)
+  // 테스트용 보드 생성 (하나만 입력해도 완료 가능한 간단한 퍼즐)
   GameBoard _createTestBoard(Difficulty difficulty) {
     developer.log('테스트 보드 생성 시작', name: 'MainNotifier');
 
-    // 완성된 스도쿠 답안 (체스 기물 위치는 빈 칸으로)
+    // 완성된 스도쿠 답안 (대부분이 이미 채워진 상태)
     final solutionPuzzle = [
-      [5, 3, 4, 6, 7, 8, 9, 1, 2],
-      [6, 7, 2, 1, 9, 5, 3, 4, 8],
-      [1, 9, 8, 3, 4, 2, 5, 6, 7],
-      [8, 5, 9, 7, 6, 1, 4, 2, 3],
-      [4, 2, 6, 8, 5, 3, 7, 9, 1],
-      [7, 1, 3, 9, 2, 4, 8, 5, 6],
-      [9, 6, 1, 5, 3, 7, 2, 8, 4],
-      [2, 8, 7, 4, 1, 9, 6, 3, 5],
-      [3, 4, 5, 2, 8, 6, 1, 7, 9],
+      [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [4, 5, 6, 7, 8, 9, 1, 2, 3],
+      [7, 8, 9, 1, 2, 3, 4, 5, 6],
+      [2, 3, 4, 5, 6, 7, 8, 9, 1],
+      [5, 6, 7, 8, 9, 1, 2, 3, 4],
+      [8, 9, 1, 2, 3, 4, 5, 6, 7],
+      [3, 4, 5, 6, 7, 8, 9, 1, 2],
+      [6, 7, 8, 9, 1, 2, 3, 4, 5],
+      [9, 1, 2, 3, 4, 5, 6, 7, 8],
     ];
 
-    // 하나만 입력하면 완료되는 퍼즐 (대부분이 이미 채워져 있고 하나만 빈칸)
+    // 빈칸이 하나만 있는 퍼즐 (하나만 입력하면 완료)
     final puzzleWithBlanks = [
-      [5, 3, 4, 6, 7, 8, 9, 1, 2],
-      [6, 7, 2, 1, 9, 5, 3, 4, 8],
-      [1, 9, 8, 3, 4, 2, 5, 6, 7],
-      [8, 5, 9, 7, 6, 1, 4, 2, 3],
-      [4, 2, 6, 8, 5, 3, 7, 9, 1],
-      [7, 1, 3, 9, 2, 4, 8, 5, 6],
-      [9, 6, 1, 5, 3, 7, 2, 8, 4],
-      [2, 8, 7, 4, 1, 9, 6, 3, 5],
-      [3, 4, 5, 2, 8, 6, null, 7, 9], // (8,6) 위치만 빈칸으로 설정
+      [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [4, 5, 6, 7, 8, 9, 1, 2, 3],
+      [7, 8, 9, 1, 2, 3, 4, 5, 6],
+      [2, 3, 4, 5, 6, 7, 8, 9, 1],
+      [5, 6, 7, 8, null, 1, 2, 3, 4], // (4,4) 위치만 빈칸 (체스 기물 위치)
+      [8, 9, 1, 2, 3, 4, 5, 6, 7],
+      [3, 4, 5, 6, 7, 8, 9, 1, 2],
+      [6, 7, 8, 9, 1, 2, 3, 4, 5],
+      [9, 1, 2, 3, 4, 5, 6, 7, 8],
     ];
 
-    // 체스 기물 배치 (숫자가 있는 위치에 배치)
+    // 체스 기물 배치 (빈칸 위치에 queen 배치)
     final chessPieces = <Position, ChessPiece>{
-      const Position(row: 0, col: 0): ChessPiece.knight, // (0,0) 위치의 5
-      const Position(row: 1, col: 2): ChessPiece.bishop, // (1,2) 위치의 2
-      const Position(row: 2, col: 1): ChessPiece.queen, // (2,1) 위치의 9
-      const Position(row: 3, col: 3): ChessPiece.rook, // (3,3) 위치의 7
-      const Position(row: 4, col: 1): ChessPiece.pawn, // (4,1) 위치의 2
+      const Position(row: 4, col: 4): ChessPiece.queen, // 빈칸 위치에 queen
     };
 
     developer.log('체스 기물 개수: ${chessPieces.length}', name: 'MainNotifier');
@@ -236,7 +232,7 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
       board: puzzleBoard,
       solutionBoard: solutionBoard,
       difficulty: difficulty,
-      puzzleId: 'test_puzzle_with_chess',
+      puzzleId: 'test_puzzle_simple',
     );
 
     developer.log('게임 보드 생성 완료 - 최종 셀 수: ${gameBoard.board.cells.length}',

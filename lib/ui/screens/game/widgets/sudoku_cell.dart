@@ -71,34 +71,14 @@ class SudokuCell extends StatelessWidget {
 
   Widget? _buildCellContent(
       int? value, ChessPiece? chessPiece, bool isInitial, bool hasNotes) {
-    // 체스 기물과 숫자가 모두 있는 경우
-    if (value != null && chessPiece != null) {
-      return Stack(
-        children: [
-          // 체스 기물 (배경)
-          Center(
-            child: Text(
-              _getChessPieceSymbol(chessPiece),
-              style: TextStyle(
-                fontSize: 24,
-                color: Colors.grey.withValues(alpha: 0.4),
-              ),
-            ),
-          ),
-          // 숫자 (전경)
-          Center(
-            child: Text(
-              value.toString(),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: isInitial
-                    ? FontWeight.w400
-                    : FontWeight.w600, // 초기값은 얇게, 입력값은 조금 두껍게
-                color: _getNumberColor(isInitial),
-              ),
-            ),
-          ),
-        ],
+    // 체스 기물이 있는 경우 - 체스 기물만 표시 (숫자는 무시)
+    if (chessPiece != null) {
+      return Text(
+        _getChessPieceSymbol(chessPiece),
+        style: const TextStyle(
+          fontSize: 24,
+          color: AppColors.onSurface,
+        ),
       );
     }
 
@@ -112,17 +92,6 @@ class SudokuCell extends StatelessWidget {
               ? FontWeight.w400
               : FontWeight.w600, // 초기값은 얇게, 입력값은 조금 두껍게
           color: _getNumberColor(isInitial),
-        ),
-      );
-    }
-
-    // 체스 기물만 있는 경우
-    if (chessPiece != null) {
-      return Text(
-        _getChessPieceSymbol(chessPiece),
-        style: const TextStyle(
-          fontSize: 24,
-          color: AppColors.onSurface,
         ),
       );
     }
