@@ -217,7 +217,7 @@ class MainScreen extends HookConsumerWidget {
                 const SizedBox(height: 24),
 
                 // 이어서 플레이 카드 (저장된 게임이 있을 때만 표시)
-                if (mainState.hasSavedGame)
+                if (mainState.hasSavedGame) ...[
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ContinuePlayCard(
@@ -245,7 +245,8 @@ class MainScreen extends HookConsumerWidget {
                       },
                     ),
                   ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 24),
+                ],
 
                 // 일일 챌린지 카드
                 DailyChallengeCard(
@@ -317,6 +318,7 @@ class MainScreen extends HookConsumerWidget {
                     });
                   },
                 ),
+                const SizedBox(height: 32),
               ],
             ),
           ),

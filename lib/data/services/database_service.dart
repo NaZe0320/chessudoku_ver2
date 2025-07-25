@@ -229,7 +229,6 @@ class DatabaseService {
 
   /// 데이터베이스 초기화 (모든 데이터 삭제)
   Future<void> resetDatabase() async {
-    final db = await database;
     // 퍼즐 관련 테이블 제거됨
   }
 }

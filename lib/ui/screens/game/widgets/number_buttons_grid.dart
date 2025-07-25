@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:chessudoku/core/di/language_pack_provider.dart';
-import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'number_button.dart';
 
