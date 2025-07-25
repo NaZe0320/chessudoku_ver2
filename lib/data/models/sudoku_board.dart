@@ -70,10 +70,13 @@ class SudokuBoard {
         final chessPiece = chessPieces[position];
 
         if (value != null || chessPiece != null) {
+          // 체스 기물이 있는 위치에서는 숫자를 제거
+          final finalValue = chessPiece != null ? null : value;
+
           cells[position] = CellContent(
-            number: value,
+            number: finalValue,
             chessPiece: chessPiece,
-            isInitial: value != null, // 숫자가 있으면 초기값
+            isInitial: finalValue != null, // 숫자가 있으면 초기값
           );
           cellCount++;
 

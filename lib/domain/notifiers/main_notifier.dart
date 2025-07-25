@@ -181,36 +181,36 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     // 완성된 스도쿠 답안 (체스 기물 위치는 빈 칸으로)
     final solutionPuzzle = [
       [5, 3, 4, 6, 7, 8, 9, 1, 2],
-      [6, null, 2, 1, 9, 5, 3, 4, 8], // (1,1) knight 위치
-      [1, 9, 8, 3, null, 2, 5, 6, 7], // (2,4) bishop 위치
+      [6, 7, 2, 1, 9, 5, 3, 4, 8],
+      [1, 9, 8, 3, 4, 2, 5, 6, 7],
       [8, 5, 9, 7, 6, 1, 4, 2, 3],
-      [4, 2, 6, 8, null, 3, 7, 9, 1], // (4,4) queen 위치
+      [4, 2, 6, 8, 5, 3, 7, 9, 1],
       [7, 1, 3, 9, 2, 4, 8, 5, 6],
-      [9, 6, 1, 5, null, 7, 2, 8, 4], // (6,4) rook 위치
-      [2, 8, 7, 4, 1, 9, 6, 3, 5], // (7,2) pawn 위치
+      [9, 6, 1, 5, 3, 7, 2, 8, 4],
+      [2, 8, 7, 4, 1, 9, 6, 3, 5],
       [3, 4, 5, 2, 8, 6, 1, 7, 9],
     ];
 
-    // 빈칸이 있는 퍼즐 (일부 셀을 null로 설정)
+    // 하나만 입력하면 완료되는 퍼즐 (대부분이 이미 채워져 있고 하나만 빈칸)
     final puzzleWithBlanks = [
-      [5, 3, null, 6, 7, 8, 9, null, 2],
-      [6, null, 2, 1, 9, null, 3, 4, 8], // (1,1) knight 위치
-      [null, 9, 8, 3, null, 2, 5, 6, null], // (2,4) bishop 위치
-      [8, 5, null, 7, 6, 1, null, 2, 3],
-      [4, null, 6, 8, null, 3, 7, null, 1], // (4,4) queen 위치
-      [7, 1, null, 9, 2, null, 8, 5, 6],
-      [null, 6, 1, 5, null, 7, 2, 8, null], // (6,4) rook 위치
-      [2, 8, null, 4, 1, null, 6, 3, 5], // (7,2) pawn 위치
-      [3, null, 5, 2, 8, 6, null, 7, 9],
+      [5, 3, 4, 6, 7, 8, 9, 1, 2],
+      [6, 7, 2, 1, 9, 5, 3, 4, 8],
+      [1, 9, 8, 3, 4, 2, 5, 6, 7],
+      [8, 5, 9, 7, 6, 1, 4, 2, 3],
+      [4, 2, 6, 8, 5, 3, 7, 9, 1],
+      [7, 1, 3, 9, 2, 4, 8, 5, 6],
+      [9, 6, 1, 5, 3, 7, 2, 8, 4],
+      [2, 8, 7, 4, 1, 9, 6, 3, 5],
+      [3, 4, 5, 2, 8, 6, null, 7, 9], // (8,6) 위치만 빈칸으로 설정
     ];
 
-    // 체스 기물 배치 (일부 셀에만)
+    // 체스 기물 배치 (숫자가 있는 위치에 배치)
     final chessPieces = <Position, ChessPiece>{
-      const Position(row: 1, col: 1): ChessPiece.knight,
-      const Position(row: 2, col: 4): ChessPiece.bishop,
-      const Position(row: 4, col: 4): ChessPiece.queen,
-      const Position(row: 6, col: 4): ChessPiece.rook,
-      const Position(row: 7, col: 2): ChessPiece.pawn,
+      const Position(row: 0, col: 0): ChessPiece.knight, // (0,0) 위치의 5
+      const Position(row: 1, col: 2): ChessPiece.bishop, // (1,2) 위치의 2
+      const Position(row: 2, col: 1): ChessPiece.queen, // (2,1) 위치의 9
+      const Position(row: 3, col: 3): ChessPiece.rook, // (3,3) 위치의 7
+      const Position(row: 4, col: 1): ChessPiece.pawn, // (4,1) 위치의 2
     };
 
     developer.log('체스 기물 개수: ${chessPieces.length}', name: 'MainNotifier');
