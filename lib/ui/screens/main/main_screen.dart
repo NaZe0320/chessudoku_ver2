@@ -9,6 +9,7 @@ import 'package:chessudoku/ui/screens/main/widgets/daily_challenge_card.dart';
 import 'package:chessudoku/ui/common/widgets/stat_card.dart';
 import 'package:chessudoku/ui/screens/game/game_screen.dart';
 import 'package:chessudoku/ui/screens/profile/settings_screen.dart';
+import 'package:chessudoku/ui/screens/profile/game_records_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -182,13 +183,11 @@ class MainScreen extends HookConsumerWidget {
                         label: translate('completed_puzzles', '완료한 퍼즐'),
                         icon: Icons.check_circle,
                         onTap: () {
-                          // 통계 새로고침 (테스트용)
-                          mainNotifier.handleIntent(const RefreshStatsIntent());
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  '통계 새로고침 완료: ${mainState.completedPuzzles}개 완료'),
-                              duration: const Duration(seconds: 2),
+                          // 게임 기록 화면으로 이동
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const GameRecordsScreen(),
                             ),
                           );
                         },
@@ -206,7 +205,7 @@ class MainScreen extends HookConsumerWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  '통계 새로고침 완료: ${mainState.currentStreak}일 연속'),
+                                  '통계 새로고침 완료: ${mainState.currentStreak}일 연속 (최고: ${mainState.bestStreak}일)'),
                               duration: const Duration(seconds: 2),
                             ),
                           );
