@@ -28,6 +28,7 @@ dependencies:
   
   # Firebase
   firebase_core: ^2.27.1
+  cloud_firestore: ^4.15.4
 
   # HTTP 클라이언트
   dio: ^5.4.3+1

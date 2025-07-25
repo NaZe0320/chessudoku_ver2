@@ -10,6 +10,7 @@ import '../../data/services/api_service.dart';
 import '../../data/services/cache_service.dart';
 import '../../data/services/database_service.dart';
 import '../../data/services/device_service.dart';
+import '../../data/services/firestore_service.dart';
 import '../../domain/repositories/version_repository.dart';
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/user_profile_repository.dart';
@@ -43,6 +44,11 @@ final databaseServiceProvider = Provider<DatabaseService>((ref) {
 /// ApiService Provider
 final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
+});
+
+/// FirestoreService Provider
+final firestoreServiceProvider = Provider<FirestoreService>((ref) {
+  return FirestoreService();
 });
 
 /// VersionRepository Provider

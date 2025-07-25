@@ -4,10 +4,17 @@ import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   // Flutter 엔진 초기화
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase 초기화
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // 상태바 스타일 설정 (앱 전체에 적용)
   SystemChrome.setSystemUIOverlayStyle(
@@ -52,6 +59,10 @@ Future<void> _initializeServices(ProviderContainer container) async {
   // API 서비스 초기화
   container.read(apiServiceProvider).dio;
   debugPrint('Main: API 서비스 초기화 완료');
+
+  // Firestore 서비스 초기화
+  container.read(firestoreServiceProvider).firestore;
+  debugPrint('Main: Firestore 서비스 초기화 완료');
 
   // 데이터 버전 체크 및 동기화 -> SplashScreen으로 로직 이동
   // debugPrint('Main: 데이터 버전 동기화 시작...');
