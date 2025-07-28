@@ -12,6 +12,7 @@ class MainState with _$MainState {
     String? savedGameInfo, // 저장된 게임 정보 (예: "보통 난이도 • 8번 정답 • 65% 완료")
     @Default(0) int completedPuzzles, // 완료한 퍼즐 수
     @Default(0) int currentStreak, // 현재 연속 기록
+    @Default(0) int bestStreak, // 최고 연속 기록
 
     // 게임 시작 관련 정보
     GameBoard? savedGameBoard, // 저장된 게임 보드

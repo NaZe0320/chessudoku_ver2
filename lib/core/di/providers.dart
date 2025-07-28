@@ -4,12 +4,17 @@ import '../../data/repositories/test_repository_impl.dart';
 import '../../domain/repositories/test_repository.dart';
 import '../../data/repositories/version_repository_impl.dart';
 import '../../data/repositories/game_save_repository_impl.dart';
+import '../../data/repositories/user_profile_repository_impl.dart';
+import '../../data/repositories/puzzle_record_repository_impl.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/cache_service.dart';
 import '../../data/services/database_service.dart';
 import '../../data/services/device_service.dart';
+import '../../data/services/firestore_service.dart';
 import '../../domain/repositories/version_repository.dart';
 import '../../domain/repositories/game_save_repository.dart';
+import '../../domain/repositories/user_profile_repository.dart';
+import '../../domain/repositories/puzzle_record_repository.dart';
 import '../../domain/notifiers/sync_notifier.dart';
 import '../../domain/states/sync_state.dart';
 import '../../domain/notifiers/main_notifier.dart';
@@ -41,16 +46,20 @@ final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
 });
 
+/// FirestoreService Provider
+final firestoreServiceProvider = Provider<FirestoreService>((ref) {
+  return FirestoreService();
+});
+
 /// VersionRepository Provider
 final versionRepositoryProvider = Provider<VersionRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
-  final testService = ref.watch(testServiceProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   final languageRepository = ref.watch(languageRepositoryProvider);
-  // final apiService = ref.watch(apiServiceProvider); // 실제 서버 연동 시 TestService 대신 사용
 
   return VersionRepositoryImpl(
     databaseService: databaseService,
-    testService: testService,
+    firestoreService: firestoreService,
     languageRepository: languageRepository,
   );
 });
@@ -74,9 +83,25 @@ final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
   return GameSaveRepositoryImpl(cacheService);
 });
 
+/// UserProfileRepository Provider
+final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
+  final databaseService = ref.watch(databaseServiceProvider);
+  final deviceService = ref.watch(deviceServiceProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  return UserProfileRepositoryImpl(
+      databaseService, deviceService, firestoreService);
+});
+
+/// PuzzleRecordRepository Provider
+final puzzleRecordRepositoryProvider = Provider<PuzzleRecordRepository>((ref) {
+  final databaseService = ref.watch(databaseServiceProvider);
+  return PuzzleRecordRepositoryImpl(databaseService);
+});
+
 /// MainNotifier Provider
 final mainNotifierProvider =
     StateNotifierProvider<MainNotifier, MainState>((ref) {
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
-  return MainNotifier(gameSaveRepository);
+  final userProfileRepository = ref.watch(userProfileRepositoryProvider);
+  return MainNotifier(gameSaveRepository, userProfileRepository);
 });

@@ -1,20 +1,20 @@
 import 'package:chessudoku/data/services/database_service.dart';
-import 'package:chessudoku/data/services/test_service.dart';
+import 'package:chessudoku/data/services/firestore_service.dart';
 import 'package:chessudoku/domain/repositories/language_repository.dart';
 import 'package:chessudoku/domain/repositories/version_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class VersionRepositoryImpl implements VersionRepository {
   final DatabaseService _databaseService;
-  final TestService _testService;
+  final FirestoreService _firestoreService;
   final LanguageRepository _languageRepository;
 
   VersionRepositoryImpl({
     required DatabaseService databaseService,
-    required TestService testService,
+    required FirestoreService firestoreService,
     required LanguageRepository languageRepository,
   })  : _databaseService = databaseService,
-        _testService = testService,
+        _firestoreService = firestoreService,
         _languageRepository = languageRepository;
 
   @override
@@ -24,9 +24,9 @@ class VersionRepositoryImpl implements VersionRepository {
     debugPrint('[VersionRepository] 데이터 버전 체크 및 동기화 시작...');
 
     try {
-      // 1. 서버로부터 최신 데이터 버전 정보 가져오기 (현재는 Mock 데이터 사용)
+      // 1. 서버로부터 최신 데이터 버전 정보 가져오기 (Firestore에서 조회)
       onProgress?.call(0.1, '서버 버전 정보 확인 중...');
-      final serverVersions = await _testService.getServerDataVersions();
+      final serverVersions = await _firestoreService.getServerDataVersions();
       debugPrint('[VersionRepository] 서버 버전 정보: $serverVersions');
 
       final dataTypes = serverVersions.keys.toList();
@@ -130,11 +130,7 @@ class VersionRepositoryImpl implements VersionRepository {
         debugPrint('[$dataType] 동기화 중... (구현 필요)');
         await Future.delayed(const Duration(milliseconds: 500));
         break;
-      case 'achievements':
-        // await _achievementRepository.syncAchievements();
-        debugPrint('[$dataType] 동기화 중... (구현 필요)');
-        await Future.delayed(const Duration(milliseconds: 800));
-        break;
+
       default:
         debugPrint('[$dataType] 알 수 없는 데이터 타입입니다. 동기화를 건너뜁니다.');
     }

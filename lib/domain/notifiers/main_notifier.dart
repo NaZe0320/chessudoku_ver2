@@ -2,18 +2,23 @@ import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/domain/states/main_state.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
+import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
-import 'package:chessudoku/data/models/saved_game_data.dart';
+import 'package:chessudoku/data/models/user_profile.dart';
+import 'package:chessudoku/data/services/device_service.dart';
 import 'dart:developer' as developer;
 
 class MainNotifier extends BaseNotifier<MainIntent, MainState> {
   final GameSaveRepository _gameSaveRepository;
+  final UserProfileRepository _userProfileRepository;
+  final DeviceService _deviceService = DeviceService();
 
-  MainNotifier(this._gameSaveRepository) : super(const MainState());
+  MainNotifier(this._gameSaveRepository, this._userProfileRepository)
+      : super(const MainState());
 
   @override
   void onIntent(MainIntent intent) {
@@ -32,6 +37,8 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
         _handleContinueSavedGame();
       case GetGameStartInfoIntent():
         _handleGetGameStartInfo();
+      case RefreshStatsIntent():
+        _handleRefreshStats();
     }
   }
 
@@ -100,17 +107,63 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
 
   Future<void> _handleLoadStats() async {
     try {
-      final completedPuzzles =
-          await _gameSaveRepository.getCompletedPuzzlesCount();
-      final currentStreak = await _gameSaveRepository.getCurrentStreak();
+      developer.log('통계 로드 시작', name: 'MainNotifier');
+      var userProfile = await _userProfileRepository.getUserProfile();
+      developer.log('사용자 프로필 조회 결과: ${userProfile != null ? '존재' : '없음'}',
+          name: 'MainNotifier');
+
+      // 사용자 프로필이 없으면 자동 생성
+      if (userProfile == null) {
+        developer.log('새 사용자 프로필 생성 시작', name: 'MainNotifier');
+        final deviceId = await _getDeviceId();
+        developer.log('생성할 DeviceId: $deviceId', name: 'MainNotifier');
+
+        userProfile = await _userProfileRepository.createUserProfile(
+          UserProfile(
+            deviceId: deviceId,
+            username: '플레이어',
+            createdAt: DateTime.now(),
+            lastLoginAt: DateTime.now(),
+          ),
+        );
+        developer.log('새 사용자 프로필 생성 완료: $deviceId', name: 'MainNotifier');
+      } else {
+        developer.log('기존 사용자 프로필 사용: ${userProfile.deviceId}',
+            name: 'MainNotifier');
+        // 마지막 로그인 시간 업데이트
+        await _userProfileRepository.updateLastLogin();
+      }
+
+      developer.log(
+          '상태 업데이트 전 - completedPuzzles: ${state.completedPuzzles}, currentStreak: ${state.currentStreak}',
+          name: 'MainNotifier');
 
       state = state.copyWith(
-        completedPuzzles: completedPuzzles,
-        currentStreak: currentStreak,
+        completedPuzzles: userProfile.completedPuzzles,
+        currentStreak: userProfile.currentStreak,
+        bestStreak: userProfile.bestStreak,
       );
+
+      developer.log(
+          '통계 로드 완료 - completedPuzzles: ${userProfile.completedPuzzles}, currentStreak: ${userProfile.currentStreak}, bestStreak: ${userProfile.bestStreak}',
+          name: 'MainNotifier');
     } catch (e) {
-      // 에러 처리
+      developer.log('통계 로드 실패: $e', name: 'MainNotifier');
     }
+  }
+
+  Future<String> _getDeviceId() async {
+    // DeviceService를 통해 deviceId 가져오기
+    return await _deviceService.getDeviceId();
+  }
+
+  // 통계 새로고침 처리
+  Future<void> _handleRefreshStats() async {
+    developer.log('통계 새로고침 시작', name: 'MainNotifier');
+    await _handleLoadStats();
+    developer.log(
+        '통계 새로고침 완료 - completedPuzzles: ${state.completedPuzzles}, currentStreak: ${state.currentStreak}, bestStreak: ${state.bestStreak}',
+        name: 'MainNotifier');
   }
 
   // 새 게임 시작 처리
@@ -174,43 +227,39 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     );
   }
 
-  // 테스트용 보드 생성 (GameNotifier의 _handleInitializeTestBoard 로직을 여기로 이동)
+  // 테스트용 보드 생성 (하나만 입력해도 완료 가능한 간단한 퍼즐)
   GameBoard _createTestBoard(Difficulty difficulty) {
     developer.log('테스트 보드 생성 시작', name: 'MainNotifier');
 
-    // 완성된 스도쿠 답안 (체스 기물 위치는 빈 칸으로)
+    // 완성된 스도쿠 답안 (대부분이 이미 채워진 상태)
     final solutionPuzzle = [
-      [5, 3, 4, 6, 7, 8, 9, 1, 2],
-      [6, null, 2, 1, 9, 5, 3, 4, 8], // (1,1) knight 위치
-      [1, 9, 8, 3, null, 2, 5, 6, 7], // (2,4) bishop 위치
-      [8, 5, 9, 7, 6, 1, 4, 2, 3],
-      [4, 2, 6, 8, null, 3, 7, 9, 1], // (4,4) queen 위치
-      [7, 1, 3, 9, 2, 4, 8, 5, 6],
-      [9, 6, 1, 5, null, 7, 2, 8, 4], // (6,4) rook 위치
-      [2, 8, 7, 4, 1, 9, 6, 3, 5], // (7,2) pawn 위치
-      [3, 4, 5, 2, 8, 6, 1, 7, 9],
+      [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [4, 5, 6, 7, 8, 9, 1, 2, 3],
+      [7, 8, 9, 1, 2, 3, 4, 5, 6],
+      [2, 3, 4, 5, 6, 7, 8, 9, 1],
+      [5, 6, 7, 8, null, 1, 2, 3, 4],
+      [8, 9, 1, 2, 3, 4, 5, 6, 7],
+      [3, 4, 5, 6, 7, 8, 9, 1, 2],
+      [6, 7, 8, 9, 1, 2, 3, 4, 5],
+      [9, 1, 2, 3, 4, 5, 6, 7, 8],
     ];
 
-    // 빈칸이 있는 퍼즐 (일부 셀을 null로 설정)
+    // 빈칸이 하나만 있는 퍼즐 (하나만 입력하면 완료)
     final puzzleWithBlanks = [
-      [5, 3, null, 6, 7, 8, 9, null, 2],
-      [6, null, 2, 1, 9, null, 3, 4, 8], // (1,1) knight 위치
-      [null, 9, 8, 3, null, 2, 5, 6, null], // (2,4) bishop 위치
-      [8, 5, null, 7, 6, 1, null, 2, 3],
-      [4, null, 6, 8, null, 3, 7, null, 1], // (4,4) queen 위치
-      [7, 1, null, 9, 2, null, 8, 5, 6],
-      [null, 6, 1, 5, null, 7, 2, 8, null], // (6,4) rook 위치
-      [2, 8, null, 4, 1, null, 6, 3, 5], // (7,2) pawn 위치
-      [3, null, 5, 2, 8, 6, null, 7, 9],
+      [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      [4, 5, 6, 7, 8, 9, 1, 2, 3],
+      [7, 8, 9, 1, 2, 3, 4, 5, 6],
+      [2, 3, 4, 5, 6, 7, 8, 9, 1],
+      [5, 6, 7, 8, null, null, 2, 3, 4], // (4,4) 위치만 빈칸 (체스 기물 위치)
+      [8, 9, 1, 2, 3, 4, 5, 6, 7],
+      [3, 4, 5, 6, 7, 8, 9, 1, 2],
+      [6, 7, 8, 9, 1, 2, 3, 4, 5],
+      [9, 1, 2, 3, 4, 5, 6, 7, 8],
     ];
 
-    // 체스 기물 배치 (일부 셀에만)
+    // 체스 기물 배치 (빈칸 위치에 queen 배치)
     final chessPieces = <Position, ChessPiece>{
-      const Position(row: 1, col: 1): ChessPiece.knight,
-      const Position(row: 2, col: 4): ChessPiece.bishop,
-      const Position(row: 4, col: 4): ChessPiece.queen,
-      const Position(row: 6, col: 4): ChessPiece.rook,
-      const Position(row: 7, col: 2): ChessPiece.pawn,
+      const Position(row: 4, col: 4): ChessPiece.queen, // 빈칸 위치에 queen
     };
 
     developer.log('체스 기물 개수: ${chessPieces.length}', name: 'MainNotifier');
@@ -236,7 +285,7 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
       board: puzzleBoard,
       solutionBoard: solutionBoard,
       difficulty: difficulty,
-      puzzleId: 'test_puzzle_with_chess',
+      puzzleId: 'test_puzzle_simple',
     );
 
     developer.log('게임 보드 생성 완료 - 최종 셀 수: ${gameBoard.board.cells.length}',

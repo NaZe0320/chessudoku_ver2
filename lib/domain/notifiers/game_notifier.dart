@@ -9,22 +9,40 @@ import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
+import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
+import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/data/models/puzzle_record.dart';
+import 'package:chessudoku/domain/intents/main_intent.dart';
 
 class GameNotifier extends BaseNotifier<GameIntent, GameState>
     with WidgetsBindingObserver {
   Timer? _timer;
   final GameSaveRepository _gameSaveRepository;
+  final UserProfileRepository _userProfileRepository;
+  final PuzzleRecordRepository _puzzleRecordRepository;
   bool _wasTimerRunningBeforePause = false; // 앱이 백그라운드로 가기 전 타이머 상태
   Difficulty? _currentDifficulty; // 현재 게임 난이도
+
+  // MainNotifier 업데이트를 위한 콜백
+  Function(MainIntent)? _onMainIntent;
 
   // 메모 히스토리 묶기 관련 변수들
   Position? _lastMemoPosition; // 마지막 메모 입력 위치
   bool _isMemoGroupActive = false; // 메모 그룹 활성화 상태
 
-  GameNotifier(this._gameSaveRepository) : super(const GameState()) {
+  GameNotifier(
+    this._gameSaveRepository,
+    this._userProfileRepository,
+    this._puzzleRecordRepository,
+  ) : super(const GameState()) {
     // 생명주기 관찰자 등록
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  // MainNotifier 업데이트 콜백 설정
+  void setOnMainIntent(Function(MainIntent) callback) {
+    _onMainIntent = callback;
   }
 
   /// 게임 상태 자동 저장
@@ -460,8 +478,62 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isPaused: true,
       );
 
+      // 게임 완료 시 기록 저장 (비동기 처리)
+      _saveGameCompletionRecord().then((_) {
+        developer.log('게임 완료 처리 완료', name: 'GameNotifier');
+      }).catchError((e) {
+        developer.log('게임 완료 처리 실패: $e', name: 'GameNotifier');
+      });
+
       // 게임 완료 시 저장된 게임 삭제
       _gameSaveRepository.clearCurrentGame();
+    }
+  }
+
+  // 게임 완료 기록 저장
+  Future<void> _saveGameCompletionRecord() async {
+    developer.log('게임 완료 기록 저장 시작', name: 'GameNotifier');
+
+    if (state.currentBoard == null || _currentDifficulty == null) {
+      developer.log('게임 완료 기록 저장 실패: 보드 또는 난이도가 null', name: 'GameNotifier');
+      return;
+    }
+
+    try {
+      developer.log('퍼즐 기록 생성 시작', name: 'GameNotifier');
+      // 퍼즐 기록 저장
+      final record = PuzzleRecord(
+        recordId: DateTime.now().millisecondsSinceEpoch.toString(),
+        puzzleId: state.currentBoard!.puzzleId,
+        difficulty: _currentDifficulty!,
+        completedAt: DateTime.now(),
+        elapsedSeconds: state.elapsedSeconds,
+        hintCount: 0, // TODO: 힌트 사용 횟수 추적 구현
+      );
+
+      developer.log('퍼즐 기록 저장 시작: ${record.puzzleId}', name: 'GameNotifier');
+      await _puzzleRecordRepository.savePuzzleRecord(record);
+      developer.log('퍼즐 기록 저장 완료', name: 'GameNotifier');
+
+      // 사용자 프로필 업데이트
+      developer.log('사용자 프로필 업데이트 시작', name: 'GameNotifier');
+      await _userProfileRepository.incrementCompletedPuzzles();
+      developer.log('완료한 퍼즐 수 증가 완료', name: 'GameNotifier');
+
+      await _userProfileRepository.updatePlayTime(state.elapsedSeconds);
+      developer.log('플레이 시간 업데이트 완료: ${state.elapsedSeconds}초',
+          name: 'GameNotifier');
+
+      await _userProfileRepository.updateStreakOnGameCompletion();
+      developer.log('연속 기록 업데이트 완료', name: 'GameNotifier');
+
+      developer.log('게임 완료 기록 저장 완료', name: 'GameNotifier');
+
+      // MainNotifier의 통계 새로고침
+      _onMainIntent?.call(const RefreshStatsIntent());
+    } catch (e) {
+      developer.log('게임 완료 기록 저장 실패: $e', name: 'GameNotifier');
+      rethrow;
     }
   }
 
