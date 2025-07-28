@@ -268,7 +268,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           {
             'currentStreak': newStreak,
             'bestStreak': bestStreak,
-            'lastLoginAt': today.toIso8601String(),
             'isDirty': 1, // 서버 동기화 필요
           },
           where: 'deviceId = ?',
@@ -283,7 +282,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         final updatedProfile = currentProfile.copyWith(
           currentStreak: newStreak,
           bestStreak: bestStreak,
-          lastLoginAt: today,
         );
         await _syncToServer(updatedProfile);
       }
