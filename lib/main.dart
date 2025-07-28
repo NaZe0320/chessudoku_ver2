@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:chessudoku/core/initialization/app_initializer.dart';
 
 void main() async {
   // Flutter 엔진 초기화
@@ -31,6 +32,15 @@ void main() async {
 
   // 앱 실행에 필수적인 서비스들 초기화
   await _initializeServices(container);
+
+  // 앱 초기화 시스템 실행
+  final appInitializer = AppInitializer();
+  final initResult = await appInitializer.initialize();
+  
+  if (initResult == InitializationResult.firstLaunchOffline) {
+    // 최초 실행 시 오프라인 상태 - 사용자에게 안내 필요
+    debugPrint('Main: 최초 실행 시 오프라인 상태 감지');
+  }
 
   // 사용이 끝난 임시 컨테이너는 폐기
   container.dispose();

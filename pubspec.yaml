@@ -38,6 +38,9 @@ dependencies:
    
   uuid: ^4.5.1
 
+  # 네트워크 연결 상태
+  connectivity_plus: ^5.0.2
+
   # 국제화(i18n)
   flutter_localizations:
     sdk: flutter

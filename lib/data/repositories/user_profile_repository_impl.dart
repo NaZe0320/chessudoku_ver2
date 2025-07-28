@@ -4,12 +4,16 @@ import 'package:chessudoku/data/services/device_service.dart';
 import 'package:chessudoku/data/services/firestore_service.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
+import 'package:chessudoku/core/sync/sync_manager.dart';
+import 'package:chessudoku/core/offline/offline_manager.dart';
 
 /// 사용자 프로필 Repository 구현체
 class UserProfileRepositoryImpl implements UserProfileRepository {
   final DatabaseService _databaseService;
   final DeviceService _deviceService;
   final FirestoreService _firestoreService;
+  final SyncManager _syncManager = SyncManager();
+  final OfflineManager _offlineManager = OfflineManager();
 
   UserProfileRepositoryImpl(
       this._databaseService, this._deviceService, this._firestoreService);
@@ -205,6 +209,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         developer.log('새 완료 퍼즐 수: $newCompletedPuzzles',
             name: 'UserProfileRepository');
 
+        // 로컬 업데이트
         await _databaseService.update(
           DatabaseService.tableUserProfiles,
           {
@@ -214,11 +219,28 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           where: 'deviceId = ?',
           whereArgs: [deviceId],
         );
-        developer.log('완료한 퍼즐 수 업데이트 완료', name: 'UserProfileRepository');
+        developer.log('완료한 퍼즐 수 로컬 업데이트 완료', name: 'UserProfileRepository');
 
-        // 서버에 즉시 동기화
-        await _syncToServer(
-            currentProfile.copyWith(completedPuzzles: newCompletedPuzzles));
+        // 동기화 시스템을 통한 지연 동기화
+        final updatedProfile =
+            currentProfile.copyWith(completedPuzzles: newCompletedPuzzles);
+        await _syncManager.syncProfileUpdate({
+          'deviceId': updatedProfile.deviceId,
+          'username': updatedProfile.username,
+          'completedPuzzles': updatedProfile.completedPuzzles,
+          'currentStreak': updatedProfile.currentStreak,
+          'bestStreak': updatedProfile.bestStreak,
+          'totalPlayTime': updatedProfile.totalPlayTime,
+        });
+
+        // 퍼즐 완료 동기화도 추가
+        await _syncManager.syncPuzzleCompletion({
+          'deviceId': deviceId,
+          'completedAt': DateTime.now().toIso8601String(),
+          'completedPuzzles': newCompletedPuzzles,
+        });
+
+        developer.log('완료한 퍼즐 수 동기화 완료', name: 'UserProfileRepository');
       } else {
         developer.log('사용자 프로필이 없습니다', name: 'UserProfileRepository');
       }
@@ -306,6 +328,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
             ? newStreak
             : currentProfile.bestStreak;
 
+        // 로컬 업데이트
         await _databaseService.update(
           DatabaseService.tableUserProfiles,
           {
@@ -318,15 +341,22 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         );
 
         developer.log(
-            '연속 기록 업데이트 완료: currentStreak=$newStreak, bestStreak=$bestStreak',
+            '연속 기록 로컬 업데이트 완료: currentStreak=$newStreak, bestStreak=$bestStreak',
             name: 'UserProfileRepository');
 
-        // 서버에 즉시 동기화
+        // 동기화 시스템을 통한 지연 동기화
         final updatedProfile = currentProfile.copyWith(
           currentStreak: newStreak,
           bestStreak: bestStreak,
         );
-        await _syncToServer(updatedProfile);
+        await _syncManager.syncProfileUpdate({
+          'deviceId': updatedProfile.deviceId,
+          'username': updatedProfile.username,
+          'completedPuzzles': updatedProfile.completedPuzzles,
+          'currentStreak': updatedProfile.currentStreak,
+          'bestStreak': updatedProfile.bestStreak,
+          'totalPlayTime': updatedProfile.totalPlayTime,
+        });
       }
     } catch (e) {
       developer.log('게임 완료 시 연속 기록 계산 실패: $e', name: 'UserProfileRepository');
@@ -341,6 +371,8 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       if (currentProfile != null) {
         final newTotalPlayTime =
             currentProfile.totalPlayTime + additionalSeconds;
+
+        // 로컬 업데이트
         await _databaseService.update(
           DatabaseService.tableUserProfiles,
           {
@@ -351,9 +383,17 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           whereArgs: [deviceId],
         );
 
-        // 서버에 즉시 동기화
-        await _syncToServer(
-            currentProfile.copyWith(totalPlayTime: newTotalPlayTime));
+        // 동기화 시스템을 통한 지연 동기화
+        final updatedProfile =
+            currentProfile.copyWith(totalPlayTime: newTotalPlayTime);
+        await _syncManager.syncProfileUpdate({
+          'deviceId': updatedProfile.deviceId,
+          'username': updatedProfile.username,
+          'completedPuzzles': updatedProfile.completedPuzzles,
+          'currentStreak': updatedProfile.currentStreak,
+          'bestStreak': updatedProfile.bestStreak,
+          'totalPlayTime': updatedProfile.totalPlayTime,
+        });
       }
     } catch (e) {
       developer.log('플레이 시간 업데이트 실패: $e', name: 'UserProfileRepository');
