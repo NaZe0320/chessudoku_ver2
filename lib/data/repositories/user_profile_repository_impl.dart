@@ -25,6 +25,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       );
 
       if (result.isNotEmpty) {
+        // 로컬에 프로필이 있는 경우
         final data = result.first;
         final localProfile = UserProfile(
           deviceId: data['deviceId'] as String,
@@ -59,6 +60,48 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
             currentStreak: updatedData['currentStreak'] as int,
             bestStreak: updatedData['bestStreak'] as int,
           );
+        }
+      } else {
+        // 로컬에 프로필이 없는 경우 - 서버에서 확인
+        developer.log('로컬에 프로필 없음, 서버에서 확인: $deviceId',
+            name: 'UserProfileRepository');
+        final serverData = await _firestoreService.getUserData(deviceId);
+
+        if (serverData != null) {
+          // 서버에 데이터가 있으면 로컬에 저장
+          developer.log('서버에서 기존 프로필 발견, 로컬에 저장',
+              name: 'UserProfileRepository');
+          final serverProfile = UserProfile(
+            deviceId: serverData['deviceId'] as String,
+            username: serverData['username'] as String,
+            createdAt: DateTime.parse(serverData['createdAt'] as String),
+            lastLoginAt: DateTime.parse(serverData['lastLoginAt'] as String),
+            totalPlayTime: serverData['totalPlayTime'] as int,
+            completedPuzzles: serverData['completedPuzzles'] as int,
+            currentStreak: serverData['currentStreak'] as int,
+            bestStreak: serverData['bestStreak'] as int,
+          );
+
+          // 로컬에 저장
+          await _databaseService.insert(
+            DatabaseService.tableUserProfiles,
+            {
+              'deviceId': serverProfile.deviceId,
+              'username': serverProfile.username,
+              'createdAt': serverProfile.createdAt.toIso8601String(),
+              'lastLoginAt': serverProfile.lastLoginAt.toIso8601String(),
+              'totalPlayTime': serverProfile.totalPlayTime,
+              'completedPuzzles': serverProfile.completedPuzzles,
+              'currentStreak': serverProfile.currentStreak,
+              'bestStreak': serverProfile.bestStreak,
+              'serverVersion': serverData['serverVersion'] as int? ?? 1,
+              'isDirty': 0, // 서버와 동기화됨
+              'lastServerSync': DateTime.now().toIso8601String(),
+            },
+          );
+
+          developer.log('서버 프로필을 로컬에 저장 완료', name: 'UserProfileRepository');
+          return serverProfile;
         }
       }
       return null;
