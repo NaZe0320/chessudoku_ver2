@@ -11,7 +11,7 @@ class DatabaseService {
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
   // 데이터베이스 버전
-  static const int _dbVersion = 3;
+  static const int _dbVersion = 4;
 
   // 테이블 이름
   static const String tableDataVersions = 'data_versions';
@@ -63,13 +63,20 @@ class DatabaseService {
     debugPrint('데이터베이스 업그레이드: $oldVersion -> $newVersion');
 
     if (oldVersion < 2) {
-      await _createDataVersionsTable(db);
-      await _createLanguageTables(db);
+      // 버전 2: 언어 팩 테이블 추가
+      await _createLanguagePacksTable(db);
     }
 
     if (oldVersion < 3) {
+      // 버전 3: 설정, 사용자 프로필, 퍼즐 기록 테이블 추가
+      await _createSettingsTable(db);
       await _createUserProfileTable(db);
       await _createPuzzleRecordsTable(db);
+    }
+
+    if (oldVersion < 4) {
+      // 버전 4: 사용자 프로필 테이블에 서버 동기화 컬럼 추가
+      await _addServerSyncColumns(db);
     }
   }
 
@@ -137,7 +144,10 @@ class DatabaseService {
         totalPlayTime INTEGER NOT NULL DEFAULT 0,
         completedPuzzles INTEGER NOT NULL DEFAULT 0,
         currentStreak INTEGER NOT NULL DEFAULT 0,
-        bestStreak INTEGER NOT NULL DEFAULT 0
+        bestStreak INTEGER NOT NULL DEFAULT 0,
+        serverVersion INTEGER NOT NULL DEFAULT 0,
+        lastServerSync TEXT,
+        isDirty INTEGER NOT NULL DEFAULT 0
       )
     ''');
     debugPrint('사용자 프로필 테이블 생성 완료: $tableUserProfiles');
@@ -230,5 +240,49 @@ class DatabaseService {
   /// 데이터베이스 초기화 (모든 데이터 삭제)
   Future<void> resetDatabase() async {
     // 퍼즐 관련 테이블 제거됨
+  }
+
+  /// 언어 팩 테이블 생성
+  Future<void> _createLanguagePacksTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE $tableLanguagePacks (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        nativeName TEXT NOT NULL,
+        isDownloaded INTEGER NOT NULL DEFAULT 0,
+        lastUpdated INTEGER NOT NULL
+      )
+    ''');
+    debugPrint('언어 팩 테이블 생성 완료: $tableLanguagePacks');
+  }
+
+  /// 서버 동기화 컬럼 추가
+  Future<void> _addServerSyncColumns(Database db) async {
+    try {
+      // serverVersion 컬럼 추가
+      await db.execute(
+          'ALTER TABLE $tableUserProfiles ADD COLUMN serverVersion INTEGER NOT NULL DEFAULT 0');
+      debugPrint('serverVersion 컬럼 추가 완료');
+    } catch (e) {
+      debugPrint('serverVersion 컬럼이 이미 존재함: $e');
+    }
+
+    try {
+      // lastServerSync 컬럼 추가
+      await db.execute(
+          'ALTER TABLE $tableUserProfiles ADD COLUMN lastServerSync TEXT');
+      debugPrint('lastServerSync 컬럼 추가 완료');
+    } catch (e) {
+      debugPrint('lastServerSync 컬럼이 이미 존재함: $e');
+    }
+
+    try {
+      // isDirty 컬럼 추가
+      await db.execute(
+          'ALTER TABLE $tableUserProfiles ADD COLUMN isDirty INTEGER NOT NULL DEFAULT 0');
+      debugPrint('isDirty 컬럼 추가 완료');
+    } catch (e) {
+      debugPrint('isDirty 컬럼이 이미 존재함: $e');
+    }
   }
 }

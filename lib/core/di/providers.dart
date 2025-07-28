@@ -87,7 +87,9 @@ final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
 final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
   final deviceService = ref.watch(deviceServiceProvider);
-  return UserProfileRepositoryImpl(databaseService, deviceService);
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  return UserProfileRepositoryImpl(
+      databaseService, deviceService, firestoreService);
 });
 
 /// PuzzleRecordRepository Provider
