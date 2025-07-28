@@ -54,13 +54,12 @@ final firestoreServiceProvider = Provider<FirestoreService>((ref) {
 /// VersionRepository Provider
 final versionRepositoryProvider = Provider<VersionRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
-  final testService = ref.watch(testServiceProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   final languageRepository = ref.watch(languageRepositoryProvider);
-  // final apiService = ref.watch(apiServiceProvider); // 실제 서버 연동 시 TestService 대신 사용
 
   return VersionRepositoryImpl(
     databaseService: databaseService,
-    testService: testService,
+    firestoreService: firestoreService,
     languageRepository: languageRepository,
   );
 });

@@ -9,6 +9,7 @@ class FirestoreService {
 
   // 컬렉션 이름
   static const String _usersCollection = 'users';
+  static const String _versionsCollection = 'versions';
 
   // 싱글톤 패턴 적용
   factory FirestoreService() {
@@ -62,6 +63,47 @@ class FirestoreService {
     } catch (e) {
       debugPrint('FirestoreService: 사용자 데이터 조회 실패 - $e');
       rethrow;
+    }
+  }
+
+  /// 서버 데이터 버전 정보 가져오기
+  Future<Map<String, int>> getServerDataVersions() async {
+    try {
+      debugPrint('FirestoreService: 서버 데이터 버전 정보 조회 중...');
+
+      final doc =
+          await firestore.collection(_versionsCollection).doc('latest').get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final versions = <String, int>{};
+
+        // 각 데이터 타입별 버전 정보 추출
+        data.forEach((key, value) {
+          if (value is int) {
+            versions[key] = value;
+          }
+        });
+
+        debugPrint('FirestoreService: 서버 버전 정보 조회 완료 - $versions');
+        return versions;
+      } else {
+        debugPrint('FirestoreService: 서버 버전 정보가 존재하지 않음');
+        // 기본 버전 정보 반환
+        return {
+          'puzzles': 1,
+          'languages': 1,
+          'notices': 1,
+        };
+      }
+    } catch (e) {
+      debugPrint('FirestoreService: 서버 버전 정보 조회 실패 - $e');
+      // 오류 시 기본 버전 정보 반환
+      return {
+        'puzzles': 1,
+        'languages': 1,
+        'notices': 1,
+      };
     }
   }
 }
