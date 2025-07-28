@@ -6,7 +6,6 @@ import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
-import 'dart:developer' as developer;
 
 part 'saved_game_data.freezed.dart';
 
@@ -133,9 +132,6 @@ class SavedGameData with _$SavedGameData {
     SudokuBoard board = SudokuBoard.empty();
     final cells = json['cells'] as List<dynamic>;
 
-    developer.log('SudokuBoard 역직렬화 시작 - 셀 개수: ${cells.length}',
-        name: 'SavedGameData');
-
     for (int i = 0; i < cells.length; i++) {
       final cell = cells[i];
       final row = cell['row'] as int;
@@ -164,17 +160,8 @@ class SavedGameData with _$SavedGameData {
           isInitial: isInitial,
         ),
       );
-
-      if (i < 5) {
-        // 처음 5개 셀만 로그 출력
-        developer.log(
-            '셀 설정: ($row, $col) - 숫자: $number, 체스기물: $chessPieceName, 초기값: $isInitial, 현재 셀 수: ${board.cells.length}',
-            name: 'SavedGameData');
-      }
     }
 
-    developer.log('SudokuBoard 역직렬화 완료 - 최종 셀 수: ${board.cells.length}',
-        name: 'SavedGameData');
     return board;
   }
 
