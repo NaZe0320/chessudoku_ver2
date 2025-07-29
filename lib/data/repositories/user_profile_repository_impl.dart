@@ -401,7 +401,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
     }
   }
 
-  /// 서버와 동기화
+  /// 서버와 동기화 (개선된 버전)
   Future<void> _syncWithServer(UserProfile localProfile) async {
     try {
       // 네트워크 상태 확인
@@ -417,22 +417,8 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           await _firestoreService.getUserData(localProfile.deviceId);
 
       if (serverData != null) {
-        // 서버 데이터가 있는 경우 버전 비교
-        final serverVersion = serverData['serverVersion'] as int? ?? 0;
-        final localVersion = await _getLocalVersion(localProfile.deviceId);
-
-        developer.log('버전 비교 - 로컬: $localVersion, 서버: $serverVersion',
-            name: 'UserProfileRepository');
-
-        if (serverVersion > localVersion) {
-          // 서버가 더 최신이면 로컬 업데이트
-          developer.log('서버 데이터로 로컬 업데이트', name: 'UserProfileRepository');
-          await _updateLocalFromServer(localProfile.deviceId, serverData);
-        } else if (localVersion > serverVersion) {
-          // 로컬이 더 최신이면 서버 업데이트
-          developer.log('로컬 데이터로 서버 업데이트', name: 'UserProfileRepository');
-          await _syncToServer(localProfile);
-        }
+        // 서버 데이터가 있는 경우 스마트 동기화
+        await _smartSync(localProfile, serverData);
       } else {
         // 서버에 데이터가 없으면 로컬 데이터를 서버에 저장
         developer.log('서버에 데이터 없음 - 로컬 데이터 업로드', name: 'UserProfileRepository');
@@ -442,6 +428,89 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       developer.log('서버 동기화 완료', name: 'UserProfileRepository');
     } catch (e) {
       developer.log('서버 동기화 실패: $e', name: 'UserProfileRepository');
+    }
+  }
+
+  /// 스마트 동기화 로직 (데이터 손실 방지)
+  Future<void> _smartSync(
+      UserProfile localProfile, Map<String, dynamic> serverData) async {
+    final serverVersion = serverData['serverVersion'] as int? ?? 0;
+    final localVersion = await _getLocalVersion(localProfile.deviceId);
+
+    final serverCompletedPuzzles = serverData['completedPuzzles'] as int? ?? 0;
+    final localCompletedPuzzles = localProfile.completedPuzzles;
+
+    developer.log(
+        '스마트 동기화 - 로컬: $localCompletedPuzzles개($localVersion), 서버: $serverCompletedPuzzles개($serverVersion)',
+        name: 'UserProfileRepository');
+
+    // 데이터 손실 방지 로직
+    if (_isDataLossScenario(localCompletedPuzzles, serverCompletedPuzzles,
+        localVersion, serverVersion)) {
+      developer.log('데이터 손실 시나리오 감지 - 서버 데이터 우선',
+          name: 'UserProfileRepository');
+      await _updateLocalFromServer(localProfile.deviceId, serverData);
+      return;
+    }
+
+    // 일반적인 버전 비교
+    if (serverVersion > localVersion) {
+      developer.log('서버가 더 최신 - 서버 데이터로 로컬 업데이트',
+          name: 'UserProfileRepository');
+      await _updateLocalFromServer(localProfile.deviceId, serverData);
+    } else if (localVersion > serverVersion) {
+      developer.log('로컬이 더 최신 - 로컬 데이터로 서버 업데이트',
+          name: 'UserProfileRepository');
+      await _syncToServer(localProfile);
+    } else {
+      developer.log('버전 동일 - 데이터 병합 고려', name: 'UserProfileRepository');
+      await _mergeDataIfNeeded(localProfile, serverData);
+    }
+  }
+
+  /// 데이터 손실 시나리오 감지
+  bool _isDataLossScenario(int localCompleted, int serverCompleted,
+      int localVersion, int serverVersion) {
+    // 로컬이 서버보다 훨씬 적은 퍼즐을 해결했는데, 로컬 버전이 더 높다면 의심
+    if (localCompleted < serverCompleted && localVersion > serverVersion) {
+      return true;
+    }
+
+    // 로컬이 0개인데 서버에 데이터가 있다면 의심
+    if (localCompleted == 0 && serverCompleted > 0) {
+      return true;
+    }
+
+    // 버전 차이가 너무 크면 의심 (예: 로컬 10, 서버 1)
+    if (localVersion - serverVersion > 5) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// 데이터 병합 (필요한 경우)
+  Future<void> _mergeDataIfNeeded(
+      UserProfile localProfile, Map<String, dynamic> serverData) async {
+    final serverCompletedPuzzles = serverData['completedPuzzles'] as int? ?? 0;
+    final localCompletedPuzzles = localProfile.completedPuzzles;
+
+    // 더 높은 값으로 병합
+    final mergedCompletedPuzzles =
+        localCompletedPuzzles > serverCompletedPuzzles
+            ? localCompletedPuzzles
+            : serverCompletedPuzzles;
+
+    if (mergedCompletedPuzzles != localCompletedPuzzles) {
+      developer.log(
+          '데이터 병합 - completedPuzzles: $localCompletedPuzzles → $mergedCompletedPuzzles',
+          name: 'UserProfileRepository');
+
+      final mergedProfile = localProfile.copyWith(
+        completedPuzzles: mergedCompletedPuzzles,
+      );
+
+      await _syncToServer(mergedProfile);
     }
   }
 
