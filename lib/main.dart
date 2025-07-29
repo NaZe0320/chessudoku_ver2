@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:chessudoku/core/initialization/app_initializer.dart';
+import 'package:chessudoku/ui/screens/offline/offline_first_launch_app.dart';
 
 void main() async {
   // Flutter 엔진 초기화
@@ -36,10 +37,17 @@ void main() async {
   // 앱 초기화 시스템 실행
   final appInitializer = AppInitializer();
   final initResult = await appInitializer.initialize();
-  
+
   if (initResult == InitializationResult.firstLaunchOffline) {
-    // 최초 실행 시 오프라인 상태 - 사용자에게 안내 필요
-    debugPrint('Main: 최초 실행 시 오프라인 상태 감지');
+    // 최초 실행 시 오프라인 상태 - 앱 시작 차단
+    debugPrint('Main: 최초 실행 시 오프라인 상태 감지 - 앱 시작 차단');
+    // 오프라인 안내 화면으로 시작
+    runApp(
+      const ProviderScope(
+        child: OfflineFirstLaunchApp(),
+      ),
+    );
+    return;
   }
 
   // 사용이 끝난 임시 컨테이너는 폐기
@@ -67,8 +75,8 @@ Future<void> _initializeServices(ProviderContainer container) async {
   debugPrint('Main: 데이터베이스 서비스 초기화 완료');
 
   // API 서비스 초기화
-  container.read(apiServiceProvider).dio;
-  debugPrint('Main: API 서비스 초기화 완료');
+  // container.read(apiServiceProvider).dio;
+  // debugPrint('Main: API 서비스 초기화 완료');
 
   // Firestore 서비스 초기화
   container.read(firestoreServiceProvider).firestore;

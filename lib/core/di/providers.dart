@@ -93,8 +93,9 @@ final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
   final deviceService = ref.watch(deviceServiceProvider);
   final firestoreService = ref.watch(firestoreServiceProvider);
+  final networkService = ref.watch(networkServiceProvider);
   return UserProfileRepositoryImpl(
-      databaseService, deviceService, firestoreService);
+      databaseService, deviceService, firestoreService, networkService);
 });
 
 /// PuzzleRecordRepository Provider

@@ -1,5 +1,6 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
@@ -58,7 +59,19 @@ class SplashScreen extends HookConsumerWidget {
       // 프레임 후 진행
       WidgetsBinding.instance.addPostFrameCallback((_) {
         progressController.forward();
+
+        // 데이터 동기화 시작
         ref.read(syncNotifierProvider.notifier).startSync();
+
+        // 저장된 게임 확인
+        ref
+            .read(mainNotifierProvider.notifier)
+            .handleIntent(const CheckSavedGameIntent());
+
+        // 사용자 통계 로드
+        ref
+            .read(mainNotifierProvider.notifier)
+            .handleIntent(const LoadStatsIntent());
       });
 
       return null;

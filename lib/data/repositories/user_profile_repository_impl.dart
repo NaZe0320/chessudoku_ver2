@@ -6,17 +6,18 @@ import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
 import 'package:chessudoku/core/sync/sync_manager.dart';
 import 'package:chessudoku/core/offline/offline_manager.dart';
+import 'package:chessudoku/core/network/network_service.dart';
 
 /// 사용자 프로필 Repository 구현체
 class UserProfileRepositoryImpl implements UserProfileRepository {
   final DatabaseService _databaseService;
   final DeviceService _deviceService;
   final FirestoreService _firestoreService;
+  final NetworkService _networkService;
   final SyncManager _syncManager = SyncManager();
-  final OfflineManager _offlineManager = OfflineManager();
 
-  UserProfileRepositoryImpl(
-      this._databaseService, this._deviceService, this._firestoreService);
+  UserProfileRepositoryImpl(this._databaseService, this._deviceService,
+      this._firestoreService, this._networkService);
 
   @override
   Future<UserProfile?> getUserProfile() async {
@@ -403,6 +404,12 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   /// 서버와 동기화
   Future<void> _syncWithServer(UserProfile localProfile) async {
     try {
+      // 네트워크 상태 확인
+      if (!_networkService.isOnline) {
+        developer.log('오프라인 상태 - 서버 동기화 건너뜀', name: 'UserProfileRepository');
+        return;
+      }
+
       developer.log('서버 동기화 시작', name: 'UserProfileRepository');
 
       // 서버에서 데이터 가져오기
@@ -441,6 +448,12 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   /// 서버에 데이터 동기화
   Future<void> _syncToServer(UserProfile profile) async {
     try {
+      // 네트워크 상태 확인
+      if (!_networkService.isOnline) {
+        developer.log('오프라인 상태 - 서버 업로드 건너뜀', name: 'UserProfileRepository');
+        return;
+      }
+
       final userData = {
         'deviceId': profile.deviceId,
         'username': profile.username,
