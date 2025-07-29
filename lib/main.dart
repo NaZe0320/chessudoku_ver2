@@ -9,6 +9,15 @@ import 'firebase_options.dart';
 import 'package:chessudoku/core/initialization/app_initializer.dart';
 import 'package:chessudoku/ui/screens/offline/offline_first_launch_app.dart';
 
+/// 앱 재시작을 위한 전역 함수
+void restartApp() {
+  runApp(
+    const ProviderScope(
+      child: MainApp(),
+    ),
+  );
+}
+
 void main() async {
   // Flutter 엔진 초기화
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,7 +45,13 @@ void main() async {
 
   // 앱 초기화 시스템 실행
   final appInitializer = AppInitializer();
-  final initResult = await appInitializer.initialize();
+  final gameSaveRepository = container.read(gameSaveRepositoryProvider);
+  final userProfileRepository = container.read(userProfileRepositoryProvider);
+
+  final initResult = await appInitializer.initialize(
+    gameSaveRepository: gameSaveRepository,
+    userProfileRepository: userProfileRepository,
+  );
 
   if (initResult == InitializationResult.firstLaunchOffline) {
     // 최초 실행 시 오프라인 상태 - 앱 시작 차단

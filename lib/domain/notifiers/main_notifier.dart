@@ -46,27 +46,15 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     developer.log('저장된 게임 확인 시작', name: 'MainNotifier');
 
     try {
-      developer.log('상태 업데이트 없이 로직만 실행', name: 'MainNotifier');
-
-      developer.log('hasSavedGame 호출 전', name: 'MainNotifier');
       final hasSavedGame = await _gameSaveRepository.hasSavedGame();
       developer.log('저장된 게임 존재 여부: $hasSavedGame', name: 'MainNotifier');
 
       String? savedGameInfo;
       if (hasSavedGame) {
-        developer.log('getSavedGameInfo 호출 전', name: 'MainNotifier');
         savedGameInfo = await _gameSaveRepository.getSavedGameInfo();
         developer.log('저장된 게임 정보: $savedGameInfo', name: 'MainNotifier');
-      } else {
-        developer.log('저장된 게임이 없으므로 정보 가져오기 생략', name: 'MainNotifier');
       }
 
-      developer.log(
-          '로직 실행 완료 - hasSavedGame: $hasSavedGame, savedGameInfo: $savedGameInfo',
-          name: 'MainNotifier');
-
-      // 상태 업데이트 다시 활성화
-      developer.log('상태 업데이트 시작', name: 'MainNotifier');
       state = state.copyWith(
         hasSavedGame: hasSavedGame,
         savedGameInfo: savedGameInfo,
@@ -75,16 +63,11 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
       developer.log('상태 업데이트 완료', name: 'MainNotifier');
     } catch (e) {
       developer.log('저장된 게임 확인 중 오류: $e', name: 'MainNotifier');
-      // 오류 시에도 상태 업데이트
-      try {
-        state = state.copyWith(
-          hasSavedGame: false,
-          savedGameInfo: null,
-          isLoading: false,
-        );
-      } catch (stateError) {
-        developer.log('오류 상태 업데이트 중 오류: $stateError', name: 'MainNotifier');
-      }
+      state = state.copyWith(
+        hasSavedGame: false,
+        savedGameInfo: null,
+        isLoading: false,
+      );
     }
   }
 
@@ -112,7 +95,7 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
       developer.log('사용자 프로필 조회 결과: ${userProfile != null ? '존재' : '없음'}',
           name: 'MainNotifier');
 
-      // 사용자 프로필이 없으면 자동 생성
+      // 사용자 프로필이 없으면 자동 생성 (AppInitializer에서 이미 처리했지만 안전장치)
       if (userProfile == null) {
         developer.log('새 사용자 프로필 생성 시작', name: 'MainNotifier');
         final deviceId = await _getDeviceId();
@@ -134,10 +117,6 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
         await _userProfileRepository.updateLastLogin();
       }
 
-      developer.log(
-          '상태 업데이트 전 - completedPuzzles: ${state.completedPuzzles}, currentStreak: ${state.currentStreak}',
-          name: 'MainNotifier');
-
       state = state.copyWith(
         completedPuzzles: userProfile.completedPuzzles,
         currentStreak: userProfile.currentStreak,
@@ -153,7 +132,6 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
   }
 
   Future<String> _getDeviceId() async {
-    // DeviceService를 통해 deviceId 가져오기
     return await _deviceService.getDeviceId();
   }
 
