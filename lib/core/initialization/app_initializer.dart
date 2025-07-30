@@ -6,7 +6,6 @@ import '../sync/sync_manager.dart';
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/user_profile_repository.dart';
 import '../../data/services/device_service.dart';
-import '../../data/services/firestore_service.dart';
 import '../../data/models/user_profile.dart';
 
 /// 앱 초기화를 관리하는 매니저
@@ -18,7 +17,6 @@ class AppInitializer {
   final NetworkService _networkService = NetworkService();
   final SyncManager _syncManager = SyncManager();
   final DeviceService _deviceService = DeviceService();
-  final FirestoreService _firestoreService = FirestoreService();
 
   static const String _firstLaunchKey = 'is_first_launch';
 
@@ -33,9 +31,10 @@ class AppInitializer {
       // 네트워크 서비스 초기화
       await _networkService.initialize();
 
-      // 동기화 매니저 초기화 (FirestoreService 설정 후)
-      _syncManager.setFirestoreService(_firestoreService);
-      await _syncManager.initialize();
+      // 동기화 매니저는 main.dart에서 이미 초기화됨
+      developer.log(
+          '동기화 매니저 상태 확인 - 온라인: ${_syncManager.isOnline}, 큐 크기: ${_syncManager.queueSize}',
+          name: 'AppInitializer');
 
       // 최초 실행 여부 확인
       final isFirstLaunch = await _checkFirstLaunch();

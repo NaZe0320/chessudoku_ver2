@@ -97,6 +97,24 @@ Future<void> _initializeServices(ProviderContainer container) async {
   container.read(firestoreServiceProvider).firestore;
   debugPrint('Main: Firestore 서비스 초기화 완료');
 
+  // SyncManager 초기화 및 FirestoreService 설정
+  final syncManager = container.read(syncManagerProvider);
+  final firestoreService = container.read(firestoreServiceProvider);
+
+  // FirestoreService 설정
+  syncManager.setFirestoreService(firestoreService);
+
+  // SyncManager 초기화
+  await syncManager.initialize();
+  debugPrint('Main: SyncManager 초기화 완료');
+
+  // 네트워크 상태 확인 및 로그
+  final isOnline = syncManager.isOnline;
+  debugPrint('Main: 네트워크 상태 - ${isOnline ? "온라인" : "오프라인"}');
+
+  // 동기화 큐 상태 확인
+  debugPrint('Main: 동기화 큐 크기 - ${syncManager.queueSize}');
+
   // 데이터 버전 체크 및 동기화 -> SplashScreen으로 로직 이동
   // debugPrint('Main: 데이터 버전 동기화 시작...');
   // await container.read(versionRepositoryProvider).checkVersionAndSync();
