@@ -145,13 +145,23 @@ class SyncQueue {
 
   /// 프로필 업데이트 처리
   Future<void> _processProfileUpdate(Map<String, dynamic> data) async {
+    developer.log('프로필 업데이트 처리 시작', name: 'SyncQueue');
+
     if (_firestoreService == null) {
+      developer.log('FirestoreService가 설정되지 않음', name: 'SyncQueue');
       throw Exception('FirestoreService가 설정되지 않았습니다.');
     }
 
     final deviceId = data['deviceId'] as String;
-    await _firestoreService!.createOrUpdateUser(deviceId, data);
-    developer.log('프로필 업데이트 동기화 완료: $deviceId', name: 'SyncQueue');
+    developer.log('프로필 업데이트 처리 중: $deviceId', name: 'SyncQueue');
+
+    try {
+      await _firestoreService!.createOrUpdateUser(deviceId, data);
+      developer.log('프로필 업데이트 동기화 완료: $deviceId', name: 'SyncQueue');
+    } catch (e) {
+      developer.log('프로필 업데이트 동기화 실패: $deviceId - $e', name: 'SyncQueue');
+      rethrow;
+    }
   }
 
   /// 큐를 SharedPreferences에 저장

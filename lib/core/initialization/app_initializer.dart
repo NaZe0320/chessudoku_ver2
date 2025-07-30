@@ -33,9 +33,10 @@ class AppInitializer {
       // 네트워크 서비스 초기화
       await _networkService.initialize();
 
-      // 동기화 매니저 초기화 (FirestoreService 설정 후)
-      _syncManager.setFirestoreService(_firestoreService);
-      await _syncManager.initialize();
+      // 동기화 매니저는 main.dart에서 이미 초기화됨
+      developer.log(
+          '동기화 매니저 상태 확인 - 온라인: ${_syncManager.isOnline}, 큐 크기: ${_syncManager.queueSize}',
+          name: 'AppInitializer');
 
       // 최초 실행 여부 확인
       final isFirstLaunch = await _checkFirstLaunch();

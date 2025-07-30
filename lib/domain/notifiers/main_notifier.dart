@@ -113,7 +113,7 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
       } else {
         developer.log('기존 사용자 프로필 사용: ${userProfile.deviceId}',
             name: 'MainNotifier');
-        // 마지막 로그인 시간 업데이트
+        // 마지막 로그인 시간 업데이트 및 서버 동기화
         await _userProfileRepository.updateLastLogin();
       }
 

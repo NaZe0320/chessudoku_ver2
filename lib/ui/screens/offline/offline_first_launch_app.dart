@@ -11,6 +11,7 @@ import 'package:chessudoku/data/services/device_service.dart';
 import 'package:chessudoku/data/services/firestore_service.dart';
 import 'package:chessudoku/data/repositories/game_save_repository_impl.dart';
 import 'package:chessudoku/data/repositories/user_profile_repository_impl.dart';
+import 'package:chessudoku/core/sync/sync_manager.dart';
 
 /// 최초 실행 시 오프라인 상태일 때 표시하는 앱
 class OfflineFirstLaunchApp extends StatefulWidget {
@@ -106,14 +107,14 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
     // Provider 없이 직접 생성
     final databaseService = DatabaseService();
     final deviceService = DeviceService();
-    final firestoreService = FirestoreService();
     final networkService = NetworkService();
+    final syncManager = SyncManager();
 
     return UserProfileRepositoryImpl(
       databaseService,
       deviceService,
-      firestoreService,
       networkService,
+      syncManager,
     );
   }
 

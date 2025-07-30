@@ -34,13 +34,27 @@ class FirestoreService {
   Future<void> createOrUpdateUser(
       String deviceId, Map<String, dynamic> userData) async {
     try {
-      debugPrint('FirestoreService: 사용자 데이터 생성/업데이트 - $deviceId');
+      debugPrint('FirestoreService: 사용자 데이터 생성/업데이트 시작 - $deviceId');
+      debugPrint('FirestoreService: 데이터 내용 - $userData');
 
-      await _getUserDocument(deviceId).set(userData, SetOptions(merge: true));
+      final docRef = _getUserDocument(deviceId);
+      debugPrint('FirestoreService: 문서 참조 생성 완료');
+
+      await docRef.set(userData, SetOptions(merge: true));
+      debugPrint('FirestoreService: Firestore에 데이터 저장 완료');
+
+      // 저장 확인
+      final savedDoc = await docRef.get();
+      if (savedDoc.exists) {
+        debugPrint('FirestoreService: 저장된 데이터 확인 완료');
+      } else {
+        debugPrint('FirestoreService: 저장된 데이터 확인 실패 - 문서가 존재하지 않음');
+      }
 
       debugPrint('FirestoreService: 사용자 데이터 저장 완료');
     } catch (e) {
       debugPrint('FirestoreService: 사용자 데이터 저장 실패 - $e');
+      debugPrint('FirestoreService: 오류 타입 - ${e.runtimeType}');
       rethrow;
     }
   }

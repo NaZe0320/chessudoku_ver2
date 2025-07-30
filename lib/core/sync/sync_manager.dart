@@ -81,11 +81,14 @@ class SyncManager {
   /// ⚠️ 주의: 온라인 상태에서만 사용 가능
   /// 네트워크 오류 시 예외가 발생합니다.
   Future<void> addImmediateTask(SyncTask task) async {
+    developer.log('즉시 동기화 작업 추가: ${task.description}', name: 'SyncManager');
+
     if (!_networkService.isOnline) {
-      throw Exception('온라인 상태가 아닙니다. 즉시 동기화를 위해 온라인 연결이 필요합니다.');
+      developer.log('오프라인 상태 - 즉시 동기화를 큐에 저장', name: 'SyncManager');
+      await addDelayedTask(task);
+      return;
     }
 
-    developer.log('즉시 동기화 작업 추가: ${task.description}', name: 'SyncManager');
     await _processImmediateTask(task);
   }
 
@@ -105,6 +108,13 @@ class SyncManager {
     try {
       developer.log('즉시 동기화 작업 처리 중: ${task.description}', name: 'SyncManager');
 
+      // 네트워크 상태 재확인
+      if (!_networkService.isOnline) {
+        developer.log('즉시 동기화 중 오프라인 상태 감지 - 큐에 저장', name: 'SyncManager');
+        await addDelayedTask(task);
+        return;
+      }
+
       switch (task.type) {
         case SyncTaskType.profileUpdate:
           await _processProfileUpdateImmediate(task.data);
@@ -115,19 +125,48 @@ class SyncManager {
     } catch (e) {
       developer.log('즉시 동기화 작업 실패: ${task.description} - $e',
           name: 'SyncManager');
-      rethrow;
+
+      // 네트워크 오류인 경우 큐에 저장
+      if (_isNetworkError(e)) {
+        developer.log('네트워크 오류로 인한 실패 - 큐에 저장', name: 'SyncManager');
+        await addDelayedTask(task);
+      } else {
+        rethrow;
+      }
     }
+  }
+
+  /// 네트워크 오류인지 확인
+  bool _isNetworkError(dynamic error) {
+    if (error is Exception) {
+      final message = error.toString().toLowerCase();
+      return message.contains('network') ||
+          message.contains('connection') ||
+          message.contains('timeout') ||
+          message.contains('offline');
+    }
+    return false;
   }
 
   /// 즉시 프로필 업데이트 처리
   Future<void> _processProfileUpdateImmediate(Map<String, dynamic> data) async {
+    developer.log('즉시 프로필 업데이트 처리 시작', name: 'SyncManager');
+
     if (_firestoreService == null) {
+      developer.log('FirestoreService가 설정되지 않음', name: 'SyncManager');
       throw Exception('FirestoreService가 설정되지 않았습니다.');
     }
 
     final deviceId = data['deviceId'] as String;
-    await _firestoreService!.createOrUpdateUser(deviceId, data);
-    developer.log('즉시 프로필 업데이트 완료: $deviceId', name: 'SyncManager');
+    developer.log('즉시 프로필 업데이트 처리 중: $deviceId', name: 'SyncManager');
+
+    try {
+      await _firestoreService!.createOrUpdateUser(deviceId, data);
+      developer.log('즉시 프로필 업데이트 완료: $deviceId', name: 'SyncManager');
+    } catch (e) {
+      developer.log('즉시 프로필 업데이트 실패: $deviceId - $e', name: 'SyncManager');
+      rethrow;
+    }
   }
 
   /// 프로필 업데이트 동기화 (로컬 → 서버 백업)
@@ -142,6 +181,39 @@ class SyncManager {
     );
 
     await addDelayedTask(task);
+  }
+
+  /// 서버에서 프로필 데이터 가져오기
+  ///
+  /// 서버에 저장된 사용자 프로필 데이터를 가져옵니다.
+  /// 온라인 상태에서만 사용 가능합니다.
+  Future<Map<String, dynamic>?> getServerProfile(String deviceId) async {
+    try {
+      developer.log('서버에서 프로필 데이터 가져오기 시작: $deviceId', name: 'SyncManager');
+
+      if (!_networkService.isOnline) {
+        developer.log('오프라인 상태 - 서버 데이터 가져오기 불가', name: 'SyncManager');
+        return null;
+      }
+
+      if (_firestoreService == null) {
+        developer.log('FirestoreService가 설정되지 않음', name: 'SyncManager');
+        return null;
+      }
+
+      final serverData = await _firestoreService!.getUserData(deviceId);
+      if (serverData != null) {
+        developer.log('서버에서 프로필 데이터 발견: $deviceId', name: 'SyncManager');
+        return serverData;
+      } else {
+        developer.log('서버에 프로필 데이터 없음: $deviceId', name: 'SyncManager');
+        return null;
+      }
+    } catch (e) {
+      developer.log('서버에서 프로필 데이터 가져오기 실패: $deviceId - $e',
+          name: 'SyncManager');
+      return null;
+    }
   }
 
   /// 현재 온라인 상태 확인
