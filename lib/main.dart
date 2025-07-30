@@ -6,6 +6,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:chessudoku/core/initialization/app_initializer.dart';
+import 'package:chessudoku/ui/screens/offline/offline_first_launch_app.dart';
+
+/// 앱 재시작을 위한 전역 함수
+void restartApp() {
+  runApp(
+    const ProviderScope(
+      child: MainApp(),
+    ),
+  );
+}
 
 void main() async {
   // Flutter 엔진 초기화
@@ -32,6 +43,28 @@ void main() async {
   // 앱 실행에 필수적인 서비스들 초기화
   await _initializeServices(container);
 
+  // 앱 초기화 시스템 실행
+  final appInitializer = AppInitializer();
+  final gameSaveRepository = container.read(gameSaveRepositoryProvider);
+  final userProfileRepository = container.read(userProfileRepositoryProvider);
+
+  final initResult = await appInitializer.initialize(
+    gameSaveRepository: gameSaveRepository,
+    userProfileRepository: userProfileRepository,
+  );
+
+  if (initResult == InitializationResult.firstLaunchOffline) {
+    // 최초 실행 시 오프라인 상태 - 앱 시작 차단
+    debugPrint('Main: 최초 실행 시 오프라인 상태 감지 - 앱 시작 차단');
+    // 오프라인 안내 화면으로 시작
+    runApp(
+      const ProviderScope(
+        child: OfflineFirstLaunchApp(),
+      ),
+    );
+    return;
+  }
+
   // 사용이 끝난 임시 컨테이너는 폐기
   container.dispose();
 
@@ -57,12 +90,30 @@ Future<void> _initializeServices(ProviderContainer container) async {
   debugPrint('Main: 데이터베이스 서비스 초기화 완료');
 
   // API 서비스 초기화
-  container.read(apiServiceProvider).dio;
-  debugPrint('Main: API 서비스 초기화 완료');
+  // container.read(apiServiceProvider).dio;
+  // debugPrint('Main: API 서비스 초기화 완료');
 
   // Firestore 서비스 초기화
   container.read(firestoreServiceProvider).firestore;
   debugPrint('Main: Firestore 서비스 초기화 완료');
+
+  // SyncManager 초기화 및 FirestoreService 설정
+  final syncManager = container.read(syncManagerProvider);
+  final firestoreService = container.read(firestoreServiceProvider);
+
+  // FirestoreService 설정
+  syncManager.setFirestoreService(firestoreService);
+
+  // SyncManager 초기화
+  await syncManager.initialize();
+  debugPrint('Main: SyncManager 초기화 완료');
+
+  // 네트워크 상태 확인 및 로그
+  final isOnline = syncManager.isOnline;
+  debugPrint('Main: 네트워크 상태 - ${isOnline ? "온라인" : "오프라인"}');
+
+  // 동기화 큐 상태 확인
+  debugPrint('Main: 동기화 큐 크기 - ${syncManager.queueSize}');
 
   // 데이터 버전 체크 및 동기화 -> SplashScreen으로 로직 이동
   // debugPrint('Main: 데이터 버전 동기화 시작...');

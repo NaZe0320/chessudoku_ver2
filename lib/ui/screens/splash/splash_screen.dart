@@ -1,5 +1,7 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/initialization/app_initializer.dart';
+import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
@@ -56,9 +58,11 @@ class SplashScreen extends HookConsumerWidget {
       logoController.forward();
 
       // 프레임 후 진행
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         progressController.forward();
-        ref.read(syncNotifierProvider.notifier).startSync();
+
+        // AppInitializer를 통한 통합 초기화
+        await _performInitialization(ref);
       });
 
       return null;
@@ -290,5 +294,74 @@ class SplashScreen extends HookConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// 통합된 초기화 수행
+  Future<void> _performInitialization(WidgetRef ref) async {
+    try {
+      debugPrint('[SplashScreen] 통합 초기화 시작');
+
+      // Repository 인스턴스 가져오기
+      final gameSaveRepository = ref.read(gameSaveRepositoryProvider);
+      final userProfileRepository = ref.read(userProfileRepositoryProvider);
+
+      // AppInitializer를 통한 초기화
+      final appInitializer = ref.read(appInitializerProvider);
+      final result = await appInitializer.initialize(
+        gameSaveRepository: gameSaveRepository,
+        userProfileRepository: userProfileRepository,
+      );
+
+      debugPrint('[SplashScreen] 초기화 결과: $result');
+
+      switch (result) {
+        case InitializationResult.success:
+          // 성공 시 동기화 시작
+          ref.read(syncNotifierProvider.notifier).startSync();
+
+          // MainNotifier 상태 초기화
+          ref
+              .read(mainNotifierProvider.notifier)
+              .handleIntent(const CheckSavedGameIntent());
+          ref
+              .read(mainNotifierProvider.notifier)
+              .handleIntent(const LoadStatsIntent());
+          break;
+
+        case InitializationResult.firstLaunchOffline:
+          // 최초 실행 시 오프라인 - 오프라인 모드로 진행
+          debugPrint('[SplashScreen] 최초 실행 시 오프라인 상태');
+          ref.read(syncNotifierProvider.notifier).startSync();
+          ref
+              .read(mainNotifierProvider.notifier)
+              .handleIntent(const CheckSavedGameIntent());
+          ref
+              .read(mainNotifierProvider.notifier)
+              .handleIntent(const LoadStatsIntent());
+          break;
+
+        case InitializationResult.failure:
+          // 실패 시에도 기본 동작 수행
+          debugPrint('[SplashScreen] 초기화 실패, 기본 동작 수행');
+          ref.read(syncNotifierProvider.notifier).startSync();
+          ref
+              .read(mainNotifierProvider.notifier)
+              .handleIntent(const CheckSavedGameIntent());
+          ref
+              .read(mainNotifierProvider.notifier)
+              .handleIntent(const LoadStatsIntent());
+          break;
+      }
+    } catch (e) {
+      debugPrint('[SplashScreen] 초기화 중 오류: $e');
+      // 오류 발생 시에도 기본 동작 수행
+      ref.read(syncNotifierProvider.notifier).startSync();
+      ref
+          .read(mainNotifierProvider.notifier)
+          .handleIntent(const CheckSavedGameIntent());
+      ref
+          .read(mainNotifierProvider.notifier)
+          .handleIntent(const LoadStatsIntent());
+    }
   }
 }
