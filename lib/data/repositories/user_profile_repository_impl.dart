@@ -5,7 +5,6 @@ import 'package:chessudoku/data/services/firestore_service.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
 import 'package:chessudoku/core/sync/sync_manager.dart';
-import 'package:chessudoku/core/offline/offline_manager.dart';
 import 'package:chessudoku/core/network/network_service.dart';
 
 /// 사용자 프로필 Repository 구현체
