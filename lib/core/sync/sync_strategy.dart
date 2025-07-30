@@ -9,7 +9,7 @@ enum SyncStrategy {
 
 /// 동기화 작업 타입
 enum SyncTaskType {
-  /// 프로필 업데이트
+  /// 프로필 업데이트 (로컬 → 서버 백업)
   profileUpdate,
 }
 
@@ -44,7 +44,7 @@ class SyncTask {
   String get description {
     switch (type) {
       case SyncTaskType.profileUpdate:
-        return '프로필 업데이트';
+        return '프로필 업데이트 (로컬→서버)';
     }
   }
 

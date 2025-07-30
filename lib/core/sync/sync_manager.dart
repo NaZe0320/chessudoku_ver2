@@ -130,9 +130,9 @@ class SyncManager {
     developer.log('즉시 프로필 업데이트 완료: $deviceId', name: 'SyncManager');
   }
 
-  /// 프로필 업데이트 동기화
+  /// 프로필 업데이트 동기화 (로컬 → 서버 백업)
   ///
-  /// 사용자 프로필 데이터를 서버에 동기화합니다.
+  /// 로컬 사용자 프로필 데이터를 서버에 백업합니다.
   /// 오프라인 상태에서는 큐에 저장되어 나중에 처리됩니다.
   Future<void> syncProfileUpdate(Map<String, dynamic> profileData) async {
     final task = SyncTask(

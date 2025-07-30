@@ -414,48 +414,47 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         return;
       }
 
-      developer.log('서버에서 데이터 동기화 시작', name: 'UserProfileRepository');
+      developer.log('서버 백업 동기화 시작', name: 'UserProfileRepository');
 
-      // 서버에서 데이터 가져오기
-      final serverData =
-          await _firestoreService.getUserData(localProfile.deviceId);
+      // 로컬 데이터를 서버에 백업
+      await _syncLocalToServer(localProfile);
 
-      if (serverData != null) {
-        // 서버 데이터가 있으면 로컬 업데이트
-        await _updateLocalFromServer(localProfile.deviceId, serverData);
-        developer.log('서버 데이터로 로컬 업데이트 완료', name: 'UserProfileRepository');
-      }
-
-      developer.log('서버 동기화 완료', name: 'UserProfileRepository');
+      developer.log('서버 백업 동기화 완료', name: 'UserProfileRepository');
     } catch (e) {
-      developer.log('서버 동기화 실패: $e', name: 'UserProfileRepository');
+      developer.log('서버 백업 동기화 실패: $e', name: 'UserProfileRepository');
     }
   }
 
-  /// 서버 데이터로 로컬 업데이트
-  Future<void> _updateLocalFromServer(
-      String deviceId, Map<String, dynamic> serverData) async {
+  /// 로컬 데이터를 서버에 백업
+  Future<void> _syncLocalToServer(UserProfile localProfile) async {
     try {
+      // 로컬 데이터를 서버에 백업
+      await _syncManager.syncProfileUpdate({
+        'deviceId': localProfile.deviceId,
+        'username': localProfile.username,
+        'createdAt': localProfile.createdAt.toIso8601String(),
+        'lastLoginAt': localProfile.lastLoginAt.toIso8601String(),
+        'totalPlayTime': localProfile.totalPlayTime,
+        'completedPuzzles': localProfile.completedPuzzles,
+        'currentStreak': localProfile.currentStreak,
+        'bestStreak': localProfile.bestStreak,
+        'lastUpdated': DateTime.now().toIso8601String(),
+      });
+
+      // 로컬 동기화 상태 업데이트
       await _databaseService.update(
         DatabaseService.tableUserProfiles,
         {
-          'username': serverData['username'],
-          'lastLoginAt': serverData['lastLoginAt'],
-          'totalPlayTime': serverData['totalPlayTime'],
-          'completedPuzzles': serverData['completedPuzzles'],
-          'currentStreak': serverData['currentStreak'],
-          'bestStreak': serverData['bestStreak'],
-          'serverVersion': serverData['serverVersion'],
-          'isDirty': 0,
+          'isDirty': 0, // 서버와 동기화됨
           'lastServerSync': DateTime.now().toIso8601String(),
         },
         where: 'deviceId = ?',
-        whereArgs: [deviceId],
+        whereArgs: [localProfile.deviceId],
       );
 
-      developer.log('서버 데이터로 로컬 업데이트 완료', name: 'UserProfileRepository');
+      developer.log('로컬 데이터를 서버에 백업 완료', name: 'UserProfileRepository');
     } catch (e) {
-      developer.log('서버 데이터로 로컬 업데이트 실패: $e', name: 'UserProfileRepository');
+      developer.log('로컬 데이터 서버 백업 실패: $e', name: 'UserProfileRepository');
     }
   }
 }
