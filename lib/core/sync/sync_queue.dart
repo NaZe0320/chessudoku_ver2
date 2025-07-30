@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'sync_strategy.dart';
+import '../../data/services/firestore_service.dart';
 
 /// 지연 동기화를 위한 큐 시스템
 class SyncQueue {
@@ -16,6 +17,12 @@ class SyncQueue {
 
   bool _isProcessing = false;
   static const String _queueKey = 'sync_queue';
+  FirestoreService? _firestoreService;
+
+  /// FirestoreService 설정
+  void setFirestoreService(FirestoreService firestoreService) {
+    _firestoreService = firestoreService;
+  }
 
   /// 큐에 작업 추가
   Future<void> add(SyncTask task) async {
@@ -105,15 +112,6 @@ class SyncQueue {
         case SyncTaskType.profileUpdate:
           await _processProfileUpdate(task.data);
           break;
-        case SyncTaskType.puzzleCompletion:
-          await _processPuzzleCompletion(task.data);
-          break;
-        case SyncTaskType.gameProgress:
-          await _processGameProgress(task.data);
-          break;
-        case SyncTaskType.settingsChange:
-          await _processSettingsChange(task.data);
-          break;
       }
 
       developer.log('작업 처리 완료: ${task.description}', name: 'SyncQueue');
@@ -147,30 +145,13 @@ class SyncQueue {
 
   /// 프로필 업데이트 처리
   Future<void> _processProfileUpdate(Map<String, dynamic> data) async {
-    // TODO: 실제 Firestore 업데이트 로직
-    await Future.delayed(const Duration(milliseconds: 300));
-    developer.log('프로필 업데이트 동기화 완료', name: 'SyncQueue');
-  }
+    if (_firestoreService == null) {
+      throw Exception('FirestoreService가 설정되지 않았습니다.');
+    }
 
-  /// 퍼즐 완료 처리
-  Future<void> _processPuzzleCompletion(Map<String, dynamic> data) async {
-    // TODO: 실제 퍼즐 완료 데이터 동기화
-    await Future.delayed(const Duration(milliseconds: 200));
-    developer.log('퍼즐 완료 동기화 완료', name: 'SyncQueue');
-  }
-
-  /// 게임 진행 데이터 처리
-  Future<void> _processGameProgress(Map<String, dynamic> data) async {
-    // TODO: 실제 게임 진행 데이터 동기화
-    await Future.delayed(const Duration(milliseconds: 400));
-    developer.log('게임 진행 데이터 동기화 완료', name: 'SyncQueue');
-  }
-
-  /// 설정 변경 처리
-  Future<void> _processSettingsChange(Map<String, dynamic> data) async {
-    // TODO: 실제 설정 변경 동기화
-    await Future.delayed(const Duration(milliseconds: 100));
-    developer.log('설정 변경 동기화 완료', name: 'SyncQueue');
+    final deviceId = data['deviceId'] as String;
+    await _firestoreService!.createOrUpdateUser(deviceId, data);
+    developer.log('프로필 업데이트 동기화 완료: $deviceId', name: 'SyncQueue');
   }
 
   /// 큐를 SharedPreferences에 저장

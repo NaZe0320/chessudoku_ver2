@@ -11,15 +11,6 @@ enum SyncStrategy {
 enum SyncTaskType {
   /// 프로필 업데이트
   profileUpdate,
-
-  /// 퍼즐 완료
-  puzzleCompletion,
-
-  /// 게임 진행 데이터
-  gameProgress,
-
-  /// 설정 변경
-  settingsChange,
 }
 
 /// 동기화 작업 정보
@@ -54,12 +45,6 @@ class SyncTask {
     switch (type) {
       case SyncTaskType.profileUpdate:
         return '프로필 업데이트';
-      case SyncTaskType.puzzleCompletion:
-        return '퍼즐 완료';
-      case SyncTaskType.gameProgress:
-        return '게임 진행 데이터';
-      case SyncTaskType.settingsChange:
-        return '설정 변경';
     }
   }
 

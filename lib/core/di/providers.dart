@@ -23,7 +23,7 @@ import './language_pack_provider.dart';
 import '../network/network_service.dart';
 import '../sync/sync_manager.dart';
 import '../sync/sync_queue.dart';
-import '../offline/offline_manager.dart';
+
 import '../initialization/app_initializer.dart';
 
 /// TestService Provider
@@ -125,11 +125,6 @@ final syncManagerProvider = Provider<SyncManager>((ref) {
 /// SyncQueue Provider
 final syncQueueProvider = Provider<SyncQueue>((ref) {
   return SyncQueue();
-});
-
-/// OfflineManager Provider
-final offlineManagerProvider = Provider<OfflineManager>((ref) {
-  return OfflineManager();
 });
 
 /// AppInitializer Provider

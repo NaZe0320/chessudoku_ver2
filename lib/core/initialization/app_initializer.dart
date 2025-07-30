@@ -2,10 +2,11 @@ import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../network/network_service.dart';
 import '../sync/sync_manager.dart';
-import '../offline/offline_manager.dart';
+
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/user_profile_repository.dart';
 import '../../data/services/device_service.dart';
+import '../../data/services/firestore_service.dart';
 import '../../data/models/user_profile.dart';
 
 /// 앱 초기화를 관리하는 매니저
@@ -16,8 +17,8 @@ class AppInitializer {
 
   final NetworkService _networkService = NetworkService();
   final SyncManager _syncManager = SyncManager();
-  final OfflineManager _offlineManager = OfflineManager();
   final DeviceService _deviceService = DeviceService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   static const String _firstLaunchKey = 'is_first_launch';
 
@@ -32,7 +33,8 @@ class AppInitializer {
       // 네트워크 서비스 초기화
       await _networkService.initialize();
 
-      // 동기화 매니저 초기화
+      // 동기화 매니저 초기화 (FirestoreService 설정 후)
+      _syncManager.setFirestoreService(_firestoreService);
       await _syncManager.initialize();
 
       // 최초 실행 여부 확인
@@ -275,9 +277,6 @@ class AppInitializer {
 
   /// 동기화 매니저 접근
   SyncManager get syncManager => _syncManager;
-
-  /// 오프라인 매니저 접근
-  OfflineManager get offlineManager => _offlineManager;
 
   /// 네트워크 서비스 접근
   NetworkService get networkService => _networkService;

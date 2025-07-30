@@ -42,10 +42,12 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           bestStreak: data['bestStreak'] as int,
         );
 
-        // 서버 동기화 시도
-        await _syncWithServer(localProfile);
+        // 서버에서 최신 데이터 확인 (온라인인 경우만)
+        if (_networkService.isOnline) {
+          await _syncFromServer(localProfile);
+        }
 
-        // 동기화 후 최신 데이터 다시 조회
+        // 최신 데이터 다시 조회
         final updatedResult = await _databaseService.query(
           DatabaseService.tableUserProfiles,
           where: 'deviceId = ?',
@@ -139,10 +141,19 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       developer.log('사용자 프로필 생성 완료: ${profile.deviceId}',
           name: 'UserProfileRepository');
 
-      // 서버에 동기화
-      await _syncToServer(profile.copyWith(
-          // UserProfile 모델에 serverVersion 필드가 없으므로 별도 처리
-          ));
+      // SyncManager를 통한 동기화
+      await _syncManager.syncProfileUpdate({
+        'deviceId': profile.deviceId,
+        'username': profile.username,
+        'createdAt': profile.createdAt.toIso8601String(),
+        'lastLoginAt': profile.lastLoginAt.toIso8601String(),
+        'totalPlayTime': profile.totalPlayTime,
+        'completedPuzzles': profile.completedPuzzles,
+        'currentStreak': profile.currentStreak,
+        'bestStreak': profile.bestStreak,
+        'serverVersion': initialVersion,
+        'lastUpdated': DateTime.now().toIso8601String(),
+      });
 
       return profile;
     } catch (e) {
@@ -163,6 +174,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           'completedPuzzles': profile.completedPuzzles,
           'currentStreak': profile.currentStreak,
           'bestStreak': profile.bestStreak,
+          'isDirty': 1, // 서버 동기화 필요
         },
         where: 'deviceId = ?',
         whereArgs: [profile.deviceId],
@@ -221,7 +233,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         );
         developer.log('완료한 퍼즐 수 로컬 업데이트 완료', name: 'UserProfileRepository');
 
-        // 동기화 시스템을 통한 지연 동기화
+        // SyncManager를 통한 동기화
         final updatedProfile =
             currentProfile.copyWith(completedPuzzles: newCompletedPuzzles);
         await _syncManager.syncProfileUpdate({
@@ -231,13 +243,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           'currentStreak': updatedProfile.currentStreak,
           'bestStreak': updatedProfile.bestStreak,
           'totalPlayTime': updatedProfile.totalPlayTime,
-        });
-
-        // 퍼즐 완료 동기화도 추가
-        await _syncManager.syncPuzzleCompletion({
-          'deviceId': deviceId,
-          'completedAt': DateTime.now().toIso8601String(),
-          'completedPuzzles': newCompletedPuzzles,
         });
 
         developer.log('완료한 퍼즐 수 동기화 완료', name: 'UserProfileRepository');
@@ -264,6 +269,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           {
             'currentStreak': newStreak,
             'bestStreak': bestStreak,
+            'isDirty': 1, // 서버 동기화 필요
           },
           where: 'deviceId = ?',
           whereArgs: [deviceId],
@@ -344,7 +350,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
             '연속 기록 로컬 업데이트 완료: currentStreak=$newStreak, bestStreak=$bestStreak',
             name: 'UserProfileRepository');
 
-        // 동기화 시스템을 통한 지연 동기화
+        // SyncManager를 통한 동기화
         final updatedProfile = currentProfile.copyWith(
           currentStreak: newStreak,
           bestStreak: bestStreak,
@@ -383,7 +389,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           whereArgs: [deviceId],
         );
 
-        // 동기화 시스템을 통한 지연 동기화
+        // SyncManager를 통한 동기화
         final updatedProfile =
             currentProfile.copyWith(totalPlayTime: newTotalPlayTime);
         await _syncManager.syncProfileUpdate({
@@ -400,156 +406,27 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
     }
   }
 
-  /// 서버와 동기화 (개선된 버전)
-  Future<void> _syncWithServer(UserProfile localProfile) async {
+  /// 서버에서 데이터 동기화 (단순화된 버전)
+  Future<void> _syncFromServer(UserProfile localProfile) async {
     try {
-      // 네트워크 상태 확인
       if (!_networkService.isOnline) {
         developer.log('오프라인 상태 - 서버 동기화 건너뜀', name: 'UserProfileRepository');
         return;
       }
 
-      developer.log('서버 동기화 시작', name: 'UserProfileRepository');
+      developer.log('서버에서 데이터 동기화 시작', name: 'UserProfileRepository');
 
       // 서버에서 데이터 가져오기
       final serverData =
           await _firestoreService.getUserData(localProfile.deviceId);
 
       if (serverData != null) {
-        // 서버 데이터가 있는 경우 스마트 동기화
-        await _smartSync(localProfile, serverData);
-      } else {
-        // 서버에 데이터가 없으면 로컬 데이터를 서버에 저장
-        developer.log('서버에 데이터 없음 - 로컬 데이터 업로드', name: 'UserProfileRepository');
-        await _syncToServer(localProfile);
+        // 서버 데이터가 있으면 로컬 업데이트
+        await _updateLocalFromServer(localProfile.deviceId, serverData);
+        developer.log('서버 데이터로 로컬 업데이트 완료', name: 'UserProfileRepository');
       }
 
       developer.log('서버 동기화 완료', name: 'UserProfileRepository');
-    } catch (e) {
-      developer.log('서버 동기화 실패: $e', name: 'UserProfileRepository');
-    }
-  }
-
-  /// 스마트 동기화 로직 (데이터 손실 방지)
-  Future<void> _smartSync(
-      UserProfile localProfile, Map<String, dynamic> serverData) async {
-    final serverVersion = serverData['serverVersion'] as int? ?? 0;
-    final localVersion = await _getLocalVersion(localProfile.deviceId);
-
-    final serverCompletedPuzzles = serverData['completedPuzzles'] as int? ?? 0;
-    final localCompletedPuzzles = localProfile.completedPuzzles;
-
-    developer.log(
-        '스마트 동기화 - 로컬: $localCompletedPuzzles개($localVersion), 서버: $serverCompletedPuzzles개($serverVersion)',
-        name: 'UserProfileRepository');
-
-    // 데이터 손실 방지 로직
-    if (_isDataLossScenario(localCompletedPuzzles, serverCompletedPuzzles,
-        localVersion, serverVersion)) {
-      developer.log('데이터 손실 시나리오 감지 - 서버 데이터 우선',
-          name: 'UserProfileRepository');
-      await _updateLocalFromServer(localProfile.deviceId, serverData);
-      return;
-    }
-
-    // 일반적인 버전 비교
-    if (serverVersion > localVersion) {
-      developer.log('서버가 더 최신 - 서버 데이터로 로컬 업데이트',
-          name: 'UserProfileRepository');
-      await _updateLocalFromServer(localProfile.deviceId, serverData);
-    } else if (localVersion > serverVersion) {
-      developer.log('로컬이 더 최신 - 로컬 데이터로 서버 업데이트',
-          name: 'UserProfileRepository');
-      await _syncToServer(localProfile);
-    } else {
-      developer.log('버전 동일 - 데이터 병합 고려', name: 'UserProfileRepository');
-      await _mergeDataIfNeeded(localProfile, serverData);
-    }
-  }
-
-  /// 데이터 손실 시나리오 감지
-  bool _isDataLossScenario(int localCompleted, int serverCompleted,
-      int localVersion, int serverVersion) {
-    // 로컬이 서버보다 훨씬 적은 퍼즐을 해결했는데, 로컬 버전이 더 높다면 의심
-    if (localCompleted < serverCompleted && localVersion > serverVersion) {
-      return true;
-    }
-
-    // 로컬이 0개인데 서버에 데이터가 있다면 의심
-    if (localCompleted == 0 && serverCompleted > 0) {
-      return true;
-    }
-
-    // 버전 차이가 너무 크면 의심 (예: 로컬 10, 서버 1)
-    if (localVersion - serverVersion > 5) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /// 데이터 병합 (필요한 경우)
-  Future<void> _mergeDataIfNeeded(
-      UserProfile localProfile, Map<String, dynamic> serverData) async {
-    final serverCompletedPuzzles = serverData['completedPuzzles'] as int? ?? 0;
-    final localCompletedPuzzles = localProfile.completedPuzzles;
-
-    // 더 높은 값으로 병합
-    final mergedCompletedPuzzles =
-        localCompletedPuzzles > serverCompletedPuzzles
-            ? localCompletedPuzzles
-            : serverCompletedPuzzles;
-
-    if (mergedCompletedPuzzles != localCompletedPuzzles) {
-      developer.log(
-          '데이터 병합 - completedPuzzles: $localCompletedPuzzles → $mergedCompletedPuzzles',
-          name: 'UserProfileRepository');
-
-      final mergedProfile = localProfile.copyWith(
-        completedPuzzles: mergedCompletedPuzzles,
-      );
-
-      await _syncToServer(mergedProfile);
-    }
-  }
-
-  /// 서버에 데이터 동기화
-  Future<void> _syncToServer(UserProfile profile) async {
-    try {
-      // 네트워크 상태 확인
-      if (!_networkService.isOnline) {
-        developer.log('오프라인 상태 - 서버 업로드 건너뜀', name: 'UserProfileRepository');
-        return;
-      }
-
-      final userData = {
-        'deviceId': profile.deviceId,
-        'username': profile.username,
-        'createdAt': profile.createdAt.toIso8601String(),
-        'lastLoginAt': profile.lastLoginAt.toIso8601String(),
-        'totalPlayTime': profile.totalPlayTime,
-        'completedPuzzles': profile.completedPuzzles,
-        'currentStreak': profile.currentStreak,
-        'bestStreak': profile.bestStreak,
-        'serverVersion': await _getLocalVersion(profile.deviceId),
-        'lastUpdated': DateTime.now().toIso8601String(),
-      };
-
-      await _firestoreService.createOrUpdateUser(profile.deviceId, userData);
-
-      // 동기화 완료 표시
-      await _databaseService.update(
-        DatabaseService.tableUserProfiles,
-        {
-          'isDirty': 0,
-          'lastServerSync': DateTime.now().toIso8601String(),
-        },
-        where: 'deviceId = ?',
-        whereArgs: [profile.deviceId],
-      );
-
-      developer.log('서버 동기화 완료: ${profile.deviceId}',
-          name: 'UserProfileRepository');
     } catch (e) {
       developer.log('서버 동기화 실패: $e', name: 'UserProfileRepository');
     }
@@ -579,26 +456,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       developer.log('서버 데이터로 로컬 업데이트 완료', name: 'UserProfileRepository');
     } catch (e) {
       developer.log('서버 데이터로 로컬 업데이트 실패: $e', name: 'UserProfileRepository');
-    }
-  }
-
-  /// 로컬 버전 가져오기
-  Future<int> _getLocalVersion(String deviceId) async {
-    try {
-      final result = await _databaseService.query(
-        DatabaseService.tableUserProfiles,
-        columns: ['serverVersion'],
-        where: 'deviceId = ?',
-        whereArgs: [deviceId],
-      );
-
-      if (result.isNotEmpty) {
-        return result.first['serverVersion'] as int;
-      }
-      return 0;
-    } catch (e) {
-      developer.log('로컬 버전 조회 실패: $e', name: 'UserProfileRepository');
-      return 0;
     }
   }
 }
