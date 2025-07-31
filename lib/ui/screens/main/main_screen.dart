@@ -111,6 +111,38 @@ class MainScreen extends HookConsumerWidget {
       return null;
     }, [gamePreparationState.isReady, gamePreparationState.error]);
 
+    // 저장된 게임 이어서 하기 처리
+    useEffect(() {
+      if (mainState.shouldContinueGame && mainState.savedGameBoard != null) {
+        // 저장된 게임 이어서 하기
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final gameNotifier = ref.read(gameNotifierProvider.notifier);
+
+          // GameNotifier에 난이도 설정
+          if (mainState.selectedDifficulty != null) {
+            gameNotifier.setCurrentDifficulty(mainState.selectedDifficulty!);
+          }
+
+          // 저장된 게임 데이터로 게임 시작
+          gameNotifier.handleIntent(const LoadSavedGameIntent());
+
+          // GameScreen으로 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const GameScreen(),
+            ),
+          ).then((_) {
+            // 게임 화면에서 돌아올 때 통계 새로고침
+            mainNotifier.handleIntent(const LoadStatsIntent());
+            // 게임 시작 정보 초기화
+            mainNotifier.handleIntent(const GetGameStartInfoIntent());
+          });
+        });
+      }
+      return null;
+    }, [mainState.shouldContinueGame, mainState.savedGameBoard]);
+
     // 로딩 상태 표시 (메인 로딩 또는 게임 준비 중)
     if (mainState.isLoading || gamePreparationState.isPreparing) {
       return Scaffold(
@@ -331,13 +363,9 @@ class MainScreen extends HookConsumerWidget {
                       progressValue: 0.0,
                       difficulty: Difficulty.medium,
                       onTap: () {
-                        // GamePreparationNotifier를 통해 저장된 게임 준비
-                        gamePreparationNotifier.handleIntent(
-                          const StartGamePreparationIntent(
-                            difficulty: Difficulty.medium,
-                            isNewGame: false,
-                          ),
-                        );
+                        // 저장된 게임 이어서 하기
+                        mainNotifier
+                            .handleIntent(const ContinueSavedGameIntent());
                       },
                     ),
                   ),
@@ -415,12 +443,30 @@ class MainScreen extends HookConsumerWidget {
                           difficulty: difficulty,
                           onContinueGame: () {
                             // 저장된 게임 이어서 하기
-                            gamePreparationNotifier.handleIntent(
-                              StartGamePreparationIntent(
-                                difficulty: difficulty,
-                                isNewGame: false,
+                            final gameNotifier =
+                                ref.read(gameNotifierProvider.notifier);
+
+                            // GameNotifier에 난이도 설정
+                            gameNotifier.setCurrentDifficulty(difficulty);
+
+                            // 저장된 게임 데이터로 게임 시작
+                            gameNotifier
+                                .handleIntent(const LoadSavedGameIntent());
+
+                            // GameScreen으로 이동
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const GameScreen(),
                               ),
-                            );
+                            ).then((_) {
+                              // 게임 화면에서 돌아올 때 통계 새로고침
+                              mainNotifier
+                                  .handleIntent(const LoadStatsIntent());
+                              // 게임 시작 정보 초기화
+                              mainNotifier
+                                  .handleIntent(const GetGameStartInfoIntent());
+                            });
                           },
                           onNewGame: () {
                             // 새 게임 시작

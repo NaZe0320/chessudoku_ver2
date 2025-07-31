@@ -118,6 +118,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         _handleUndo();
       case RedoIntent():
         _handleRedo();
+      case LoadSavedGameIntent():
+        _handleLoadSavedGame();
     }
   }
 
@@ -145,6 +147,64 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     // 타이머 시작
     _handleStartTimer();
     developer.log('게임 시작 완료', name: 'GameNotifier');
+  }
+
+  /// 저장된 게임 데이터로 게임 시작
+  void _handleStartSavedGame(
+      GameBoard savedBoard,
+      int elapsedSeconds,
+      List<GameBoard> history,
+      List<GameBoard> redoHistory,
+      Map<String, Checkpoint> checkpoints) {
+    developer.log('저장된 게임 데이터로 게임 시작', name: 'GameNotifier');
+    developer.log('저장된 경과 시간: $elapsedSeconds초', name: 'GameNotifier');
+
+    // 선택된 셀을 초기화한 보드 생성
+    final boardWithoutSelection = savedBoard.selectCell(null);
+
+    state = state.copyWith(
+      currentBoard: boardWithoutSelection,
+      history: history,
+      redoHistory: redoHistory,
+      canUndo: history.isNotEmpty,
+      canRedo: redoHistory.isNotEmpty,
+      elapsedSeconds: elapsedSeconds,
+      isPaused: false,
+      isGameCompleted: false,
+      showCompletionDialog: false,
+      checkpoints: checkpoints,
+      selectedCellContent: null, // 선택된 셀 내용 초기화
+    );
+
+    // 타이머 시작
+    _handleStartTimer();
+    developer.log('저장된 게임 시작 완료', name: 'GameNotifier');
+  }
+
+  /// 저장된 게임 로드
+  void _handleLoadSavedGame() {
+    developer.log('저장된 게임 로드 시작', name: 'GameNotifier');
+
+    try {
+      final savedGameData = _gameSaveRepository.loadCurrentGame();
+      if (savedGameData != null) {
+        developer.log('저장된 게임 데이터 로드 성공', name: 'GameNotifier');
+        developer.log('저장된 경과 시간: ${savedGameData.elapsedSeconds}초',
+            name: 'GameNotifier');
+
+        _handleStartSavedGame(
+          savedGameData.board,
+          savedGameData.elapsedSeconds,
+          savedGameData.history,
+          savedGameData.redoHistory,
+          savedGameData.checkpoints,
+        );
+      } else {
+        developer.log('저장된 게임 데이터가 없습니다.', name: 'GameNotifier');
+      }
+    } catch (e) {
+      developer.log('저장된 게임 로드 실패: $e', name: 'GameNotifier');
+    }
   }
 
   void _handleSelectCell(position) {

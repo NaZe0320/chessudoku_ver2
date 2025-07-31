@@ -61,6 +61,10 @@ class GameScreen extends HookConsumerWidget {
           if (shouldExit == true) {
             // 게임 저장 후 나가기
             await gameNotifier.autoSave();
+
+            // 메인 화면에서 저장된 게임 상태 업데이트
+            mainNotifier.handleIntent(const CheckSavedGameIntent());
+
             return true;
           }
 

@@ -88,3 +88,7 @@ class UndoIntent extends GameIntent {
 class RedoIntent extends GameIntent {
   const RedoIntent();
 }
+
+class LoadSavedGameIntent extends GameIntent {
+  const LoadSavedGameIntent();
+}

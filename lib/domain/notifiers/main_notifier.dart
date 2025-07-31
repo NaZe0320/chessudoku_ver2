@@ -25,8 +25,6 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     switch (intent) {
       case CheckSavedGameIntent():
         _handleCheckSavedGame();
-      case LoadSavedGameIntent():
-        _handleLoadSavedGame();
       case ClearSavedGameIntent():
         _handleClearSavedGame();
       case LoadStatsIntent():
@@ -139,6 +137,10 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
   Future<void> _handleRefreshStats() async {
     developer.log('통계 새로고침 시작', name: 'MainNotifier');
     await _handleLoadStats();
+
+    // 저장된 게임 상태도 함께 새로고침
+    await _handleCheckSavedGame();
+
     developer.log(
         '통계 새로고침 완료 - completedPuzzles: ${state.completedPuzzles}, currentStreak: ${state.currentStreak}, bestStreak: ${state.bestStreak}',
         name: 'MainNotifier');
