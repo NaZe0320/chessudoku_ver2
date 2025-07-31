@@ -58,17 +58,17 @@ class GameSelectionDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: _getDifficultyColor(difficulty).withValues(alpha: 0.1),
+                color: difficulty.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: _getDifficultyColor(difficulty).withValues(alpha: 0.3),
+                  color: difficulty.color.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
               child: Text(
-                _getDifficultyText(difficulty),
+                difficulty.label,
                 style: AppTypography.body.copyWith(
-                  color: _getDifficultyColor(difficulty),
+                  color: difficulty.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -153,32 +153,6 @@ class GameSelectionDialog extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _getDifficultyColor(Difficulty difficulty) {
-    switch (difficulty) {
-      case Difficulty.easy:
-        return Colors.green;
-      case Difficulty.medium:
-        return Colors.orange;
-      case Difficulty.hard:
-        return Colors.red;
-      case Difficulty.expert:
-        return Colors.purple;
-    }
-  }
-
-  String _getDifficultyText(Difficulty difficulty) {
-    switch (difficulty) {
-      case Difficulty.easy:
-        return '쉬움';
-      case Difficulty.medium:
-        return '보통';
-      case Difficulty.hard:
-        return '어려움';
-      case Difficulty.expert:
-        return '전문가';
-    }
   }
 
   /// 게임 선택 다이얼로그 표시 (정적 메서드)
