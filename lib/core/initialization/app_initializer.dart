@@ -5,8 +5,6 @@ import '../sync/sync_manager.dart';
 
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/user_profile_repository.dart';
-import '../../data/services/device_service.dart';
-import '../../data/models/user_profile.dart';
 
 /// 앱 초기화를 관리하는 매니저
 class AppInitializer {
@@ -16,7 +14,6 @@ class AppInitializer {
 
   final NetworkService _networkService = NetworkService();
   final SyncManager _syncManager = SyncManager();
-  final DeviceService _deviceService = DeviceService();
 
   static const String _firstLaunchKey = 'is_first_launch';
 
