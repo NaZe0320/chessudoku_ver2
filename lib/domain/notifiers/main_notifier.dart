@@ -7,6 +7,7 @@ import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
+import 'package:chessudoku/data/models/saved_game_data.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
 import 'package:chessudoku/data/services/device_service.dart';
@@ -32,7 +33,7 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
       case StartNewGameIntent():
         _handleStartNewGame(intent.difficulty);
       case ContinueSavedGameIntent():
-        _handleContinueSavedGame();
+        _handleContinueSavedGame(intent.difficulty);
       case GetGameStartInfoIntent():
         _handleGetGameStartInfo();
       case RefreshStatsIntent():
@@ -159,12 +160,25 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     );
   }
 
-  // 저장된 게임 이어서 하기
-  Future<void> _handleContinueSavedGame() async {
-    developer.log('저장된 게임 이어서 하기 시작', name: 'MainNotifier');
+  // 저장된 게임 이어서 하기 (통합된 방식)
+  Future<void> _handleContinueSavedGame(
+      [Difficulty? specificDifficulty]) async {
+    developer.log('저장된 게임 이어서 하기 시작 (난이도: ${specificDifficulty ?? '자동'})',
+        name: 'MainNotifier');
     try {
-      // 저장된 게임 데이터 로드
-      final savedGameData = _gameSaveRepository.loadCurrentGame();
+      SavedGameData? savedGameData;
+
+      if (specificDifficulty != null) {
+        // 특정 난이도 게임 로드
+        savedGameData =
+            _gameSaveRepository.getSavedGameByDifficulty(specificDifficulty);
+        developer.log('특정 난이도($specificDifficulty) 게임 로드 시도',
+            name: 'MainNotifier');
+      } else {
+        // 현재 저장된 게임 로드 (기존 방식)
+        savedGameData = _gameSaveRepository.loadCurrentGame();
+        developer.log('현재 저장된 게임 로드 시도', name: 'MainNotifier');
+      }
 
       if (savedGameData != null) {
         developer.log('저장된 게임 데이터 로드 성공', name: 'MainNotifier');

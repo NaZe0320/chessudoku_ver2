@@ -45,20 +45,15 @@ class MainScreen extends HookConsumerWidget {
       return null;
     }, []);
 
-    // 게임 준비 상태에 따른 처리
+    // 게임 준비 완료 처리 (새 게임만)
     useEffect(() {
       if (gamePreparationState.isReady &&
           gamePreparationState.preparedBoard != null) {
-        // 게임 준비 완료 시 GameScreen으로 이동
+        // 게임 준비가 완료되면 GameScreen으로 이동 (새 게임만)
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final gameNotifier = ref.read(gameNotifierProvider.notifier);
 
-          // GameNotifier에 난이도 설정
-          if (gamePreparationState.difficulty != null) {
-            gameNotifier.setCurrentDifficulty(gamePreparationState.difficulty!);
-          }
-
-          // 준비된 게임 데이터로 게임 시작
+          // 새 게임 시작
           gameNotifier.handleIntent(
               StartGameIntent(gamePreparationState.preparedBoard!));
 
@@ -71,33 +66,16 @@ class MainScreen extends HookConsumerWidget {
           ).then((_) {
             // 게임 화면에서 돌아올 때 통계 새로고침
             mainNotifier.handleIntent(const LoadStatsIntent());
+            // 게임 시작 정보 초기화
+            mainNotifier.handleIntent(const GetGameStartInfoIntent());
             // 게임 준비 상태 초기화
             gamePreparationNotifier.reset();
           });
         });
       } else if (gamePreparationState.error != null) {
-        // 게임 준비 실패 시 오류 메시지 표시
+        // 오류가 있는 경우
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          // 오프라인 에러인지 확인
-          if (gamePreparationState.error!.contains('인터넷 연결이 필요합니다')) {
-            // 오프라인 다이얼로그 표시
-            OfflineDialog.show(
-              context: context,
-              title: '오프라인 상태',
-              message: '새 퍼즐을 다운로드하려면 인터넷 연결이 필요합니다.',
-              onRetry: () {
-                // 재시도 - 게임 준비 다시 시작
-                if (gamePreparationState.difficulty != null) {
-                  gamePreparationNotifier.handleIntent(
-                    StartGamePreparationIntent(
-                      difficulty: gamePreparationState.difficulty!,
-                      isNewGame: true,
-                    ),
-                  );
-                }
-              },
-            );
-          } else {
+          if (gamePreparationState.error != null) {
             // 일반 오류 메시지 표시
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -111,7 +89,7 @@ class MainScreen extends HookConsumerWidget {
       return null;
     }, [gamePreparationState.isReady, gamePreparationState.error]);
 
-    // 저장된 게임 이어서 하기 처리
+    // 저장된 게임 이어서 하기 처리 (통합된 방식)
     useEffect(() {
       if (mainState.shouldContinueGame && mainState.savedGameBoard != null) {
         // 저장된 게임 이어서 하기
@@ -363,7 +341,7 @@ class MainScreen extends HookConsumerWidget {
                       progressValue: 0.0,
                       difficulty: Difficulty.medium,
                       onTap: () {
-                        // 저장된 게임 이어서 하기
+                        // 통합된 방식으로 저장된 게임 이어서 하기
                         mainNotifier
                             .handleIntent(const ContinueSavedGameIntent());
                       },
@@ -442,31 +420,10 @@ class MainScreen extends HookConsumerWidget {
                           message: '이미 진행 중인 게임이 있습니다. 어떻게 하시겠습니까?',
                           difficulty: difficulty,
                           onContinueGame: () {
-                            // 저장된 게임 이어서 하기
-                            final gameNotifier =
-                                ref.read(gameNotifierProvider.notifier);
-
-                            // GameNotifier에 난이도 설정
-                            gameNotifier.setCurrentDifficulty(difficulty);
-
-                            // 저장된 게임 데이터로 게임 시작
-                            gameNotifier
-                                .handleIntent(const LoadSavedGameIntent());
-
-                            // GameScreen으로 이동
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const GameScreen(),
-                              ),
-                            ).then((_) {
-                              // 게임 화면에서 돌아올 때 통계 새로고침
-                              mainNotifier
-                                  .handleIntent(const LoadStatsIntent());
-                              // 게임 시작 정보 초기화
-                              mainNotifier
-                                  .handleIntent(const GetGameStartInfoIntent());
-                            });
+                            // 통합된 방식으로 저장된 게임 이어서 하기
+                            mainNotifier.handleIntent(
+                              ContinueSavedGameIntent(difficulty),
+                            );
                           },
                           onNewGame: () {
                             // 새 게임 시작

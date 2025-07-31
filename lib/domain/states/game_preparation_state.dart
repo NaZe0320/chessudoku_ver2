@@ -1,17 +1,38 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/data/models/game_board.dart';
 
-part 'game_preparation_state.freezed.dart';
+class GamePreparationState {
+  final bool isPreparing;
+  final bool isReady;
+  final String? error;
+  final GameBoard? preparedBoard;
+  final String? puzzleId;
+  final Difficulty? difficulty;
 
-@freezed
-class GamePreparationState with _$GamePreparationState {
-  const factory GamePreparationState({
-    @Default(false) bool isPreparing,
-    @Default(false) bool isReady,
+  const GamePreparationState({
+    this.isPreparing = false,
+    this.isReady = false,
+    this.error,
+    this.preparedBoard,
+    this.puzzleId,
+    this.difficulty,
+  });
+
+  GamePreparationState copyWith({
+    bool? isPreparing,
+    bool? isReady,
     String? error,
     GameBoard? preparedBoard,
-    Difficulty? difficulty,
     String? puzzleId,
-  }) = _GamePreparationState;
+    Difficulty? difficulty,
+  }) {
+    return GamePreparationState(
+      isPreparing: isPreparing ?? this.isPreparing,
+      isReady: isReady ?? this.isReady,
+      error: error,
+      preparedBoard: preparedBoard,
+      puzzleId: puzzleId,
+      difficulty: difficulty,
+    );
+  }
 }

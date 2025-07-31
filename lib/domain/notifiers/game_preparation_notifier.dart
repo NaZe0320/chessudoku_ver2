@@ -26,7 +26,7 @@ class GamePreparationNotifier
   void onIntent(GamePreparationIntent intent) {
     switch (intent) {
       case StartGamePreparationIntent():
-        _handleStartPreparation(intent);
+        _handleStartPreparation(intent.difficulty, intent.isNewGame);
       case CancelGamePreparationIntent():
         _handleCancelPreparation();
       case RetryGamePreparationIntent():
@@ -34,23 +34,29 @@ class GamePreparationNotifier
     }
   }
 
-  void _handleStartPreparation(StartGamePreparationIntent intent) async {
+  void _handleStartPreparation(Difficulty difficulty, bool isNewGame) async {
     state = state.copyWith(
       isPreparing: true,
       isReady: false,
       error: null,
-      difficulty: intent.difficulty,
+      difficulty: difficulty,
     );
 
     try {
       GameBoard? gameBoard;
 
-      if (intent.isNewGame) {
+      if (isNewGame) {
         // 새 게임 준비 - 네트워크 상태 확인 후 퍼즐 생성
-        gameBoard = await _prepareNewGame(intent.difficulty);
+        gameBoard = await _prepareNewGame(difficulty);
       } else {
         // 이어서 하기 - 저장된 게임 로드 (네트워크 불필요)
-        gameBoard = await _loadSavedGame(intent.difficulty);
+        final savedGameData =
+            _gameSaveRepository.getSavedGameByDifficulty(difficulty);
+        if (savedGameData != null) {
+          gameBoard = savedGameData.board;
+        } else {
+          throw Exception('저장된 게임을 찾을 수 없습니다.');
+        }
       }
 
       if (gameBoard != null) {
@@ -61,7 +67,7 @@ class GamePreparationNotifier
           puzzleId: gameBoard.puzzleId,
         );
       } else {
-        throw Exception('게임을 준비할 수 없습니다.');
+        throw Exception('게임 보드를 생성할 수 없습니다.');
       }
     } catch (e) {
       state = state.copyWith(
@@ -96,15 +102,6 @@ class GamePreparationNotifier
 
     // 퍼즐 생성 (MainNotifier의 로직 사용)
     return _createTestBoard(difficulty);
-  }
-
-  Future<GameBoard?> _loadSavedGame(Difficulty difficulty) async {
-    final savedGame = _gameSaveRepository.getSavedGameByDifficulty(difficulty);
-    if (savedGame == null) {
-      throw Exception('저장된 게임을 찾을 수 없습니다.');
-    }
-
-    return savedGame.board;
   }
 
   // MainNotifier의 퍼즐 생성 로직을 복사

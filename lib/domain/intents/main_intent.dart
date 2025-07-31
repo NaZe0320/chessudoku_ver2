@@ -24,7 +24,8 @@ class StartNewGameIntent extends MainIntent {
 }
 
 class ContinueSavedGameIntent extends MainIntent {
-  const ContinueSavedGameIntent();
+  final Difficulty? difficulty;
+  const ContinueSavedGameIntent([this.difficulty]);
 }
 
 class GetGameStartInfoIntent extends MainIntent {

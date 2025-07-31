@@ -149,30 +149,29 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     developer.log('게임 시작 완료', name: 'GameNotifier');
   }
 
-  /// 저장된 게임 데이터로 게임 시작
-  void _handleStartSavedGame(
-      GameBoard savedBoard,
-      int elapsedSeconds,
-      List<GameBoard> history,
-      List<GameBoard> redoHistory,
-      Map<String, Checkpoint> checkpoints) {
-    developer.log('저장된 게임 데이터로 게임 시작', name: 'GameNotifier');
-    developer.log('저장된 경과 시간: $elapsedSeconds초', name: 'GameNotifier');
+  /// 저장된 게임 데이터로 게임 시작 (GamePreparationNotifier에서 호출)
+  void handleStartSavedGameFromPreparation(SavedGameData savedGameData) {
+    developer.log('저장된 게임 데이터로 게임 시작 (준비 단계에서)', name: 'GameNotifier');
+    developer.log('저장된 경과 시간: ${savedGameData.elapsedSeconds}초',
+        name: 'GameNotifier');
+
+    // 현재 난이도 설정
+    _currentDifficulty = savedGameData.difficulty;
 
     // 선택된 셀을 초기화한 보드 생성
-    final boardWithoutSelection = savedBoard.selectCell(null);
+    final boardWithoutSelection = savedGameData.board.selectCell(null);
 
     state = state.copyWith(
       currentBoard: boardWithoutSelection,
-      history: history,
-      redoHistory: redoHistory,
-      canUndo: history.isNotEmpty,
-      canRedo: redoHistory.isNotEmpty,
-      elapsedSeconds: elapsedSeconds,
+      history: savedGameData.history,
+      redoHistory: savedGameData.redoHistory,
+      canUndo: savedGameData.history.isNotEmpty,
+      canRedo: savedGameData.redoHistory.isNotEmpty,
+      elapsedSeconds: savedGameData.elapsedSeconds,
       isPaused: false,
       isGameCompleted: false,
       showCompletionDialog: false,
-      checkpoints: checkpoints,
+      checkpoints: savedGameData.checkpoints,
       selectedCellContent: null, // 선택된 셀 내용 초기화
     );
 
@@ -191,14 +190,30 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         developer.log('저장된 게임 데이터 로드 성공', name: 'GameNotifier');
         developer.log('저장된 경과 시간: ${savedGameData.elapsedSeconds}초',
             name: 'GameNotifier');
+        developer.log('현재 설정된 난이도: $_currentDifficulty', name: 'GameNotifier');
+        developer.log('저장된 게임의 난이도: ${savedGameData.difficulty}',
+            name: 'GameNotifier');
 
-        _handleStartSavedGame(
-          savedGameData.board,
-          savedGameData.elapsedSeconds,
-          savedGameData.history,
-          savedGameData.redoHistory,
-          savedGameData.checkpoints,
-        );
+        // MainNotifier에서 설정한 난이도가 있으면 우선 사용
+        if (_currentDifficulty != null) {
+          developer.log('MainNotifier에서 설정한 난이도 사용: $_currentDifficulty',
+              name: 'GameNotifier');
+          // 난이도별 저장된 게임 데이터로 교체
+          final difficultySpecificData =
+              _gameSaveRepository.getSavedGameByDifficulty(_currentDifficulty!);
+          if (difficultySpecificData != null) {
+            handleStartSavedGameFromPreparation(difficultySpecificData);
+          } else {
+            // 해당 난이도의 저장된 게임이 없으면 기존 데이터 사용
+            developer.log('해당 난이도의 저장된 게임이 없어 기존 데이터 사용', name: 'GameNotifier');
+            handleStartSavedGameFromPreparation(savedGameData);
+          }
+        } else {
+          // MainNotifier에서 난이도가 설정되지 않았으면 저장된 게임의 난이도 사용
+          developer.log('MainNotifier에서 난이도가 설정되지 않아 저장된 게임의 난이도 사용',
+              name: 'GameNotifier');
+          handleStartSavedGameFromPreparation(savedGameData);
+        }
       } else {
         developer.log('저장된 게임 데이터가 없습니다.', name: 'GameNotifier');
       }

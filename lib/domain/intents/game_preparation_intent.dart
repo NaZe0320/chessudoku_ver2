@@ -5,23 +5,20 @@ abstract class GamePreparationIntent extends BaseIntent {
   const GamePreparationIntent();
 }
 
-/// 게임 준비 시작
 class StartGamePreparationIntent extends GamePreparationIntent {
   final Difficulty difficulty;
   final bool isNewGame;
 
   const StartGamePreparationIntent({
     required this.difficulty,
-    this.isNewGame = true,
+    required this.isNewGame,
   });
 }
 
-/// 게임 준비 취소
 class CancelGamePreparationIntent extends GamePreparationIntent {
   const CancelGamePreparationIntent();
 }
 
-/// 게임 준비 재시도
 class RetryGamePreparationIntent extends GamePreparationIntent {
   const RetryGamePreparationIntent();
 }
