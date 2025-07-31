@@ -413,28 +413,38 @@ class MainScreen extends HookConsumerWidget {
                         .hasSavedGameByDifficulty(difficulty)
                         .then((hasSavedGame) {
                       if (hasSavedGame) {
-                        // 저장된 게임이 있으면 선택 다이얼로그 표시
-                        GameSelectionDialog.show(
-                          context: context,
-                          title: '게임 선택',
-                          message: '이미 진행 중인 게임이 있습니다. 어떻게 하시겠습니까?',
-                          difficulty: difficulty,
-                          onContinueGame: () {
-                            // 통합된 방식으로 저장된 게임 이어서 하기
-                            mainNotifier.handleIntent(
-                              ContinueSavedGameIntent(difficulty),
-                            );
-                          },
-                          onNewGame: () {
-                            // 새 게임 시작
-                            gamePreparationNotifier.handleIntent(
-                              StartGamePreparationIntent(
-                                difficulty: difficulty,
-                                isNewGame: true,
-                              ),
-                            );
-                          },
-                        );
+                        // 저장된 게임이 있으면 진행시간을 가져와서 선택 다이얼로그 표시
+                        final savedGameData = gameSaveRepository.getSavedGameByDifficulty(difficulty);
+                        if (savedGameData != null) {
+                          // 진행시간을 분:초 형식으로 변환
+                          final minutes = savedGameData.elapsedSeconds ~/ 60;
+                          final seconds = savedGameData.elapsedSeconds % 60;
+                          final elapsedTimeString =
+                              '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+
+                          GameSelectionDialog.show(
+                            context: context,
+                            title: '게임 선택',
+                            message: '이미 진행 중인 게임이 있습니다. 어떻게 하시겠습니까?',
+                            difficulty: difficulty,
+                            elapsedTime: elapsedTimeString,
+                            onContinueGame: () {
+                              // 통합된 방식으로 저장된 게임 이어서 하기
+                              mainNotifier.handleIntent(
+                                ContinueSavedGameIntent(difficulty),
+                              );
+                            },
+                            onNewGame: () {
+                              // 새 게임 시작
+                              gamePreparationNotifier.handleIntent(
+                                StartGamePreparationIntent(
+                                  difficulty: difficulty,
+                                  isNewGame: true,
+                                ),
+                              );
+                            },
+                          );
+                        }
                       } else {
                         // 저장된 게임이 없으면 바로 새 게임 시작
                         gamePreparationNotifier.handleIntent(

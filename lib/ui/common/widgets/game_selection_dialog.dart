@@ -7,6 +7,7 @@ class GameSelectionDialog extends StatelessWidget {
   final String title;
   final String message;
   final Difficulty difficulty;
+  final String? elapsedTime;
   final VoidCallback? onContinueGame;
   final VoidCallback? onNewGame;
   final VoidCallback? onCancel;
@@ -16,6 +17,7 @@ class GameSelectionDialog extends StatelessWidget {
     required this.title,
     required this.message,
     required this.difficulty,
+    this.elapsedTime,
     this.onContinueGame,
     this.onNewGame,
     this.onCancel,
@@ -52,35 +54,74 @@ class GameSelectionDialog extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            // 난이도 표시
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: difficulty.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: difficulty.color.withValues(alpha: 0.3),
-                  width: 1,
+            // 게임 정보 (난이도 + 진행시간)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // 난이도 표시
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: difficulty.color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: difficulty.color.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    difficulty.label,
+                    style: AppTypography.body.copyWith(
+                      color: difficulty.color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                difficulty.label,
-                style: AppTypography.body.copyWith(
-                  color: difficulty.color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+
+                // 진행시간 표시
+                if (elapsedTime != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.neutral100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.neutral300,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          elapsedTime!,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 24),
 
-            // 버튼들
-            Column(
+            // 버튼들 (가로 배치)
+            Row(
               children: [
                 // 이어서 하기 버튼
-                SizedBox(
-                  width: double.infinity,
+                Expanded(
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
@@ -101,11 +142,10 @@ class GameSelectionDialog extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(width: 12),
 
                 // 새로 하기 버튼
-                SizedBox(
-                  width: double.infinity,
+                Expanded(
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
@@ -129,24 +169,6 @@ class GameSelectionDialog extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-
-                // 취소 버튼
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      onCancel?.call();
-                    },
-                    child: Text(
-                      '취소',
-                      style: AppTypography.buttonText.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ],
@@ -161,6 +183,7 @@ class GameSelectionDialog extends StatelessWidget {
     required String title,
     required String message,
     required Difficulty difficulty,
+    String? elapsedTime,
     VoidCallback? onContinueGame,
     VoidCallback? onNewGame,
     VoidCallback? onCancel,
@@ -172,6 +195,7 @@ class GameSelectionDialog extends StatelessWidget {
           title: title,
           message: message,
           difficulty: difficulty,
+          elapsedTime: elapsedTime,
           onContinueGame: onContinueGame,
           onNewGame: onNewGame,
           onCancel: onCancel,
