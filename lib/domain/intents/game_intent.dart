@@ -1,8 +1,16 @@
 import 'package:chessudoku/core/base/base_intent.dart';
 import 'package:chessudoku/data/models/position.dart';
+import 'package:chessudoku/data/models/game_board.dart';
 
 abstract class GameIntent extends BaseIntent {
   const GameIntent();
+}
+
+/// 게임 시작 Intent
+class StartGameIntent extends GameIntent {
+  final GameBoard preparedBoard;
+
+  const StartGameIntent(this.preparedBoard);
 }
 
 class SelectCellIntent extends GameIntent {

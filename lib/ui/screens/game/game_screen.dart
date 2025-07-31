@@ -7,13 +7,13 @@ import 'package:chessudoku/core/di/game_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/ui/common/widgets/exit_game_dialog.dart';
 import 'widgets/game_timer.dart';
 import 'widgets/game_action_buttons.dart';
 import 'widgets/number_buttons_grid.dart';
 import 'widgets/game_completion_dialog.dart';
+import 'dart:developer' as developer;
 
 class GameScreen extends HookConsumerWidget {
   const GameScreen({super.key});
@@ -23,44 +23,14 @@ class GameScreen extends HookConsumerWidget {
     final translate = ref.watch(translationProvider);
     final gameState = ref.watch(gameNotifierProvider);
     final gameNotifier = ref.read(gameNotifierProvider.notifier);
-    final mainState = ref.watch(mainNotifierProvider);
     final mainNotifier = ref.read(mainNotifierProvider.notifier);
 
-    // 화면 진입 시 MainNotifier의 정보를 받아 GameNotifier 초기화
+    // 화면 진입 시 게임 상태 확인
     useEffect(() {
-      Future(() async {
-        // MainNotifier에서 게임 시작 정보 확인
-        if (mainState.shouldStartNewGame && mainState.savedGameBoard != null) {
-          // 새 게임 시작
-          gameNotifier.initializeGame(
-            mainState.savedGameBoard!,
-            difficulty: mainState.selectedDifficulty,
-          );
-          // 게임 시작 정보 초기화
-          mainNotifier.handleIntent(const GetGameStartInfoIntent());
-        } else if (mainState.shouldContinueGame &&
-            mainState.savedGameBoard != null) {
-          // 저장된 게임 이어서 하기
-          gameNotifier.loadSavedGame();
-          // 게임 시작 정보 초기화
-          mainNotifier.handleIntent(const GetGameStartInfoIntent());
-        } else {
-          // 기본 테스트 보드로 시작 (기존 로직 유지)
-          mainNotifier
-              .handleIntent(const StartNewGameIntent(Difficulty.medium));
-          // 다음 프레임에서 다시 확인
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final updatedMainState = ref.read(mainNotifierProvider);
-            if (updatedMainState.savedGameBoard != null) {
-              gameNotifier.initializeGame(
-                updatedMainState.savedGameBoard!,
-                difficulty: updatedMainState.selectedDifficulty,
-              );
-              mainNotifier.handleIntent(const GetGameStartInfoIntent());
-            }
-          });
-        }
-      });
+      // GameScreen은 이미 MainScreen에서 준비된 게임 데이터로 시작됨
+      // GameNotifier는 MainScreen에서 이미 초기화되어 있음
+      developer.log('GameScreen 진입 - 게임 상태 확인', name: 'GameScreen');
+
       return null;
     }, []);
 

@@ -18,7 +18,7 @@ class SavedGameData with _$SavedGameData {
     required List<GameBoard> redoHistory,
     required Difficulty difficulty,
     required DateTime savedAt,
-    @Default({}) Map<String, Checkpoint> checkpoints, // 체크포인트 정보 추가
+    @Default({}) Map<String, Checkpoint> checkpoints,
   }) = _SavedGameData;
 
   const SavedGameData._();
@@ -31,8 +31,8 @@ class SavedGameData with _$SavedGameData {
       'redoHistory': redoHistory.map(_gameBoardToJson).toList(),
       'difficulty': difficulty.name,
       'savedAt': savedAt.toIso8601String(),
-      'checkpoints': checkpoints.map(
-          (key, value) => MapEntry(key, _checkpointToJson(value))), // 체크포인트 직렬화
+      'checkpoints': checkpoints
+          .map((key, value) => MapEntry(key, _checkpointToJson(value))),
     };
   }
 
@@ -53,7 +53,7 @@ class SavedGameData with _$SavedGameData {
       checkpoints: json['checkpoints'] != null
           ? (json['checkpoints'] as Map<String, dynamic>).map((key, value) =>
               MapEntry(key, _checkpointFromJson(value as Map<String, dynamic>)))
-          : {}, // 체크포인트 역직렬화
+          : {},
     );
   }
 

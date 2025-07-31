@@ -19,6 +19,8 @@ import '../../domain/notifiers/sync_notifier.dart';
 import '../../domain/states/sync_state.dart';
 import '../../domain/notifiers/main_notifier.dart';
 import '../../domain/states/main_state.dart';
+import '../../domain/notifiers/game_preparation_notifier.dart';
+import '../../domain/states/game_preparation_state.dart';
 import './language_pack_provider.dart';
 import '../network/network_service.dart';
 import '../sync/sync_manager.dart';
@@ -110,6 +112,17 @@ final mainNotifierProvider =
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
   final userProfileRepository = ref.watch(userProfileRepositoryProvider);
   return MainNotifier(gameSaveRepository, userProfileRepository);
+});
+
+/// GamePreparationNotifier Provider
+final gamePreparationNotifierProvider =
+    StateNotifierProvider<GamePreparationNotifier, GamePreparationState>((ref) {
+  final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
+  final networkService = ref.watch(networkServiceProvider);
+  return GamePreparationNotifier(
+    gameSaveRepository: gameSaveRepository,
+    networkService: networkService,
+  );
 });
 
 /// NetworkService Provider

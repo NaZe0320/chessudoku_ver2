@@ -14,6 +14,7 @@ import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/puzzle_record.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
+import 'package:chessudoku/data/models/saved_game_data.dart';
 
 class GameNotifier extends BaseNotifier<GameIntent, GameState>
     with WidgetsBindingObserver {
@@ -51,8 +52,21 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     if (state.currentBoard != null && _currentDifficulty != null) {
       developer.log('저장 조건 충족 - 보드 존재, 난이도: $_currentDifficulty',
           name: 'GameNotifier');
-      final success =
-          await _gameSaveRepository.saveCurrentGame(state, _currentDifficulty!);
+
+      // SavedGameData 생성
+      final savedGameData = SavedGameData(
+        board: state.currentBoard!,
+        elapsedSeconds: state.elapsedSeconds,
+        history: state.history,
+        redoHistory: state.redoHistory,
+        difficulty: _currentDifficulty!,
+        savedAt: DateTime.now(),
+        checkpoints: state.checkpoints,
+      );
+
+      // 난이도별 저장 사용
+      final success = await _gameSaveRepository.saveGameByDifficulty(
+          savedGameData, _currentDifficulty!);
       developer.log('자동 저장 결과: $success', name: 'GameNotifier');
     } else {
       developer.log(
@@ -61,78 +75,17 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     }
   }
 
-  /// 게임 초기화 (MainNotifier에서 호출)
-  void initializeGame(GameBoard gameBoard, {Difficulty? difficulty}) {
-    developer.log('게임 초기화 시작 - 난이도: $difficulty', name: 'GameNotifier');
+  /// 현재 게임 난이도 설정 (MainScreen에서 호출)
+  void setCurrentDifficulty(Difficulty difficulty) {
     _currentDifficulty = difficulty;
-
-    // 선택된 셀을 초기화한 보드 생성
-    final boardWithoutSelection = gameBoard.selectCell(null);
-
-    state = state.copyWith(
-      currentBoard: boardWithoutSelection,
-      history: [],
-      redoHistory: [],
-      canUndo: false,
-      canRedo: false,
-      elapsedSeconds: 0,
-      isPaused: false,
-      isGameCompleted: false,
-      showCompletionDialog: false,
-      checkpoints: {}, // 새 게임 시작 시 체크포인트 초기화
-      selectedCellContent: null, // 선택된 셀 내용 초기화
-    );
-
-    // 타이머 시작
-    _handleStartTimer();
-    developer.log('게임 초기화 완료', name: 'GameNotifier');
-  }
-
-  /// 저장된 게임 로드 (MainNotifier에서 호출)
-  void loadSavedGame() {
-    developer.log('저장된 게임 로드 시작', name: 'GameNotifier');
-    final savedGameData = _gameSaveRepository.loadCurrentGame();
-    if (savedGameData != null) {
-      developer.log('저장된 게임 데이터 로드 성공', name: 'GameNotifier');
-      developer.log('로드된 보드 셀 수: ${savedGameData.board.board.cells.length}',
-          name: 'GameNotifier');
-      developer.log('로드된 보드 선택된 셀: ${savedGameData.board.selectedCell}',
-          name: 'GameNotifier');
-      _currentDifficulty = savedGameData.difficulty;
-
-      // 선택된 셀을 초기화한 보드 생성
-      final boardWithoutSelection = savedGameData.board.selectCell(null);
-
-      state = state.copyWith(
-        currentBoard: boardWithoutSelection,
-        history: savedGameData.history,
-        redoHistory: savedGameData.redoHistory,
-        elapsedSeconds: savedGameData.elapsedSeconds,
-        canUndo: savedGameData.history.isNotEmpty,
-        canRedo: savedGameData.redoHistory.isNotEmpty,
-        isPaused: false,
-        isGameCompleted: false,
-        showCompletionDialog: false,
-        checkpoints: savedGameData.checkpoints, // 저장된 체크포인트 복원
-        selectedCellContent: null, // 선택된 셀 내용 초기화
-      );
-
-      developer.log(
-          '상태 업데이트 완료 - 현재 보드 셀 수: ${state.currentBoard?.board.cells.length}',
-          name: 'GameNotifier');
-
-      // 타이머 시작
-      _handleStartTimer();
-      developer.log('저장된 게임 로드 완료 - 경과시간: ${savedGameData.elapsedSeconds}초',
-          name: 'GameNotifier');
-    } else {
-      developer.log('저장된 게임 데이터가 없습니다.', name: 'GameNotifier');
-    }
+    developer.log('현재 게임 난이도 설정: $difficulty', name: 'GameNotifier');
   }
 
   @override
   void onIntent(GameIntent intent) {
     switch (intent) {
+      case StartGameIntent():
+        _handleStartGame(intent.preparedBoard);
       case SelectCellIntent():
         _handleSelectCell(intent.position);
       case InputNumberIntent():
@@ -166,6 +119,32 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       case RedoIntent():
         _handleRedo();
     }
+  }
+
+  /// 준비된 게임 데이터로 게임 시작
+  void _handleStartGame(GameBoard preparedBoard) {
+    developer.log('준비된 게임 데이터로 게임 시작', name: 'GameNotifier');
+
+    // 선택된 셀을 초기화한 보드 생성
+    final boardWithoutSelection = preparedBoard.selectCell(null);
+
+    state = state.copyWith(
+      currentBoard: boardWithoutSelection,
+      history: [],
+      redoHistory: [],
+      canUndo: false,
+      canRedo: false,
+      elapsedSeconds: 0,
+      isPaused: false,
+      isGameCompleted: false,
+      showCompletionDialog: false,
+      checkpoints: {}, // 새 게임 시작 시 체크포인트 초기화
+      selectedCellContent: null, // 선택된 셀 내용 초기화
+    );
+
+    // 타이머 시작
+    _handleStartTimer();
+    developer.log('게임 시작 완료', name: 'GameNotifier');
   }
 
   void _handleSelectCell(position) {
