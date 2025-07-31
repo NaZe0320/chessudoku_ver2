@@ -464,8 +464,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         developer.log('게임 완료 처리 실패: $e', name: 'GameNotifier');
       });
 
-      // 게임 완료 시 저장된 게임 삭제
-      _gameSaveRepository.clearCurrentGame();
+      // 게임 완료 시 현재 난이도의 저장된 게임 삭제
+      if (_currentDifficulty != null) {
+        _gameSaveRepository.clearGameByDifficulty(_currentDifficulty!);
+      }
     }
   }
 

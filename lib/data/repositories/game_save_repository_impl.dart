@@ -132,10 +132,36 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
   @override
   Future<bool> clearCurrentGame() async {
     try {
+      // 기존 저장 키들 삭제
       await _cacheService.remove(_savedGameKey);
       await _cacheService.remove(_difficultyKey);
       await _cacheService.remove(_timestampKey);
       await _cacheService.remove(_lastPlayedTypeKey);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 특정 난이도의 저장된 게임 삭제
+  @override
+  Future<bool> clearGameByDifficulty(Difficulty difficulty) async {
+    try {
+      final difficultyKey = _getSavedGameKeyByDifficulty(difficulty);
+      await _cacheService.remove(difficultyKey);
+
+      // 현재 삭제한 난이도가 마지막 플레이한 게임인 경우 메타데이터도 삭제
+      final lastPlayedType = _cacheService.getString(_lastPlayedTypeKey);
+      final lastDifficultyName = _cacheService.getString(_difficultyKey);
+
+      if (lastPlayedType == 'difficulty' &&
+          lastDifficultyName == difficulty.name) {
+        await _cacheService.remove(_difficultyKey);
+        await _cacheService.remove(_timestampKey);
+        await _cacheService.remove(_lastPlayedTypeKey);
+      }
+
       return true;
     } catch (e) {
       return false;

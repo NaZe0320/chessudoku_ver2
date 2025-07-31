@@ -43,4 +43,7 @@ abstract class GameSaveRepository {
 
   /// 가장 최근 플레이한 게임 타입 저장
   Future<bool> saveLastPlayedType(String type);
+
+  /// 특정 난이도의 저장된 게임 삭제
+  Future<bool> clearGameByDifficulty(Difficulty difficulty);
 }
