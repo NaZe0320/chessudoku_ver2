@@ -210,17 +210,13 @@ class AppInitializer {
     try {
       developer.log('사용자 프로필 초기화 시작', name: 'AppInitializer');
 
-      final deviceId = await _deviceService.getDeviceId();
-      developer.log('생성할 DeviceId: $deviceId', name: 'AppInitializer');
+      // getUserProfile()을 호출하여 서버 확인 후 프로필 생성/가져오기
+      final userProfile = await userProfileRepository.getUserProfile();
 
-      final userProfile = await userProfileRepository.createUserProfile(
-        UserProfile(
-          deviceId: deviceId,
-          username: '플레이어',
-          createdAt: DateTime.now(),
-          lastLoginAt: DateTime.now(),
-        ),
-      );
+      if (userProfile == null) {
+        developer.log('프로필 생성 실패', name: 'AppInitializer');
+        throw Exception('사용자 프로필 생성에 실패했습니다.');
+      }
 
       developer.log('사용자 프로필 초기화 완료: ${userProfile.deviceId}',
           name: 'AppInitializer');

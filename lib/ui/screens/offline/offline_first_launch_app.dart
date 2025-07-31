@@ -8,7 +8,6 @@ import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/device_service.dart';
-import 'package:chessudoku/data/services/firestore_service.dart';
 import 'package:chessudoku/data/repositories/game_save_repository_impl.dart';
 import 'package:chessudoku/data/repositories/user_profile_repository_impl.dart';
 import 'package:chessudoku/core/sync/sync_manager.dart';
