@@ -48,37 +48,29 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   /// 게임 상태 자동 저장
   Future<void> autoSave() async {
-    developer.log('자동 저장 시작', name: 'GameNotifier');
     if (state.currentBoard != null && _currentDifficulty != null) {
-      developer.log('저장 조건 충족 - 보드 존재, 난이도: $_currentDifficulty',
-          name: 'GameNotifier');
-
       // SavedGameData 생성
       final savedGameData = SavedGameData(
         board: state.currentBoard!,
         elapsedSeconds: state.elapsedSeconds,
         history: state.history,
         redoHistory: state.redoHistory,
+        checkpoints: state.checkpoints,
         difficulty: _currentDifficulty!,
         savedAt: DateTime.now(),
-        checkpoints: state.checkpoints,
       );
 
-      // 난이도별 저장 사용
-      final success = await _gameSaveRepository.saveGameByDifficulty(
-          savedGameData, _currentDifficulty!);
-      developer.log('자동 저장 결과: $success', name: 'GameNotifier');
-    } else {
-      developer.log(
-          '저장 조건 불충족 - 보드: ${state.currentBoard != null}, 난이도: $_currentDifficulty',
-          name: 'GameNotifier');
+      // 난이도별로 저장
+      await _gameSaveRepository.saveGameByDifficulty(
+        savedGameData,
+        _currentDifficulty!,
+      );
     }
   }
 
   /// 현재 게임 난이도 설정 (MainScreen에서 호출)
   void setCurrentDifficulty(Difficulty difficulty) {
     _currentDifficulty = difficulty;
-    developer.log('현재 게임 난이도 설정: $difficulty', name: 'GameNotifier');
   }
 
   @override
@@ -125,8 +117,6 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   /// 준비된 게임 데이터로 게임 시작
   void _handleStartGame(GameBoard preparedBoard) {
-    developer.log('준비된 게임 데이터로 게임 시작', name: 'GameNotifier');
-
     // 선택된 셀을 초기화한 보드 생성
     final boardWithoutSelection = preparedBoard.selectCell(null);
 
@@ -146,15 +136,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
     // 타이머 시작
     _handleStartTimer();
-    developer.log('게임 시작 완료', name: 'GameNotifier');
   }
 
   /// 저장된 게임 데이터로 게임 시작 (GamePreparationNotifier에서 호출)
   void handleStartSavedGameFromPreparation(SavedGameData savedGameData) {
-    developer.log('저장된 게임 데이터로 게임 시작 (준비 단계에서)', name: 'GameNotifier');
-    developer.log('저장된 경과 시간: ${savedGameData.elapsedSeconds}초',
-        name: 'GameNotifier');
-
     // 현재 난이도 설정
     _currentDifficulty = savedGameData.difficulty;
 
@@ -177,27 +162,15 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
     // 타이머 시작
     _handleStartTimer();
-    developer.log('저장된 게임 시작 완료', name: 'GameNotifier');
   }
 
   /// 저장된 게임 로드
   void _handleLoadSavedGame() {
-    developer.log('저장된 게임 로드 시작', name: 'GameNotifier');
-
     try {
       final savedGameData = _gameSaveRepository.loadCurrentGame();
       if (savedGameData != null) {
-        developer.log('저장된 게임 데이터 로드 성공', name: 'GameNotifier');
-        developer.log('저장된 경과 시간: ${savedGameData.elapsedSeconds}초',
-            name: 'GameNotifier');
-        developer.log('현재 설정된 난이도: $_currentDifficulty', name: 'GameNotifier');
-        developer.log('저장된 게임의 난이도: ${savedGameData.difficulty}',
-            name: 'GameNotifier');
-
         // MainNotifier에서 설정한 난이도가 있으면 우선 사용
         if (_currentDifficulty != null) {
-          developer.log('MainNotifier에서 설정한 난이도 사용: $_currentDifficulty',
-              name: 'GameNotifier');
           // 난이도별 저장된 게임 데이터로 교체
           final difficultySpecificData =
               _gameSaveRepository.getSavedGameByDifficulty(_currentDifficulty!);
@@ -205,21 +178,14 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
             handleStartSavedGameFromPreparation(difficultySpecificData);
           } else {
             // 해당 난이도의 저장된 게임이 없으면 기존 데이터 사용
-            developer.log('해당 난이도의 저장된 게임이 없어 기존 데이터 사용', name: 'GameNotifier');
             handleStartSavedGameFromPreparation(savedGameData);
           }
         } else {
           // MainNotifier에서 난이도가 설정되지 않았으면 저장된 게임의 난이도 사용
-          developer.log('MainNotifier에서 난이도가 설정되지 않아 저장된 게임의 난이도 사용',
-              name: 'GameNotifier');
           handleStartSavedGameFromPreparation(savedGameData);
         }
-      } else {
-        developer.log('저장된 게임 데이터가 없습니다.', name: 'GameNotifier');
-      }
-    } catch (e) {
-      developer.log('저장된 게임 로드 실패: $e', name: 'GameNotifier');
-    }
+      } else {}
+    } catch (e) {}
   }
 
   void _handleSelectCell(position) {
@@ -533,11 +499,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       );
 
       // 게임 완료 시 기록 저장 (비동기 처리)
-      _saveGameCompletionRecord().then((_) {
-        developer.log('게임 완료 처리 완료', name: 'GameNotifier');
-      }).catchError((e) {
-        developer.log('게임 완료 처리 실패: $e', name: 'GameNotifier');
-      });
+      _saveGameCompletionRecord().then((_) {}).catchError((e) {});
 
       // 게임 완료 시 현재 난이도의 저장된 게임 삭제
       if (_currentDifficulty != null) {
@@ -548,15 +510,12 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   // 게임 완료 기록 저장
   Future<void> _saveGameCompletionRecord() async {
-    developer.log('게임 완료 기록 저장 시작', name: 'GameNotifier');
-
     if (state.currentBoard == null || _currentDifficulty == null) {
-      developer.log('게임 완료 기록 저장 실패: 보드 또는 난이도가 null', name: 'GameNotifier');
       return;
     }
 
     try {
-      developer.log('퍼즐 기록 생성 시작', name: 'GameNotifier');
+      // 퍼즐 기록 생성 시작
       // 퍼즐 기록 저장
       final record = PuzzleRecord(
         recordId: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -567,28 +526,19 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         hintCount: 0, // TODO: 힌트 사용 횟수 추적 구현
       );
 
-      developer.log('퍼즐 기록 저장 시작: ${record.puzzleId}', name: 'GameNotifier');
+      // 퍼즐 기록 저장 시작: ${record.puzzleId}
       await _puzzleRecordRepository.savePuzzleRecord(record);
-      developer.log('퍼즐 기록 저장 완료', name: 'GameNotifier');
 
       // 사용자 프로필 업데이트
-      developer.log('사용자 프로필 업데이트 시작', name: 'GameNotifier');
       await _userProfileRepository.incrementCompletedPuzzles();
-      developer.log('완료한 퍼즐 수 증가 완료', name: 'GameNotifier');
 
       await _userProfileRepository.updatePlayTime(state.elapsedSeconds);
-      developer.log('플레이 시간 업데이트 완료: ${state.elapsedSeconds}초',
-          name: 'GameNotifier');
 
       await _userProfileRepository.updateStreakOnGameCompletion();
-      developer.log('연속 기록 업데이트 완료', name: 'GameNotifier');
-
-      developer.log('게임 완료 기록 저장 완료', name: 'GameNotifier');
 
       // MainNotifier의 통계 새로고침
       _onMainIntent?.call(const RefreshStatsIntent());
     } catch (e) {
-      developer.log('게임 완료 기록 저장 실패: $e', name: 'GameNotifier');
       rethrow;
     }
   }
@@ -794,8 +744,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         if (!this.state.isPaused) {
           _handlePauseTimer();
         }
-        // 자동 저장
-        autoSave();
+        // 자동 저장 (에러 처리 추가)
+        _safeAutoSave();
         break;
       case AppLifecycleState.resumed:
         // 앱이 포그라운드로 돌아올 때 이전에 실행 중이었다면 재시작
@@ -804,11 +754,24 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         }
         break;
       case AppLifecycleState.detached:
-        // 앱 종료 시 자동 저장
-        autoSave();
+        // 앱 종료 시 자동 저장 (에러 처리 추가)
+        _safeAutoSave();
+        break;
+      case AppLifecycleState.hidden:
+        // 앱이 숨겨질 때도 저장 (Android에서 추가 안정성)
+        _safeAutoSave();
         break;
       default:
         break;
+    }
+  }
+
+  /// 안전한 자동 저장 (에러 처리 포함)
+  Future<void> _safeAutoSave() async {
+    try {
+      await autoSave();
+    } catch (e) {
+      // 저장 실패 시에도 앱이 계속 실행되도록 함
     }
   }
 

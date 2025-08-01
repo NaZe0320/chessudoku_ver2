@@ -10,7 +10,6 @@ import 'package:chessudoku/ui/screens/main/widgets/continue_play_card.dart';
 import 'package:chessudoku/ui/screens/main/widgets/daily_challenge_card.dart';
 import 'package:chessudoku/ui/common/widgets/stat_card.dart';
 import 'package:chessudoku/ui/common/widgets/game_selection_dialog.dart';
-import 'package:chessudoku/ui/common/widgets/offline_dialog.dart';
 import 'package:chessudoku/ui/screens/game/game_screen.dart';
 import 'package:chessudoku/ui/screens/profile/settings_screen.dart';
 import 'package:chessudoku/ui/screens/profile/game_records_screen.dart';
@@ -53,6 +52,14 @@ class MainScreen extends HookConsumerWidget {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final gameNotifier = ref.read(gameNotifierProvider.notifier);
 
+          // 새 게임 시작 시 난이도 설정 추가
+          if (gamePreparationState.difficulty != null) {
+            gameNotifier.setCurrentDifficulty(gamePreparationState.difficulty!);
+          } else {
+            // 기본값으로 easy 설정
+            gameNotifier.setCurrentDifficulty(Difficulty.easy);
+          }
+
           // 새 게임 시작
           gameNotifier.handleIntent(
               StartGameIntent(gamePreparationState.preparedBoard!));
@@ -64,30 +71,20 @@ class MainScreen extends HookConsumerWidget {
               builder: (context) => const GameScreen(),
             ),
           ).then((_) {
-            // 게임 화면에서 돌아올 때 통계 새로고침
-            mainNotifier.handleIntent(const LoadStatsIntent());
-            // 게임 시작 정보 초기화
-            mainNotifier.handleIntent(const GetGameStartInfoIntent());
-            // 게임 준비 상태 초기화
-            gamePreparationNotifier.reset();
+            // 게임 화면에서 돌아올 때 저장된 게임 상태 확인
+            mainNotifier.handleIntent(const CheckSavedGameIntent());
           });
-        });
-      } else if (gamePreparationState.error != null) {
-        // 오류가 있는 경우
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (gamePreparationState.error != null) {
-            // 일반 오류 메시지 표시
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('게임 준비 실패: ${gamePreparationState.error}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
         });
       }
       return null;
-    }, [gamePreparationState.isReady, gamePreparationState.error]);
+    }, [gamePreparationState.isReady, gamePreparationState.preparedBoard]);
+
+    // 경과 시간을 분:초 형식으로 변환하는 헬퍼 메서드
+    String formatElapsedTime(int elapsedSeconds) {
+      final minutes = elapsedSeconds ~/ 60;
+      final seconds = elapsedSeconds % 60;
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    }
 
     // 저장된 게임 이어서 하기 처리 (통합된 방식)
     useEffect(() {
@@ -414,35 +411,37 @@ class MainScreen extends HookConsumerWidget {
                         .then((hasSavedGame) {
                       if (hasSavedGame) {
                         // 저장된 게임이 있으면 진행시간을 가져와서 선택 다이얼로그 표시
-                        final savedGameData = gameSaveRepository.getSavedGameByDifficulty(difficulty);
+                        final savedGameData = gameSaveRepository
+                            .getSavedGameByDifficulty(difficulty);
                         if (savedGameData != null) {
-                          // 진행시간을 분:초 형식으로 변환
-                          final minutes = savedGameData.elapsedSeconds ~/ 60;
-                          final seconds = savedGameData.elapsedSeconds % 60;
                           final elapsedTimeString =
-                              '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+                              formatElapsedTime(savedGameData.elapsedSeconds);
 
-                          GameSelectionDialog.show(
+                          showDialog(
                             context: context,
-                            title: '게임 선택',
-                            message: '이미 진행 중인 게임이 있습니다. 어떻게 하시겠습니까?',
-                            difficulty: difficulty,
-                            elapsedTime: elapsedTimeString,
-                            onContinueGame: () {
-                              // 통합된 방식으로 저장된 게임 이어서 하기
-                              mainNotifier.handleIntent(
-                                ContinueSavedGameIntent(difficulty),
-                              );
-                            },
-                            onNewGame: () {
-                              // 새 게임 시작
-                              gamePreparationNotifier.handleIntent(
-                                StartGamePreparationIntent(
-                                  difficulty: difficulty,
-                                  isNewGame: true,
-                                ),
-                              );
-                            },
+                            builder: (context) => GameSelectionDialog(
+                              title: '게임 선택',
+                              message: '이미 진행 중인 게임이 있습니다. 어떻게 하시겠습니까?',
+                              difficulty: difficulty,
+                              elapsedTime: elapsedTimeString,
+                              onContinueGame: () {
+                                // 통합된 방식으로 저장된 게임 이어서 하기
+                                mainNotifier.handleIntent(
+                                  ContinueSavedGameIntent(difficulty),
+                                );
+                                Navigator.of(context).pop();
+                              },
+                              onNewGame: () {
+                                // 새 게임 시작
+                                gamePreparationNotifier.handleIntent(
+                                  StartGamePreparationIntent(
+                                    difficulty: difficulty,
+                                    isNewGame: true,
+                                  ),
+                                );
+                                Navigator.of(context).pop();
+                              },
+                            ),
                           );
                         }
                       } else {

@@ -21,26 +21,46 @@ class CacheService {
 
   /// 문자열 값 저장
   Future<bool> setString(String key, String value) async {
-    await _ensureInitialized();
-    return await _prefs!.setString(key, value);
+    try {
+      await _ensureInitialized();
+      final result = await _prefs!.setString(key, value);
+      return result;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// 문자열 값 로드
   String? getString(String key) {
-    _ensureInitializedSync();
-    return _prefs?.getString(key);
+    try {
+      _ensureInitializedSync();
+      final result = _prefs?.getString(key);
+      return result;
+    } catch (e) {
+      return null;
+    }
   }
 
   /// 정수 값 저장
   Future<bool> setInt(String key, int value) async {
-    await _ensureInitialized();
-    return await _prefs!.setInt(key, value);
+    try {
+      await _ensureInitialized();
+      final result = await _prefs!.setInt(key, value);
+      return result;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// 정수 값 로드
   int? getInt(String key) {
-    _ensureInitializedSync();
-    return _prefs?.getInt(key);
+    try {
+      _ensureInitializedSync();
+      final result = _prefs?.getInt(key);
+      return result;
+    } catch (e) {
+      return null;
+    }
   }
 
   /// 불리언 값 저장

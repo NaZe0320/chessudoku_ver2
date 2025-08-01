@@ -17,6 +17,7 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
 
   // 새로운 난이도별 저장 키
   static const String _lastPlayedTypeKey = 'last_played_type';
+  static const String _currentGameKey = 'current_game_key';
 
   // 난이도별 저장 키 생성 함수
   String _getSavedGameKeyByDifficulty(Difficulty difficulty) {
@@ -254,29 +255,18 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
   Future<bool> saveGameByDifficulty(
       SavedGameData game, Difficulty difficulty) async {
     try {
-      developer.log('난이도별 게임 저장 시작 - 난이도: $difficulty',
-          name: 'GameSaveRepository');
-
       final jsonString = jsonEncode(game.toJson());
       final difficultyKey = _getSavedGameKeyByDifficulty(difficulty);
 
       final success = await _cacheService.setString(difficultyKey, jsonString);
 
       if (success) {
-        // 가장 최근 플레이한 게임 타입 저장
-        await _cacheService.setString(_lastPlayedTypeKey, 'difficulty');
-        await _cacheService.setString(_difficultyKey, difficulty.name);
-        await _cacheService.setInt(
-            _timestampKey, DateTime.now().millisecondsSinceEpoch);
-        developer.log('난이도별 게임 저장 성공 - 키: $difficultyKey',
-            name: 'GameSaveRepository');
-      } else {
-        developer.log('난이도별 게임 저장 실패', name: 'GameSaveRepository');
+        // 현재 게임으로 설정
+        await _cacheService.setString(_currentGameKey, difficultyKey);
       }
 
       return success;
     } catch (e) {
-      developer.log('난이도별 게임 저장 중 오류 발생: $e', name: 'GameSaveRepository');
       return false;
     }
   }

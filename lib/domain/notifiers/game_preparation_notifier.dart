@@ -26,7 +26,7 @@ class GamePreparationNotifier
   void onIntent(GamePreparationIntent intent) {
     switch (intent) {
       case StartGamePreparationIntent():
-        _handleStartPreparation(intent.difficulty, intent.isNewGame);
+        _handleStartGamePreparation(intent);
       case CancelGamePreparationIntent():
         _handleCancelPreparation();
       case RetryGamePreparationIntent():
@@ -34,7 +34,10 @@ class GamePreparationNotifier
     }
   }
 
-  void _handleStartPreparation(Difficulty difficulty, bool isNewGame) async {
+  void _handleStartGamePreparation(StartGamePreparationIntent intent) async {
+    final difficulty = intent.difficulty;
+    final isNewGame = intent.isNewGame;
+
     state = state.copyWith(
       isPreparing: true,
       isReady: false,
@@ -54,8 +57,6 @@ class GamePreparationNotifier
             _gameSaveRepository.getSavedGameByDifficulty(difficulty);
         if (savedGameData != null) {
           gameBoard = savedGameData.board;
-        } else {
-          throw Exception('저장된 게임을 찾을 수 없습니다.');
         }
       }
 
@@ -65,6 +66,7 @@ class GamePreparationNotifier
           isReady: true,
           preparedBoard: gameBoard,
           puzzleId: gameBoard.puzzleId,
+          difficulty: difficulty, // 난이도 유지
         );
       } else {
         throw Exception('게임 보드를 생성할 수 없습니다.');
@@ -106,8 +108,6 @@ class GamePreparationNotifier
 
   // MainNotifier의 퍼즐 생성 로직을 복사
   GameBoard _createTestBoard(Difficulty difficulty) {
-    developer.log('테스트 보드 생성 시작', name: 'GamePreparationNotifier');
-
     // 완성된 스도쿠 답안 (대부분이 이미 채워진 상태)
     final solutionPuzzle = [
       [1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -139,25 +139,13 @@ class GamePreparationNotifier
       const Position(row: 4, col: 4): ChessPiece.queen, // 빈칸 위치에 queen
     };
 
-    developer.log('체스 기물 개수: ${chessPieces.length}',
-        name: 'GamePreparationNotifier');
-    for (final entry in chessPieces.entries) {
-      developer.log('체스 기물: ${entry.key} -> ${entry.value}',
-          name: 'GamePreparationNotifier');
-    }
-
     // 체스 기물을 포함한 보드 생성
     final puzzleBoard = SudokuBoard.fromPuzzleWithChess(
       puzzle: puzzleWithBlanks,
       chessPieces: chessPieces,
     );
 
-    developer.log('퍼즐 보드 생성 완료 - 셀 수: ${puzzleBoard.cells.length}',
-        name: 'GamePreparationNotifier');
-
     final solutionBoard = SudokuBoard.fromPuzzle(solutionPuzzle);
-    developer.log('솔루션 보드 생성 완료 - 셀 수: ${solutionBoard.cells.length}',
-        name: 'GamePreparationNotifier');
 
     final gameBoard = GameBoard(
       board: puzzleBoard,
@@ -165,9 +153,6 @@ class GamePreparationNotifier
       difficulty: difficulty,
       puzzleId: 'test_puzzle_simple',
     );
-
-    developer.log('게임 보드 생성 완료 - 최종 셀 수: ${gameBoard.board.cells.length}',
-        name: 'GamePreparationNotifier');
     return gameBoard;
   }
 

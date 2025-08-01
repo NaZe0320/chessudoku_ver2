@@ -1,19 +1,18 @@
-import 'package:chessudoku/ui/screens/game/widgets/sudoku_board.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:chessudoku/core/di/language_pack_provider.dart';
-import 'package:chessudoku/core/di/game_provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/game_provider.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/ui/common/widgets/exit_game_dialog.dart';
-import 'widgets/game_timer.dart';
-import 'widgets/game_action_buttons.dart';
-import 'widgets/number_buttons_grid.dart';
-import 'widgets/game_completion_dialog.dart';
-import 'dart:developer' as developer;
+import 'package:chessudoku/ui/screens/game/widgets/game_timer.dart';
+import 'package:chessudoku/ui/screens/game/widgets/sudoku_board.dart';
+import 'package:chessudoku/ui/screens/game/widgets/game_action_buttons.dart';
+import 'package:chessudoku/ui/screens/game/widgets/number_buttons_grid.dart';
+import 'package:chessudoku/ui/screens/game/widgets/game_completion_dialog.dart';
+import 'package:chessudoku/core/di/language_pack_provider.dart';
 
 class GameScreen extends HookConsumerWidget {
   const GameScreen({super.key});
@@ -29,8 +28,6 @@ class GameScreen extends HookConsumerWidget {
     useEffect(() {
       // GameScreen은 이미 MainScreen에서 준비된 게임 데이터로 시작됨
       // GameNotifier는 MainScreen에서 이미 초기화되어 있음
-      developer.log('GameScreen 진입 - 게임 상태 확인', name: 'GameScreen');
-
       return null;
     }, []);
 
@@ -104,8 +101,13 @@ class GameScreen extends HookConsumerWidget {
                 );
 
                 if (shouldExit == true) {
-                  // 게임 저장 후 나가기
-                  await gameNotifier.autoSave();
+                  // 게임 저장 후 나가기 (저장 완료를 기다림)
+                  try {
+                    await gameNotifier.autoSave();
+                  } catch (e) {
+                    // 저장 실패해도 나가기
+                  }
+
                   // 메인 화면에서 저장된 게임 상태 업데이트
                   mainNotifier.handleIntent(const CheckSavedGameIntent());
                   Navigator.of(context).pop();
