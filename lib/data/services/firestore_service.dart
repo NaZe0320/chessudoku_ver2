@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:chessudoku/domain/enums/difficulty.dart';
 
 /// Firestore 데이터베이스 서비스
 /// deviceId 기반 사용자 데이터 관리를 담당하는 싱글톤 클래스
@@ -10,6 +11,7 @@ class FirestoreService {
   // 컬렉션 이름
   static const String _usersCollection = 'users';
   static const String _versionsCollection = 'versions';
+  static const String _puzzlesCollection = 'puzzles';
 
   // 싱글톤 패턴 적용
   factory FirestoreService() {
@@ -118,6 +120,62 @@ class FirestoreService {
         'languages': 1,
         'notices': 1,
       };
+    }
+  }
+
+  /// Firebase에서 퍼즐 가져오기
+  Future<Map<String, dynamic>?> getPuzzleFromFirebase(
+      Difficulty difficulty) async {
+    try {
+      debugPrint('FirestoreService: 퍼즐 조회 중 - 난이도: ${difficulty.name}');
+
+      // 난이도별 퍼즐 컬렉션에서 랜덤 퍼즐 가져오기
+      final querySnapshot = await firestore
+          .collection(_puzzlesCollection)
+          .doc(difficulty.name) // /puzzles/easy
+          .collection('puzzles') // /puzzles/easy/puzzles
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final puzzleData = querySnapshot.docs.first.data();
+        debugPrint('FirestoreService: 퍼즐 조회 완료');
+        return puzzleData;
+      } else {
+        debugPrint('FirestoreService: 해당 난이도의 퍼즐이 존재하지 않음');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('FirestoreService: 퍼즐 조회 실패 - $e');
+      rethrow;
+    }
+  }
+
+  /// Firebase에서 특정 퍼즐 ID로 퍼즐 가져오기
+  Future<Map<String, dynamic>?> getPuzzleById(
+      String puzzleId, Difficulty difficulty) async {
+    try {
+      debugPrint(
+          'FirestoreService: 퍼즐 조회 중 - ID: $puzzleId, 난이도: ${difficulty.name}');
+
+      final doc = await firestore
+          .collection(_puzzlesCollection)
+          .doc(difficulty.name) // /puzzles/easy
+          .collection('puzzles') // /puzzles/easy/puzzles
+          .doc(puzzleId) // /puzzles/easy/puzzles/simple_puzzle_001
+          .get();
+
+      if (doc.exists) {
+        final puzzleData = doc.data() as Map<String, dynamic>;
+        debugPrint('FirestoreService: 퍼즐 조회 완료');
+        return puzzleData;
+      } else {
+        debugPrint('FirestoreService: 해당 ID의 퍼즐이 존재하지 않음');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('FirestoreService: 퍼즐 조회 실패 - $e');
+      rethrow;
     }
   }
 }

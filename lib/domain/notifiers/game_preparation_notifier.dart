@@ -2,6 +2,7 @@ import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/game_preparation_intent.dart';
 import 'package:chessudoku/domain/states/game_preparation_state.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
+import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
@@ -13,12 +14,15 @@ import 'dart:developer' as developer;
 class GamePreparationNotifier
     extends BaseNotifier<GamePreparationIntent, GamePreparationState> {
   final GameSaveRepository _gameSaveRepository;
+  final PuzzleRepository _puzzleRepository;
   final NetworkService _networkService;
 
   GamePreparationNotifier({
     required GameSaveRepository gameSaveRepository,
+    required PuzzleRepository puzzleRepository,
     NetworkService? networkService,
   })  : _gameSaveRepository = gameSaveRepository,
+        _puzzleRepository = puzzleRepository,
         _networkService = networkService ?? NetworkService(),
         super(const GamePreparationState());
 
@@ -49,7 +53,7 @@ class GamePreparationNotifier
       GameBoard? gameBoard;
 
       if (isNewGame) {
-        // 새 게임 준비 - 네트워크 상태 확인 후 퍼즐 생성
+        // 새 게임 준비 - Firebase에서 퍼즐 가져오기
         gameBoard = await _prepareNewGame(difficulty);
       } else {
         // 이어서 하기 - 저장된 게임 로드 (네트워크 불필요)
@@ -99,11 +103,31 @@ class GamePreparationNotifier
     final isOnline = await _networkService.checkConnectivity();
 
     if (!isOnline) {
+      // 오프라인일 때 캐시된 퍼즐 확인
+      final cachedPuzzle = _puzzleRepository.getCachedPuzzle(difficulty);
+      if (cachedPuzzle != null) {
+        developer.log('캐시된 퍼즐 사용 - 난이도: ${difficulty.name}');
+        return cachedPuzzle;
+      }
       throw Exception('인터넷 연결이 필요합니다. 새 퍼즐을 다운로드하려면 온라인 상태여야 합니다.');
     }
 
-    // 퍼즐 생성 (MainNotifier의 로직 사용)
-    return _createTestBoard(difficulty);
+    // Firebase에서 퍼즐 가져오기
+    try {
+      final puzzle = await _puzzleRepository.getPuzzleFromFirebase(difficulty);
+      if (puzzle != null) {
+        developer.log('Firebase에서 퍼즐 가져오기 성공 - 난이도: ${difficulty.name}');
+        return puzzle;
+      } else {
+        // Firebase에 퍼즐이 없으면 테스트 퍼즐 생성
+        developer.log('Firebase에 퍼즐이 없어 테스트 퍼즐 생성 - 난이도: ${difficulty.name}');
+        return _createTestBoard(difficulty);
+      }
+    } catch (e) {
+      developer.log('Firebase에서 퍼즐 가져오기 실패: $e');
+      // 실패 시 테스트 퍼즐 생성
+      return _createTestBoard(difficulty);
+    }
   }
 
   // MainNotifier의 퍼즐 생성 로직을 복사

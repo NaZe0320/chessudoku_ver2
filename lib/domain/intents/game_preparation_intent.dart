@@ -22,3 +22,4 @@ class CancelGamePreparationIntent extends GamePreparationIntent {
 class RetryGamePreparationIntent extends GamePreparationIntent {
   const RetryGamePreparationIntent();
 }
+
