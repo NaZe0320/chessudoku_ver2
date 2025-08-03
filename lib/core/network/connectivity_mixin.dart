@@ -81,7 +81,7 @@ mixin ConnectivityMixin {
       }
 
       return await apiCall();
-    } on ApiException catch (e) {
+    } on ApiException catch (_) {
       // 오프라인 에러는 상위에서 처리하도록 rethrow
       rethrow;
     } catch (e) {

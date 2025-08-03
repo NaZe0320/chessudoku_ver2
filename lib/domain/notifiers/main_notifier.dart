@@ -70,10 +70,6 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     }
   }
 
-  Future<void> _handleLoadSavedGame() async {
-    // TODO: 저장된 게임 로드 구현
-  }
-
   Future<void> _handleClearSavedGame() async {
     try {
       await _gameSaveRepository.clearCurrentGame();
