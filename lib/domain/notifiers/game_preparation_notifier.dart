@@ -2,6 +2,7 @@ import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/game_preparation_intent.dart';
 import 'package:chessudoku/domain/states/game_preparation_state.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
+import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
@@ -15,11 +16,14 @@ class GamePreparationNotifier
     extends BaseNotifier<GamePreparationIntent, GamePreparationState>
     with ConnectivityMixin {
   final GameSaveRepository _gameSaveRepository;
+  final PuzzleRepository _puzzleRepository;
 
   GamePreparationNotifier({
     required GameSaveRepository gameSaveRepository,
+    required PuzzleRepository puzzleRepository,
     NetworkService? networkService,
   })  : _gameSaveRepository = gameSaveRepository,
+        _puzzleRepository = puzzleRepository,
         super(const GamePreparationState());
 
   @override
@@ -109,75 +113,63 @@ class GamePreparationNotifier
       return null;
     }
 
-    // 퍼즐 생성 (MainNotifier의 로직 사용)
-    return _createTestBoard(difficulty);
+    // Firestore에서 퍼즐 가져오기
+    return _loadPuzzleFromFirestore(difficulty);
   }
 
-  // MainNotifier의 퍼즐 생성 로직을 복사
-  GameBoard _createTestBoard(Difficulty difficulty) {
-    developer.log('테스트 보드 생성 시작', name: 'GamePreparationNotifier');
-
-    // 완성된 스도쿠 답안 (대부분이 이미 채워진 상태)
-    final solutionPuzzle = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 9],
-      [4, 5, 6, 7, 8, 9, 1, 2, 3],
-      [7, 8, 9, 1, 2, 3, 4, 5, 6],
-      [2, 3, 4, 5, 6, 7, 8, 9, 1],
-      [5, 6, 7, 8, null, 1, 2, 3, 4],
-      [8, 9, 1, 2, 3, 4, 5, 6, 7],
-      [3, 4, 5, 6, 7, 8, 9, 1, 2],
-      [6, 7, 8, 9, 1, 2, 3, 4, 5],
-      [9, 1, 2, 3, 4, 5, 6, 7, 8],
-    ];
-
-    // 빈칸이 하나만 있는 퍼즐 (하나만 입력하면 완료)
-    final puzzleWithBlanks = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 9],
-      [4, 5, 6, 7, 8, 9, 1, 2, 3],
-      [7, 8, 9, 1, 2, 3, 4, 5, 6],
-      [2, 3, 4, 5, 6, 7, 8, 9, 1],
-      [5, 6, 7, 8, null, null, 2, 3, 4], // (4,4) 위치만 빈칸 (체스 기물 위치)
-      [8, 9, 1, 2, 3, 4, 5, 6, 7],
-      [3, 4, 5, 6, 7, 8, 9, 1, 2],
-      [6, 7, 8, 9, 1, 2, 3, 4, 5],
-      [9, 1, 2, 3, 4, 5, 6, 7, 8],
-    ];
-
-    // 체스 기물 배치 (빈칸 위치에 queen 배치)
-    final chessPieces = <Position, ChessPiece>{
-      const Position(row: 4, col: 4): ChessPiece.queen, // 빈칸 위치에 queen
-    };
-
-    developer.log('체스 기물 개수: ${chessPieces.length}',
-        name: 'GamePreparationNotifier');
-    for (final entry in chessPieces.entries) {
-      developer.log('체스 기물: ${entry.key} -> ${entry.value}',
+  /// Firestore에서 퍼즐을 가져와서 GameBoard로 변환
+  Future<GameBoard?> _loadPuzzleFromFirestore(Difficulty difficulty) async {
+    try {
+      developer.log('Firestore에서 퍼즐 로드 시작 - $difficulty',
           name: 'GamePreparationNotifier');
+
+      // Firestore에서 난이도별 랜덤 퍼즐 가져오기
+      final puzzle =
+          await _puzzleRepository.getRandomPuzzleByDifficulty(difficulty);
+
+      if (puzzle == null) {
+        developer.log('해당 난이도의 퍼즐을 찾을 수 없음 - $difficulty',
+            name: 'GamePreparationNotifier');
+        throw Exception('해당 난이도의 퍼즐을 찾을 수 없습니다.');
+      }
+
+      developer.log('퍼즐 로드 완료 - ${puzzle.puzzleId}',
+          name: 'GamePreparationNotifier');
+
+      // Firestore에서 가져온 체스 기물 사용
+      developer.log('체스 기물 개수: ${puzzle.chessPieces.length}',
+          name: 'GamePreparationNotifier');
+
+      // 체스 기물을 포함한 보드 생성
+      final puzzleBoard = SudokuBoard.fromPuzzleWithChess(
+        puzzle: puzzle.puzzle,
+        chessPieces: puzzle.chessPieces,
+      );
+
+      developer.log('퍼즐 보드 생성 완료 - 셀 수: ${puzzleBoard.cells.length}',
+          name: 'GamePreparationNotifier');
+
+      // 솔루션 보드 생성
+      final solutionBoard = SudokuBoard.fromPuzzle(puzzle.solution);
+      developer.log('솔루션 보드 생성 완료 - 셀 수: ${solutionBoard.cells.length}',
+          name: 'GamePreparationNotifier');
+
+      // GameBoard 생성
+      final gameBoard = GameBoard(
+        board: puzzleBoard,
+        solutionBoard: solutionBoard,
+        difficulty: puzzle.difficulty,
+        puzzleId: puzzle.puzzleId,
+      );
+
+      developer.log('게임 보드 생성 완료 - 최종 셀 수: ${gameBoard.board.cells.length}',
+          name: 'GamePreparationNotifier');
+      return gameBoard;
+    } catch (e) {
+      developer.log('Firestore에서 퍼즐 로드 실패 - $e',
+          name: 'GamePreparationNotifier');
+      rethrow;
     }
-
-    // 체스 기물을 포함한 보드 생성
-    final puzzleBoard = SudokuBoard.fromPuzzleWithChess(
-      puzzle: puzzleWithBlanks,
-      chessPieces: chessPieces,
-    );
-
-    developer.log('퍼즐 보드 생성 완료 - 셀 수: ${puzzleBoard.cells.length}',
-        name: 'GamePreparationNotifier');
-
-    final solutionBoard = SudokuBoard.fromPuzzle(solutionPuzzle);
-    developer.log('솔루션 보드 생성 완료 - 셀 수: ${solutionBoard.cells.length}',
-        name: 'GamePreparationNotifier');
-
-    final gameBoard = GameBoard(
-      board: puzzleBoard,
-      solutionBoard: solutionBoard,
-      difficulty: difficulty,
-      puzzleId: 'test_puzzle_simple',
-    );
-
-    developer.log('게임 보드 생성 완료 - 최종 셀 수: ${gameBoard.board.cells.length}',
-        name: 'GamePreparationNotifier');
-    return gameBoard;
   }
 
   /// 준비된 게임 데이터 반환
