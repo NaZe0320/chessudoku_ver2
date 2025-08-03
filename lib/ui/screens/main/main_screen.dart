@@ -53,6 +53,11 @@ class MainScreen extends HookConsumerWidget {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final gameNotifier = ref.read(gameNotifierProvider.notifier);
 
+          // 새 게임 시작 시 난이도 설정 추가
+          if (gamePreparationState.difficulty != null) {
+            gameNotifier.setCurrentDifficulty(gamePreparationState.difficulty!);
+          }
+
           // 새 게임 시작
           gameNotifier.handleIntent(
               StartGameIntent(gamePreparationState.preparedBoard!));
@@ -414,7 +419,8 @@ class MainScreen extends HookConsumerWidget {
                         .then((hasSavedGame) {
                       if (hasSavedGame) {
                         // 저장된 게임이 있으면 진행시간을 가져와서 선택 다이얼로그 표시
-                        final savedGameData = gameSaveRepository.getSavedGameByDifficulty(difficulty);
+                        final savedGameData = gameSaveRepository
+                            .getSavedGameByDifficulty(difficulty);
                         if (savedGameData != null) {
                           // 진행시간을 분:초 형식으로 변환
                           final minutes = savedGameData.elapsedSeconds ~/ 60;

@@ -127,6 +127,11 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
   void _handleStartGame(GameBoard preparedBoard) {
     developer.log('준비된 게임 데이터로 게임 시작', name: 'GameNotifier');
 
+    // 준비된 게임 보드의 난이도를 현재 난이도로 설정
+    _currentDifficulty = preparedBoard.difficulty;
+    developer.log('준비된 게임 보드의 난이도를 현재 난이도로 설정: $_currentDifficulty',
+        name: 'GameNotifier');
+
     // 선택된 셀을 초기화한 보드 생성
     final boardWithoutSelection = preparedBoard.selectCell(null);
 
@@ -211,6 +216,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         } else {
           // MainNotifier에서 난이도가 설정되지 않았으면 저장된 게임의 난이도 사용
           developer.log('MainNotifier에서 난이도가 설정되지 않아 저장된 게임의 난이도 사용',
+              name: 'GameNotifier');
+          // 저장된 게임의 난이도를 현재 난이도로 설정
+          _currentDifficulty = savedGameData.difficulty;
+          developer.log('저장된 게임의 난이도를 현재 난이도로 설정: $_currentDifficulty',
               name: 'GameNotifier');
           handleStartSavedGameFromPreparation(savedGameData);
         }
