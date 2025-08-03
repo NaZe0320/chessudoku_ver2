@@ -8,18 +8,18 @@ import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/core/network/network_service.dart';
+import 'package:chessudoku/core/network/connectivity_mixin.dart';
 import 'dart:developer' as developer;
 
 class GamePreparationNotifier
-    extends BaseNotifier<GamePreparationIntent, GamePreparationState> {
+    extends BaseNotifier<GamePreparationIntent, GamePreparationState>
+    with ConnectivityMixin {
   final GameSaveRepository _gameSaveRepository;
-  final NetworkService _networkService;
 
   GamePreparationNotifier({
     required GameSaveRepository gameSaveRepository,
     NetworkService? networkService,
   })  : _gameSaveRepository = gameSaveRepository,
-        _networkService = networkService ?? NetworkService(),
         super(const GamePreparationState());
 
   @override
@@ -48,6 +48,13 @@ class GamePreparationNotifier
       if (isNewGame) {
         // 새 게임 준비 - 네트워크 상태 확인 후 퍼즐 생성
         gameBoard = await _prepareNewGame(difficulty);
+
+        // 오프라인 상태인 경우 (null 반환) 여기서 처리
+        if (gameBoard == null) {
+          // _prepareNewGame에서 이미 오프라인 에러 상태로 설정했으므로
+          // 추가 처리 없이 종료
+          return;
+        }
       } else {
         // 이어서 하기 - 저장된 게임 로드 (네트워크 불필요)
         final savedGameData =
@@ -59,16 +66,12 @@ class GamePreparationNotifier
         }
       }
 
-      if (gameBoard != null) {
-        state = state.copyWith(
-          isPreparing: false,
-          isReady: true,
-          preparedBoard: gameBoard,
-          puzzleId: gameBoard.puzzleId,
-        );
-      } else {
-        throw Exception('게임 보드를 생성할 수 없습니다.');
-      }
+      state = state.copyWith(
+        isPreparing: false,
+        isReady: true,
+        preparedBoard: gameBoard,
+        puzzleId: gameBoard.puzzleId,
+      );
     } catch (e) {
       state = state.copyWith(
         isPreparing: false,
@@ -94,10 +97,16 @@ class GamePreparationNotifier
 
   Future<GameBoard?> _prepareNewGame(Difficulty difficulty) async {
     // 네트워크 상태 확인
-    final isOnline = await _networkService.checkConnectivity();
+    final isOnline = await checkConnectivity();
 
     if (!isOnline) {
-      throw Exception('인터넷 연결이 필요합니다. 새 퍼즐을 다운로드하려면 온라인 상태여야 합니다.');
+      // 오프라인 상태를 상태로 관리 (Exception 대신)
+      state = state.copyWith(
+        isPreparing: false,
+        isReady: false,
+        error: 'OFFLINE_ERROR: 인터넷 연결이 필요합니다. 새 퍼즐을 다운로드하려면 온라인 상태여야 합니다.',
+      );
+      return null;
     }
 
     // 퍼즐 생성 (MainNotifier의 로직 사용)

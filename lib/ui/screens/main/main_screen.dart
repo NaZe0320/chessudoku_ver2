@@ -81,13 +81,41 @@ class MainScreen extends HookConsumerWidget {
         // 오류가 있는 경우
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (gamePreparationState.error != null) {
-            // 일반 오류 메시지 표시
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('게임 준비 실패: ${gamePreparationState.error}'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            // 인터넷 연결 관련 에러인지 확인
+            if (gamePreparationState.error!.contains('OFFLINE_ERROR') ||
+                gamePreparationState.error!.contains('인터넷 연결') ||
+                gamePreparationState.error!.contains('온라인 상태')) {
+              // 오프라인 다이얼로그 표시
+              OfflineDialog.show(
+                context: context,
+                title: '인터넷 연결 필요',
+                message: gamePreparationState.error!
+                    .replaceAll('OFFLINE_ERROR: ', ''),
+                onRetry: () {
+                  // 게임 준비 재시도
+                  if (gamePreparationState.difficulty != null) {
+                    gamePreparationNotifier.handleIntent(
+                      StartGamePreparationIntent(
+                        difficulty: gamePreparationState.difficulty!,
+                        isNewGame: true,
+                      ),
+                    );
+                  }
+                },
+                onCancel: () {
+                  // 게임 준비 상태 초기화
+                  gamePreparationNotifier.reset();
+                },
+              );
+            } else {
+              // 일반 오류 메시지 표시
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('게임 준비 실패: ${gamePreparationState.error}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         });
       }
