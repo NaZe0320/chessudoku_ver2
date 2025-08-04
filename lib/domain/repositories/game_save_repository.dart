@@ -19,12 +19,6 @@ abstract class GameSaveRepository {
   /// 저장된 게임 정보 가져오기
   Future<String?> getSavedGameInfo();
 
-  /// 완료한 퍼즐 수 가져오기
-  Future<int> getCompletedPuzzlesCount();
-
-  /// 현재 연속 기록 가져오기
-  Future<int> getCurrentStreak();
-
   // 난이도별 저장 메서드들
   /// 난이도별 게임 저장
   Future<bool> saveGameByDifficulty(SavedGameData game, Difficulty difficulty);

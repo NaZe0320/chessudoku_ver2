@@ -237,18 +237,6 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
     }
   }
 
-  @override
-  Future<int> getCompletedPuzzlesCount() async {
-    // TODO: 완료한 퍼즐 수 가져오기 구현
-    return 0;
-  }
-
-  @override
-  Future<int> getCurrentStreak() async {
-    // TODO: 현재 연속 기록 가져오기 구현
-    return 0;
-  }
-
   // 새로운 난이도별 저장 메서드들
   @override
   Future<bool> saveGameByDifficulty(

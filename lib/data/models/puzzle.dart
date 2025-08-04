@@ -1,6 +1,7 @@
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/data/models/position.dart';
+import 'package:flutter/foundation.dart';
 
 /// Firestore에서 가져온 퍼즐 데이터 모델
 class Puzzle {
@@ -26,18 +27,31 @@ class Puzzle {
     return rows.map((row) {
       return row.split(',').map((cell) {
         if (cell == 'null') return null;
-        // 체스 기물 이모지가 포함된 경우 숫자만 추출
-        if (cell.contains('♝') ||
-            cell.contains('♗') ||
-            cell.contains('♔') ||
+
+        // 체스 기물 이모지가 포함된 경우 null로 처리
+        // 모든 체스 기물 이모지 패턴 확인
+        if (cell.contains('♔') ||
             cell.contains('♕') ||
             cell.contains('♖') ||
+            cell.contains('♗') ||
             cell.contains('♘') ||
-            cell.contains('♙')) {
-          // 체스 기물 위치의 숫자는 null로 처리 (체스 기물이 있으므로)
+            cell.contains('♙') ||
+            cell.contains('♚') ||
+            cell.contains('♛') ||
+            cell.contains('♜') ||
+            cell.contains('♝') ||
+            cell.contains('♞') ||
+            cell.contains('♟')) {
           return null;
         }
-        return int.parse(cell);
+
+        // 숫자가 아닌 문자가 포함된 경우 null로 처리
+        try {
+          return int.parse(cell);
+        } catch (e) {
+          debugPrint('Puzzle: 숫자 파싱 실패 - "$cell"');
+          return null;
+        }
       }).toList();
     }).toList();
   }
