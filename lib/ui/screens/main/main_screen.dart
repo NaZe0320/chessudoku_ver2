@@ -7,7 +7,6 @@ import 'package:chessudoku/domain/intents/game_preparation_intent.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/ui/screens/main/widgets/quick_play_grid.dart';
 import 'package:chessudoku/ui/screens/main/widgets/continue_play_card.dart';
-import 'package:chessudoku/ui/screens/main/widgets/daily_challenge_card.dart';
 import 'package:chessudoku/ui/common/widgets/stat_card.dart';
 import 'package:chessudoku/ui/common/widgets/game_selection_dialog.dart';
 import 'package:chessudoku/ui/common/widgets/offline_dialog.dart';
@@ -382,28 +381,6 @@ class MainScreen extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                 ],
-
-                // 일일 챌린지 카드
-                DailyChallengeCard(
-                  title: translate('daily_challenge', '일일 챌린지'),
-                  streakText: translate('may_streak', '7월 3째주'),
-                  statusText: translate('challenge_status', '이번 주 진행 상황'),
-                  messageText: translate(
-                      'special_puzzle_message', '매일 특별한 퍼즐로 연속 기록을 쌓아보세요!'),
-                  onDayTap: (day) {
-                    // TODO: 데일리 챌린지 게임 준비 로직 구현
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const GameScreen(),
-                      ),
-                    ).then((_) {
-                      // 게임 화면에서 돌아올 때 통계 새로고침
-                      mainNotifier.handleIntent(const LoadStatsIntent());
-                    });
-                  },
-                ),
-                const SizedBox(height: 24),
 
                 // 빠른 플레이 섹션
                 Row(
