@@ -6,8 +6,6 @@ import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
-import 'package:chessudoku/data/models/position.dart';
-import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/core/network/network_service.dart';
 import 'package:chessudoku/core/network/connectivity_mixin.dart';
 import 'dart:developer' as developer;
