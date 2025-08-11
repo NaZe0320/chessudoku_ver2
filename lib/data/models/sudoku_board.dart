@@ -252,30 +252,46 @@ class SudokuBoard {
 
           case ChessPiece.bishop:
           case ChessPiece.queen:
-            // 빗변(대각선) 커버리지: origin에서 4방향 레이
-            final drs = [1, 1, -1, -1];
-            final dcs = [1, -1, 1, -1];
-            bool isOnDiagonalFromOrigin = false;
-            if ((position.row - or).abs() == (position.col - oc).abs() &&
-                !(position.row == or && position.col == oc)) {
-              isOnDiagonalFromOrigin = true;
-            }
-            if (isOnDiagonalFromOrigin) {
-              for (int i = 0; i < 4; i++) {
-                var r = or + drs[i];
-                var c = oc + dcs[i];
+            {
+              // 후보 칸이 origin으로부터 어느 대각선(NE-SW 또는 NW-SE)에 놓여 있는지 판정
+              final dr = position.row - or;
+              final dc = position.col - oc;
+              if (dr == 0 && dc == 0) break; // 같은 칸이면 스킵
+              if (dr.abs() != dc.abs()) break; // 대각선이 아니면 스킵
+
+              // 같은 대각선 라인에 대해서만 검사 (양 대각선 전체를 묶지 않음)
+              // diagSameSign: (1,1) / (-1,-1) 라인, diagOppSign: (1,-1) / (-1,1) 라인
+              final bool diagSameSign =
+                  (dr > 0 && dc > 0) || (dr < 0 && dc < 0);
+
+              List<List<int>> directions;
+              if (diagSameSign) {
+                directions = const [
+                  [1, 1],
+                  [-1, -1],
+                ];
+              } else {
+                directions = const [
+                  [1, -1],
+                  [-1, 1],
+                ];
+              }
+
+              for (final d in directions) {
+                var r = or + d[0];
+                var c = oc + d[1];
                 while (inBounds(r, c)) {
                   if (!(r == position.row && c == position.col) &&
                       hasSameNumberAt(Position(row: r, col: c))) {
                     return false;
                   }
-                  r += drs[i];
-                  c += dcs[i];
+                  r += d[0];
+                  c += d[1];
                 }
               }
+              // Rook 성분(행/열)은 기본 스도쿠 제약으로 충분
+              break;
             }
-            // Rook 성분(행/열)은 기본 스도쿠 제약으로 충분하므로 생략
-            break;
 
           case ChessPiece.rook:
             // 행/열은 스도쿠 기본 제약으로 이미 차단됨
