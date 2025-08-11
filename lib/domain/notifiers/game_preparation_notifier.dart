@@ -3,25 +3,30 @@ import 'package:chessudoku/domain/intents/game_preparation_intent.dart';
 import 'package:chessudoku/domain/states/game_preparation_state.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
+import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/core/network/network_service.dart';
 import 'package:chessudoku/core/network/connectivity_mixin.dart';
 import 'dart:developer' as developer;
+import 'dart:math';
 
 class GamePreparationNotifier
     extends BaseNotifier<GamePreparationIntent, GamePreparationState>
     with ConnectivityMixin {
   final GameSaveRepository _gameSaveRepository;
   final PuzzleRepository _puzzleRepository;
+  final PuzzleRecordRepository _puzzleRecordRepository;
 
   GamePreparationNotifier({
     required GameSaveRepository gameSaveRepository,
     required PuzzleRepository puzzleRepository,
+    required PuzzleRecordRepository puzzleRecordRepository,
     NetworkService? networkService,
   })  : _gameSaveRepository = gameSaveRepository,
         _puzzleRepository = puzzleRepository,
+        _puzzleRecordRepository = puzzleRecordRepository,
         super(const GamePreparationState());
 
   @override
@@ -121,15 +126,27 @@ class GamePreparationNotifier
       developer.log('Firestore에서 퍼즐 로드 시작 - $difficulty',
           name: 'GamePreparationNotifier');
 
-      // Firestore에서 난이도별 랜덤 퍼즐 가져오기
-      final puzzle =
-          await _puzzleRepository.getRandomPuzzleByDifficulty(difficulty);
+      // 완료한 퍼즐 제외를 위한 임시 필터링
+      // 1) 해당 난이도의 완료 기록 조회 -> puzzleId 집합 생성
+      final completedRecords =
+          await _puzzleRecordRepository.getRecordsByDifficulty(difficulty);
+      final completedIds = completedRecords.map((r) => r.puzzleId).toSet();
 
-      if (puzzle == null) {
-        developer.log('해당 난이도의 퍼즐을 찾을 수 없음 - $difficulty',
+      // 2) 난이도별 퍼즐 목록을 배치로 가져와(임시: 50개) 완료 퍼즐 제외
+      final puzzles =
+          await _puzzleRepository.getPuzzlesByDifficulty(difficulty, limit: 50);
+      final candidates =
+          puzzles.where((p) => !completedIds.contains(p.puzzleId)).toList();
+
+      if (candidates.isEmpty) {
+        developer.log('완료하지 않은 퍼즐이 없습니다 - $difficulty',
             name: 'GamePreparationNotifier');
-        throw Exception('해당 난이도의 퍼즐을 찾을 수 없습니다.');
+        throw Exception('완료하지 않은 퍼즐이 없습니다.');
       }
+
+      // 3) 후보 중 랜덤 선택
+      final randomIndex = Random().nextInt(candidates.length);
+      final puzzle = candidates[randomIndex];
 
       developer.log('퍼즐 로드 완료 - ${puzzle.puzzleId}',
           name: 'GamePreparationNotifier');
