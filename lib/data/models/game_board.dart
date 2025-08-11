@@ -148,8 +148,11 @@ class GameBoard {
       for (int col = 0; col < 9; col++) {
         final position = Position(row: row, col: col);
         final currentContent = board.getCellContent(position);
-        final solutionContent = solutionBoard.getCellContent(position);
 
+        // 체스 기물이 있는 칸은 숫자 비교에서 제외
+        if (currentContent?.chessPiece != null) continue;
+
+        final solutionContent = solutionBoard.getCellContent(position);
         if (currentContent?.number != solutionContent?.number) {
           return false;
         }
