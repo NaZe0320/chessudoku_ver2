@@ -5,6 +5,7 @@ import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/domain/states/game_state.dart';
 import 'package:chessudoku/data/models/game_board.dart';
+import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
@@ -565,8 +566,90 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   /// 전체 보드의 빈 칸에 가능한 숫자 후보를 메모로 채우기
   void _handleAutoFillNotes() {
-    // 자동 메모 기능 비활성화 (의도적으로 동작하지 않음)
-    return;
+    _recomputeAllNotes();
+  }
+
+  // 자동 메모: 전체 보드의 후보 메모 재계산
+  void _recomputeAllNotes() {
+    final currentBoard = state.currentBoard;
+    if (currentBoard == null) return;
+
+    final originalBoard = currentBoard.board;
+    final newCells = Map<Position, CellContent>.from(originalBoard.cells);
+    bool changed = false;
+
+    for (int row = 0; row < 9; row++) {
+      for (int col = 0; col < 9; col++) {
+        final p = Position(row: row, col: col);
+        final content = newCells[p];
+
+        final hasNumber = content?.number != null;
+        final isInitial = content?.isInitial == true;
+        final hasPiece = content?.chessPiece != null;
+
+        // 숫자가 있는 칸은 메모 제거
+        if (hasNumber) {
+          final oldNotes = content?.notes ?? {};
+          if (oldNotes.isNotEmpty) {
+            newCells[p] = CellContent(
+              number: content!.number,
+              notes: {},
+              chessPiece: content.chessPiece,
+              isInitial: content.isInitial,
+            );
+            changed = true;
+          }
+          continue;
+        }
+
+        // 초기값 또는 체스 기물이 있는 칸은 메모 제거
+        if (isInitial || hasPiece) {
+          final oldNotes = content?.notes ?? {};
+          if (oldNotes.isNotEmpty) {
+            newCells[p] = CellContent(
+              notes: {},
+              chessPiece: content?.chessPiece,
+              isInitial: isInitial,
+            );
+            changed = true;
+          }
+          continue;
+        }
+
+        // 비어있는 일반 칸의 후보 계산 후 메모로 설정
+        final candidates = _computeCandidatesForCell(p, originalBoard);
+        final oldNotes = content?.notes ?? {};
+        final isSame = oldNotes.length == candidates.length &&
+            oldNotes.containsAll(candidates);
+        if (!isSame) {
+          newCells[p] = CellContent(
+            number: null,
+            notes: candidates,
+            chessPiece: content?.chessPiece,
+            isInitial: false,
+          );
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      final updatedBoard = originalBoard.copyWith(cells: newCells);
+      final updatedGameBoard = currentBoard.copyWith(board: updatedBoard);
+      state = state.copyWith(currentBoard: updatedGameBoard);
+
+      _updateSelectedNumbersFromCurrentCell();
+    }
+  }
+
+  Set<int> _computeCandidatesForCell(Position position, SudokuBoard board) {
+    final candidates = <int>{};
+    for (int n = 1; n <= 9; n++) {
+      if (board.isValidWithChessConstraints(position: position, number: n)) {
+        candidates.add(n);
+      }
+    }
+    return candidates;
   }
 
   // 체스 기물 제약 범위 하이라이트

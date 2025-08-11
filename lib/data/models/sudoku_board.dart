@@ -157,6 +157,12 @@ class SudokuBoard {
   }
 
   /// 체스 기물 제약을 고려한 유효성 검사
+  ///
+  /// 규칙 적용 방식:
+  /// - 기본 스도쿠 제약(행/열/블록)은 항상 적용
+  /// - 체스 제약은 "각 체스 기물 칸을 기점으로" 그 기물이 도달하는 범위 내에서만 적용
+  ///   예) Knight 기물이 위치한 칸에서 L자 범위로 뻗은 칸들 사이에서는 동일 숫자 금지
+  ///       (보드 전역 anti-knight가 아님)
   bool isValidWithChessConstraints({
     required Position position,
     required int number,
@@ -165,79 +171,122 @@ class SudokuBoard {
       return false;
     }
 
-    // 보드에 배치된 체스 기물 종류 수집 (존재하는 기물의 규칙만 적용)
-    final activePieces = <ChessPiece>{};
-    for (int row = 0; row < 9; row++) {
-      for (int col = 0; col < 9; col++) {
-        final piece = getCellContent(Position(row: row, col: col))?.chessPiece;
-        if (piece != null) activePieces.add(piece);
-      }
-    }
+    bool inBounds(int r, int c) => r >= 0 && r < 9 && c >= 0 && c < 9;
 
     bool hasSameNumberAt(Position p) {
       final content = getCellContent(p);
       return content?.number == number;
     }
 
-    bool inBounds(int r, int c) => r >= 0 && r < 9 && c >= 0 && c < 9;
+    // 보드의 모든 체스 기물 칸을 순회하며, 해당 칸을 기점으로 한 제약만 적용
+    for (int or = 0; or < 9; or++) {
+      for (int oc = 0; oc < 9; oc++) {
+        final origin = Position(row: or, col: oc);
+        final piece = getCellContent(origin)?.chessPiece;
+        if (piece == null) continue;
 
-    // King: 인접 8칸 동일 숫자 금지
-    if (activePieces.contains(ChessPiece.king)) {
-      for (int dr = -1; dr <= 1; dr++) {
-        for (int dc = -1; dc <= 1; dc++) {
-          if (dr == 0 && dc == 0) continue;
-          final r = position.row + dr;
-          final c = position.col + dc;
-          if (inBounds(r, c) && hasSameNumberAt(Position(row: r, col: c))) {
-            return false;
-          }
+        switch (piece) {
+          case ChessPiece.king:
+            // origin의 인접 8칸 집합 S
+            bool isInCoverage = false;
+            for (int dr = -1; dr <= 1; dr++) {
+              for (int dc = -1; dc <= 1; dc++) {
+                if (dr == 0 && dc == 0) continue;
+                final r = or + dr;
+                final c = oc + dc;
+                if (!inBounds(r, c)) continue;
+                if (position.row == r && position.col == c) {
+                  isInCoverage = true;
+                }
+              }
+            }
+            if (isInCoverage) {
+              for (int dr = -1; dr <= 1; dr++) {
+                for (int dc = -1; dc <= 1; dc++) {
+                  if (dr == 0 && dc == 0) continue;
+                  final r = or + dr;
+                  final c = oc + dc;
+                  if (!inBounds(r, c)) continue;
+                  if (r == position.row && c == position.col) continue;
+                  if (hasSameNumberAt(Position(row: r, col: c))) {
+                    return false;
+                  }
+                }
+              }
+            }
+            break;
+
+          case ChessPiece.knight:
+            const deltas = [
+              [2, 1],
+              [2, -1],
+              [-2, 1],
+              [-2, -1],
+              [1, 2],
+              [1, -2],
+              [-1, 2],
+              [-1, -2],
+            ];
+            bool isInCoverage = false;
+            for (final d in deltas) {
+              final r = or + d[0];
+              final c = oc + d[1];
+              if (!inBounds(r, c)) continue;
+              if (position.row == r && position.col == c) {
+                isInCoverage = true;
+                break;
+              }
+            }
+            if (isInCoverage) {
+              for (final d in deltas) {
+                final r = or + d[0];
+                final c = oc + d[1];
+                if (!inBounds(r, c)) continue;
+                if (r == position.row && c == position.col) continue;
+                if (hasSameNumberAt(Position(row: r, col: c))) {
+                  return false;
+                }
+              }
+            }
+            break;
+
+          case ChessPiece.bishop:
+          case ChessPiece.queen:
+            // 빗변(대각선) 커버리지: origin에서 4방향 레이
+            final drs = [1, 1, -1, -1];
+            final dcs = [1, -1, 1, -1];
+            bool isOnDiagonalFromOrigin = false;
+            if ((position.row - or).abs() == (position.col - oc).abs() &&
+                !(position.row == or && position.col == oc)) {
+              isOnDiagonalFromOrigin = true;
+            }
+            if (isOnDiagonalFromOrigin) {
+              for (int i = 0; i < 4; i++) {
+                var r = or + drs[i];
+                var c = oc + dcs[i];
+                while (inBounds(r, c)) {
+                  if (!(r == position.row && c == position.col) &&
+                      hasSameNumberAt(Position(row: r, col: c))) {
+                    return false;
+                  }
+                  r += drs[i];
+                  c += dcs[i];
+                }
+              }
+            }
+            // Rook 성분(행/열)은 기본 스도쿠 제약으로 충분하므로 생략
+            break;
+
+          case ChessPiece.rook:
+            // 행/열은 스도쿠 기본 제약으로 이미 차단됨
+            break;
+
+          case ChessPiece.pawn:
+            // 현재 별도 제약 없음
+            break;
         }
       }
     }
-
-    // Knight: L자 위치 동일 숫자 금지 (기물 유무와 관계없이 항상 적용)
-    const deltas = [
-      [2, 1],
-      [2, -1],
-      [-2, 1],
-      [-2, -1],
-      [1, 2],
-      [1, -2],
-      [-1, 2],
-      [-1, -2],
-    ];
-    for (final d in deltas) {
-      final r = position.row + d[0];
-      final c = position.col + d[1];
-      if (inBounds(r, c) && hasSameNumberAt(Position(row: r, col: c))) {
-        return false;
-      }
-    }
-
-    // Bishop: 대각선 어디든 동일 숫자 금지
-    if (activePieces.contains(ChessPiece.bishop) ||
-        activePieces.contains(ChessPiece.queen)) {
-      const dirs = [
-        [1, 1],
-        [1, -1],
-        [-1, 1],
-        [-1, -1],
-      ];
-      for (final d in dirs) {
-        var r = position.row + d[0];
-        var c = position.col + d[1];
-        while (inBounds(r, c)) {
-          if (hasSameNumberAt(Position(row: r, col: c))) {
-            return false;
-          }
-          r += d[0];
-          c += d[1];
-        }
-      }
-    }
-
-    // Rook/Queen: 같은 행/열 동일 숫자 금지는 기본 스도쿠 규칙으로 이미 차단됨
-    // 별도 체크 불필요
 
     return true;
   }
