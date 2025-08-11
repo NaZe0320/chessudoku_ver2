@@ -92,3 +92,14 @@ class RedoIntent extends GameIntent {
 class LoadSavedGameIntent extends GameIntent {
   const LoadSavedGameIntent();
 }
+
+/// 전체 보드 자동 메모(가능한 후보 숫자를 메모로 채우기)
+class AutoFillNotesIntent extends GameIntent {
+  const AutoFillNotesIntent();
+}
+
+/// 체스 기물 제약 범위 하이라이트
+class ShowChessConstraintIntent extends GameIntent {
+  final Position position;
+  const ShowChessConstraintIntent(this.position);
+}

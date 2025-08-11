@@ -7,6 +7,7 @@ import 'package:chessudoku/domain/states/game_state.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
@@ -120,6 +121,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         _handleRedo();
       case LoadSavedGameIntent():
         _handleLoadSavedGame();
+      case AutoFillNotesIntent():
+        _handleAutoFillNotes();
+      case ShowChessConstraintIntent():
+        _handleShowChessConstraint(intent.position);
     }
   }
 
@@ -311,7 +316,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       if (newNotes.contains(number)) {
         newNotes.remove(number); // 이미 있으면 제거
       } else {
-        newNotes.add(number); // 없으면 추가
+        newNotes.add(number); // 없으면 추가 (수동 메모는 제약 미적용)
       }
 
       final newContent = CellContent(
@@ -333,7 +338,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
       // selectedCellContent 업데이트
       state = state.copyWith(selectedCellContent: newContent);
     } else {
-      // 기존 메모 토글
+      // 기존 메모 토글 (수동 메모는 제약 미적용)
       final newContent =
           currentContent?.toggleNote(number) ?? CellContent(notes: {number});
 
@@ -395,6 +400,7 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isInitial: false, // 사용자 입력
       );
 
+      // 숫자 배치 (메모 자동 정리하지 않음)
       final newBoard = currentBoard.board.setCellContent(position, newContent);
 
       // 숫자 입력 시 모든 오류 검사 내용 초기화
@@ -412,6 +418,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     // 게임 완료 체크
     _handleCheckGameCompletion();
   }
+
+  // 자동 메모 비활성화에 따라 사용되지 않음
 
   void _handleToggleNoteMode() {
     final currentBoard = state.currentBoard;
@@ -553,6 +561,126 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         _gameSaveRepository.clearGameByDifficulty(_currentDifficulty!);
       }
     }
+  }
+
+  /// 전체 보드의 빈 칸에 가능한 숫자 후보를 메모로 채우기
+  void _handleAutoFillNotes() {
+    // 자동 메모 기능 비활성화 (의도적으로 동작하지 않음)
+    return;
+  }
+
+  // 체스 기물 제약 범위 하이라이트
+  void _handleShowChessConstraint(Position position) {
+    final currentBoard = state.currentBoard;
+    if (currentBoard == null) return;
+
+    final content = currentBoard.board.getCellContent(position);
+    final piece = content?.chessPiece;
+    if (piece == null) {
+      // 기물이 없으면 일반 셀 선택 동작 수행
+      _handleSelectCell(position);
+      return;
+    }
+
+    final highlighted = _computeConstraintCoverage(position, piece);
+
+    // 선택 셀을 기물 위치로 설정하고 하이라이트 교체
+    final newBoard = currentBoard.copyWith(
+      selectedCell: position,
+      highlightedCells: highlighted,
+    );
+
+    state = state.copyWith(currentBoard: newBoard);
+  }
+
+  Set<Position> _computeConstraintCoverage(Position origin, ChessPiece piece) {
+    switch (piece) {
+      case ChessPiece.king:
+        return _kingCoverage(origin);
+      case ChessPiece.knight:
+        return _knightCoverage(origin);
+      case ChessPiece.bishop:
+        return _bishopCoverage(origin);
+      case ChessPiece.rook:
+        return _rookCoverage(origin);
+      case ChessPiece.queen:
+        final s = <Position>{}
+          ..addAll(_rookCoverage(origin))
+          ..addAll(_bishopCoverage(origin));
+        return s;
+      case ChessPiece.pawn:
+        return <Position>{};
+    }
+  }
+
+  bool _inBounds(int r, int c) => r >= 0 && r < 9 && c >= 0 && c < 9;
+
+  Set<Position> _kingCoverage(Position o) {
+    final res = <Position>{};
+    for (int dr = -1; dr <= 1; dr++) {
+      for (int dc = -1; dc <= 1; dc++) {
+        if (dr == 0 && dc == 0) continue;
+        final r = o.row + dr;
+        final c = o.col + dc;
+        if (_inBounds(r, c)) res.add(Position(row: r, col: c));
+      }
+    }
+    return res;
+  }
+
+  Set<Position> _knightCoverage(Position o) {
+    final res = <Position>{};
+    const deltas = [
+      [2, 1],
+      [2, -1],
+      [-2, 1],
+      [-2, -1],
+      [1, 2],
+      [1, -2],
+      [-1, 2],
+      [-1, -2],
+    ];
+    for (final d in deltas) {
+      final r = o.row + d[0];
+      final c = o.col + d[1];
+      if (_inBounds(r, c)) res.add(Position(row: r, col: c));
+    }
+    return res;
+  }
+
+  Set<Position> _bishopCoverage(Position o) {
+    final res = <Position>{};
+    const dirs = [
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ];
+    for (final d in dirs) {
+      var r = o.row + d[0];
+      var c = o.col + d[1];
+      while (_inBounds(r, c)) {
+        res.add(Position(row: r, col: c));
+        r += d[0];
+        c += d[1];
+      }
+    }
+    return res;
+  }
+
+  Set<Position> _rookCoverage(Position o) {
+    final res = <Position>{};
+    // rows
+    for (int c = 0; c < 9; c++) {
+      if (c == o.col) continue;
+      res.add(Position(row: o.row, col: c));
+    }
+    // cols
+    for (int r = 0; r < 9; r++) {
+      if (r == o.row) continue;
+      res.add(Position(row: r, col: o.col));
+    }
+    return res;
   }
 
   // 게임 완료 기록 저장

@@ -41,6 +41,16 @@ class GameActionButtons extends HookConsumerWidget {
           },
         ),
         GameActionButton(
+          icon: Icons.auto_fix_high,
+          text: translate('auto_note', '자동 메모'),
+          isActive: true,
+          isPaused: gameState.isPaused,
+          buttonType: ButtonType.action,
+          onTap: () {
+            gameNotifier.handleIntent(const AutoFillNotesIntent());
+          },
+        ),
+        GameActionButton(
           icon: Icons.redo,
           text: translate('redo', '다시 실행'),
           isActive: gameState.canRedo,

@@ -81,7 +81,13 @@ class SudokuBoard extends HookConsumerWidget {
                       isHighlighted: isHighlighted,
                       hasError: hasError,
                       onTap: () {
-                        gameNotifier.handleIntent(SelectCellIntent(position));
+                        final piece = cellContent?.chessPiece;
+                        if (piece != null) {
+                          gameNotifier.handleIntent(
+                              ShowChessConstraintIntent(position));
+                        } else {
+                          gameNotifier.handleIntent(SelectCellIntent(position));
+                        }
                       },
                     ),
                   );
