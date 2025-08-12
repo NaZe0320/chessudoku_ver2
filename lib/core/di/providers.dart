@@ -6,6 +6,7 @@ import '../../data/repositories/version_repository_impl.dart';
 import '../../data/repositories/game_save_repository_impl.dart';
 import '../../data/repositories/user_profile_repository_impl.dart';
 import '../../data/repositories/puzzle_record_repository_impl.dart';
+import '../../data/repositories/puzzle_repository_impl.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/cache_service.dart';
 import '../../data/services/database_service.dart';
@@ -15,10 +16,13 @@ import '../../domain/repositories/version_repository.dart';
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/user_profile_repository.dart';
 import '../../domain/repositories/puzzle_record_repository.dart';
+import '../../domain/repositories/puzzle_repository.dart';
 import '../../domain/notifiers/sync_notifier.dart';
 import '../../domain/states/sync_state.dart';
 import '../../domain/notifiers/main_notifier.dart';
 import '../../domain/states/main_state.dart';
+import '../../domain/notifiers/game_preparation_notifier.dart';
+import '../../domain/states/game_preparation_state.dart';
 import './language_pack_provider.dart';
 import '../network/network_service.dart';
 import '../sync/sync_manager.dart';
@@ -104,12 +108,32 @@ final puzzleRecordRepositoryProvider = Provider<PuzzleRecordRepository>((ref) {
   return PuzzleRecordRepositoryImpl(databaseService);
 });
 
+/// PuzzleRepository Provider
+final puzzleRepositoryProvider = Provider<PuzzleRepository>((ref) {
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  return PuzzleRepositoryImpl(firestoreService: firestoreService);
+});
+
 /// MainNotifier Provider
 final mainNotifierProvider =
     StateNotifierProvider<MainNotifier, MainState>((ref) {
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
   final userProfileRepository = ref.watch(userProfileRepositoryProvider);
   return MainNotifier(gameSaveRepository, userProfileRepository);
+});
+
+/// GamePreparationNotifier Provider
+final gamePreparationNotifierProvider =
+    StateNotifierProvider<GamePreparationNotifier, GamePreparationState>((ref) {
+  final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
+  final puzzleRepository = ref.watch(puzzleRepositoryProvider);
+  final networkService = ref.watch(networkServiceProvider);
+  return GamePreparationNotifier(
+    gameSaveRepository: gameSaveRepository,
+    puzzleRepository: puzzleRepository,
+    puzzleRecordRepository: ref.watch(puzzleRecordRepositoryProvider),
+    networkService: networkService,
+  );
 });
 
 /// NetworkService Provider

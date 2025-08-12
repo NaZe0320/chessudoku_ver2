@@ -9,10 +9,6 @@ class CheckSavedGameIntent extends MainIntent {
   const CheckSavedGameIntent();
 }
 
-class LoadSavedGameIntent extends MainIntent {
-  const LoadSavedGameIntent();
-}
-
 class ClearSavedGameIntent extends MainIntent {
   const ClearSavedGameIntent();
 }
@@ -28,7 +24,8 @@ class StartNewGameIntent extends MainIntent {
 }
 
 class ContinueSavedGameIntent extends MainIntent {
-  const ContinueSavedGameIntent();
+  final Difficulty? difficulty;
+  const ContinueSavedGameIntent([this.difficulty]);
 }
 
 class GetGameStartInfoIntent extends MainIntent {

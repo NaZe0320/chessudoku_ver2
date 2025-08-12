@@ -10,9 +10,18 @@ import 'package:chessudoku/domain/enums/difficulty.dart';
 class GameSaveRepositoryImpl implements GameSaveRepository {
   final CacheService _cacheService;
 
+  // 기존 키 (하위 호환성 유지)
   static const String _savedGameKey = 'saved_game_data';
   static const String _difficultyKey = 'saved_game_difficulty';
   static const String _timestampKey = 'saved_game_timestamp';
+
+  // 새로운 난이도별 저장 키
+  static const String _lastPlayedTypeKey = 'last_played_type';
+
+  // 난이도별 저장 키 생성 함수
+  String _getSavedGameKeyByDifficulty(Difficulty difficulty) {
+    return 'saved_game_${difficulty.name}';
+  }
 
   GameSaveRepositoryImpl(this._cacheService);
 
@@ -39,7 +48,7 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
         redoHistory: gameState.redoHistory,
         difficulty: difficulty,
         savedAt: DateTime.now(),
-        checkpoints: gameState.checkpoints, // 체크포인트 정보 추가
+        checkpoints: gameState.checkpoints,
       );
 
       // JSON으로 직렬화
@@ -47,15 +56,20 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
       developer.log('JSON 직렬화 완료 - 길이: ${jsonString.length}',
           name: 'GameSaveRepository');
 
+      // 난이도별 저장 키 사용
+      final difficultyKey = _getSavedGameKeyByDifficulty(difficulty);
+
       // 저장
-      final success = await _cacheService.setString(_savedGameKey, jsonString);
+      final success = await _cacheService.setString(difficultyKey, jsonString);
 
       if (success) {
-        // 난이도와 타임스탬프도 별도 저장
+        // 가장 최근 플레이한 게임 타입 저장
+        await _cacheService.setString(_lastPlayedTypeKey, 'difficulty');
         await _cacheService.setString(_difficultyKey, difficulty.name);
         await _cacheService.setInt(
             _timestampKey, DateTime.now().millisecondsSinceEpoch);
-        developer.log('게임 저장 성공', name: 'GameSaveRepository');
+        developer.log('게임 저장 성공 - 키: $difficultyKey',
+            name: 'GameSaveRepository');
       } else {
         developer.log('게임 저장 실패', name: 'GameSaveRepository');
       }
@@ -72,6 +86,20 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
     try {
       developer.log('저장된 게임 로드 시작', name: 'GameSaveRepository');
 
+      // 가장 최근 플레이한 게임 타입 확인
+      final lastPlayedType = _cacheService.getString(_lastPlayedTypeKey);
+      if (lastPlayedType == 'difficulty') {
+        final difficultyName = _cacheService.getString(_difficultyKey);
+        if (difficultyName != null) {
+          final difficulty = Difficulty.values.firstWhere(
+            (e) => e.name == difficultyName,
+            orElse: () => Difficulty.easy,
+          );
+          return getSavedGameByDifficulty(difficulty);
+        }
+      }
+
+      // 기존 방식으로 로드 (하위 호환성)
       final jsonString = _cacheService.getString(_savedGameKey);
       if (jsonString == null) {
         developer.log('저장된 게임 데이터가 없습니다.', name: 'GameSaveRepository');
@@ -104,9 +132,36 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
   @override
   Future<bool> clearCurrentGame() async {
     try {
+      // 기존 저장 키들 삭제
       await _cacheService.remove(_savedGameKey);
       await _cacheService.remove(_difficultyKey);
       await _cacheService.remove(_timestampKey);
+      await _cacheService.remove(_lastPlayedTypeKey);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 특정 난이도의 저장된 게임 삭제
+  @override
+  Future<bool> clearGameByDifficulty(Difficulty difficulty) async {
+    try {
+      final difficultyKey = _getSavedGameKeyByDifficulty(difficulty);
+      await _cacheService.remove(difficultyKey);
+
+      // 현재 삭제한 난이도가 마지막 플레이한 게임인 경우 메타데이터도 삭제
+      final lastPlayedType = _cacheService.getString(_lastPlayedTypeKey);
+      final lastDifficultyName = _cacheService.getString(_difficultyKey);
+
+      if (lastPlayedType == 'difficulty' &&
+          lastDifficultyName == difficulty.name) {
+        await _cacheService.remove(_difficultyKey);
+        await _cacheService.remove(_timestampKey);
+        await _cacheService.remove(_lastPlayedTypeKey);
+      }
+
       return true;
     } catch (e) {
       return false;
@@ -117,6 +172,20 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
   Future<bool> hasSavedGame() async {
     developer.log('hasSavedGame 호출', name: 'GameSaveRepository');
     try {
+      // 가장 최근 플레이한 게임이 있는지 확인
+      final lastPlayedType = _cacheService.getString(_lastPlayedTypeKey);
+      if (lastPlayedType == 'difficulty') {
+        final difficultyName = _cacheService.getString(_difficultyKey);
+        if (difficultyName != null) {
+          final difficulty = Difficulty.values.firstWhere(
+            (e) => e.name == difficultyName,
+            orElse: () => Difficulty.easy,
+          );
+          return hasSavedGameByDifficulty(difficulty);
+        }
+      }
+
+      // 기존 방식으로 확인 (하위 호환성)
       final result = _cacheService.containsKey(_savedGameKey);
       developer.log('hasSavedGame 결과: $result', name: 'GameSaveRepository');
       return result;
@@ -130,7 +199,7 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
   Future<String?> getSavedGameInfo() async {
     developer.log('getSavedGameInfo 호출', name: 'GameSaveRepository');
     try {
-      final savedGame = loadCurrentGame();
+      final savedGame = getLatestPlayedGame();
       if (savedGame == null) {
         developer.log('저장된 게임이 없음', name: 'GameSaveRepository');
         return null;
@@ -168,15 +237,113 @@ class GameSaveRepositoryImpl implements GameSaveRepository {
     }
   }
 
+  // 새로운 난이도별 저장 메서드들
   @override
-  Future<int> getCompletedPuzzlesCount() async {
-    // TODO: 완료한 퍼즐 수 가져오기 구현
-    return 0;
+  Future<bool> saveGameByDifficulty(
+      SavedGameData game, Difficulty difficulty) async {
+    try {
+      developer.log('난이도별 게임 저장 시작 - 난이도: $difficulty',
+          name: 'GameSaveRepository');
+
+      final jsonString = jsonEncode(game.toJson());
+      final difficultyKey = _getSavedGameKeyByDifficulty(difficulty);
+
+      final success = await _cacheService.setString(difficultyKey, jsonString);
+
+      if (success) {
+        // 가장 최근 플레이한 게임 타입 저장
+        await _cacheService.setString(_lastPlayedTypeKey, 'difficulty');
+        await _cacheService.setString(_difficultyKey, difficulty.name);
+        await _cacheService.setInt(
+            _timestampKey, DateTime.now().millisecondsSinceEpoch);
+        developer.log('난이도별 게임 저장 성공 - 키: $difficultyKey',
+            name: 'GameSaveRepository');
+      } else {
+        developer.log('난이도별 게임 저장 실패', name: 'GameSaveRepository');
+      }
+
+      return success;
+    } catch (e) {
+      developer.log('난이도별 게임 저장 중 오류 발생: $e', name: 'GameSaveRepository');
+      return false;
+    }
   }
 
   @override
-  Future<int> getCurrentStreak() async {
-    // TODO: 현재 연속 기록 가져오기 구현
-    return 0;
+  SavedGameData? getSavedGameByDifficulty(Difficulty difficulty) {
+    try {
+      developer.log('난이도별 게임 로드 시작 - 난이도: $difficulty',
+          name: 'GameSaveRepository');
+
+      final difficultyKey = _getSavedGameKeyByDifficulty(difficulty);
+      final jsonString = _cacheService.getString(difficultyKey);
+
+      if (jsonString == null) {
+        developer.log('해당 난이도의 저장된 게임이 없습니다.', name: 'GameSaveRepository');
+        return null;
+      }
+
+      final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      final savedGameData = SavedGameData.fromJson(jsonMap);
+
+      developer.log('난이도별 게임 로드 성공 - 난이도: $difficulty',
+          name: 'GameSaveRepository');
+      return savedGameData;
+    } catch (e) {
+      developer.log('난이도별 게임 로드 중 오류 발생: $e', name: 'GameSaveRepository');
+      return null;
+    }
+  }
+
+  @override
+  SavedGameData? getLatestPlayedGame() {
+    try {
+      developer.log('가장 최근 플레이한 게임 조회 시작', name: 'GameSaveRepository');
+
+      final lastPlayedType = _cacheService.getString(_lastPlayedTypeKey);
+      if (lastPlayedType == 'difficulty') {
+        final difficultyName = _cacheService.getString(_difficultyKey);
+        if (difficultyName != null) {
+          final difficulty = Difficulty.values.firstWhere(
+            (e) => e.name == difficultyName,
+            orElse: () => Difficulty.easy,
+          );
+          return getSavedGameByDifficulty(difficulty);
+        }
+      }
+
+      // 기존 방식으로 조회 (하위 호환성)
+      return loadCurrentGame();
+    } catch (e) {
+      developer.log('가장 최근 플레이한 게임 조회 중 오류 발생: $e', name: 'GameSaveRepository');
+      return null;
+    }
+  }
+
+  @override
+  String? getLastPlayedType() {
+    return _cacheService.getString(_lastPlayedTypeKey);
+  }
+
+  @override
+  Future<bool> hasSavedGameByDifficulty(Difficulty difficulty) async {
+    try {
+      final difficultyKey = _getSavedGameKeyByDifficulty(difficulty);
+      return _cacheService.containsKey(difficultyKey);
+    } catch (e) {
+      developer.log('난이도별 저장된 게임 확인 중 오류 발생: $e', name: 'GameSaveRepository');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> saveLastPlayedType(String type) async {
+    try {
+      return await _cacheService.setString(_lastPlayedTypeKey, type);
+    } catch (e) {
+      developer.log('가장 최근 플레이한 게임 타입 저장 중 오류 발생: $e',
+          name: 'GameSaveRepository');
+      return false;
+    }
   }
 }

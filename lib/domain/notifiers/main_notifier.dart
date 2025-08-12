@@ -7,6 +7,7 @@ import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
+import 'package:chessudoku/data/models/saved_game_data.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
 import 'package:chessudoku/data/services/device_service.dart';
@@ -25,8 +26,6 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     switch (intent) {
       case CheckSavedGameIntent():
         _handleCheckSavedGame();
-      case LoadSavedGameIntent():
-        _handleLoadSavedGame();
       case ClearSavedGameIntent():
         _handleClearSavedGame();
       case LoadStatsIntent():
@@ -34,7 +33,7 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
       case StartNewGameIntent():
         _handleStartNewGame(intent.difficulty);
       case ContinueSavedGameIntent():
-        _handleContinueSavedGame();
+        _handleContinueSavedGame(intent.difficulty);
       case GetGameStartInfoIntent():
         _handleGetGameStartInfo();
       case RefreshStatsIntent():
@@ -69,10 +68,6 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
         isLoading: false,
       );
     }
-  }
-
-  Future<void> _handleLoadSavedGame() async {
-    // TODO: 저장된 게임 로드 구현
   }
 
   Future<void> _handleClearSavedGame() async {
@@ -139,6 +134,10 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
   Future<void> _handleRefreshStats() async {
     developer.log('통계 새로고침 시작', name: 'MainNotifier');
     await _handleLoadStats();
+
+    // 저장된 게임 상태도 함께 새로고침
+    await _handleCheckSavedGame();
+
     developer.log(
         '통계 새로고침 완료 - completedPuzzles: ${state.completedPuzzles}, currentStreak: ${state.currentStreak}, bestStreak: ${state.bestStreak}',
         name: 'MainNotifier');
@@ -157,12 +156,25 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     );
   }
 
-  // 저장된 게임 이어서 하기
-  Future<void> _handleContinueSavedGame() async {
-    developer.log('저장된 게임 이어서 하기 시작', name: 'MainNotifier');
+  // 저장된 게임 이어서 하기 (통합된 방식)
+  Future<void> _handleContinueSavedGame(
+      [Difficulty? specificDifficulty]) async {
+    developer.log('저장된 게임 이어서 하기 시작 (난이도: ${specificDifficulty ?? '자동'})',
+        name: 'MainNotifier');
     try {
-      // 저장된 게임 데이터 로드
-      final savedGameData = _gameSaveRepository.loadCurrentGame();
+      SavedGameData? savedGameData;
+
+      if (specificDifficulty != null) {
+        // 특정 난이도 게임 로드
+        savedGameData =
+            _gameSaveRepository.getSavedGameByDifficulty(specificDifficulty);
+        developer.log('특정 난이도($specificDifficulty) 게임 로드 시도',
+            name: 'MainNotifier');
+      } else {
+        // 현재 저장된 게임 로드 (기존 방식)
+        savedGameData = _gameSaveRepository.loadCurrentGame();
+        developer.log('현재 저장된 게임 로드 시도', name: 'MainNotifier');
+      }
 
       if (savedGameData != null) {
         developer.log('저장된 게임 데이터 로드 성공', name: 'MainNotifier');

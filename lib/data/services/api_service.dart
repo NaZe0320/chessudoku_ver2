@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:chessudoku/core/network/connectivity_mixin.dart';
 
 /// 앱 전체에서 사용할 수 있는 API 서비스
 /// HTTP 통신을 담당하는 싱글톤 클래스
-class ApiService {
+class ApiService with ConnectivityMixin {
   static final ApiService _instance = ApiService._internal();
   static Dio? _dio;
 
@@ -100,6 +101,12 @@ class ApiService {
     CancelToken? cancelToken,
   }) async {
     try {
+      // 인터넷 연결 확인
+      final isOnline = await checkConnectivity();
+      if (!isOnline) {
+        throw const ApiException('인터넷 연결이 필요합니다.', 0);
+      }
+
       final response = await dio.get<T>(
         path,
         queryParameters: queryParameters,
@@ -121,6 +128,12 @@ class ApiService {
     CancelToken? cancelToken,
   }) async {
     try {
+      // 인터넷 연결 확인
+      final isOnline = await checkConnectivity();
+      if (!isOnline) {
+        throw const ApiException('인터넷 연결이 필요합니다.', 0);
+      }
+
       final response = await dio.post<T>(
         path,
         data: data,

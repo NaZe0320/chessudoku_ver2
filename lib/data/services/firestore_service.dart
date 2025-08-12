@@ -1,5 +1,8 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:chessudoku/data/models/puzzle.dart';
+import 'package:chessudoku/domain/enums/difficulty.dart';
 
 /// Firestore 데이터베이스 서비스
 /// deviceId 기반 사용자 데이터 관리를 담당하는 싱글톤 클래스
@@ -10,6 +13,7 @@ class FirestoreService {
   // 컬렉션 이름
   static const String _usersCollection = 'users';
   static const String _versionsCollection = 'versions';
+  static const String _puzzlesCollection = 'puzzles';
 
   // 싱글톤 패턴 적용
   factory FirestoreService() {
@@ -118,6 +122,92 @@ class FirestoreService {
         'languages': 1,
         'notices': 1,
       };
+    }
+  }
+
+  /// 특정 퍼즐 가져오기
+  Future<Puzzle?> getPuzzleById(String puzzleId, Difficulty difficulty) async {
+    try {
+      debugPrint('FirestoreService: 퍼즐 조회 - $puzzleId, $difficulty');
+
+      final doc =
+          await firestore.collection(_puzzlesCollection).doc(puzzleId).get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final puzzle = Puzzle.fromFirestore(data, doc.id);
+        debugPrint('FirestoreService: 퍼즐 조회 완료 - ${puzzle.puzzleId}');
+        return puzzle;
+      } else {
+        debugPrint('FirestoreService: 퍼즐이 존재하지 않음 - $puzzleId');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('FirestoreService: 퍼즐 조회 실패 - $e');
+      rethrow;
+    }
+  }
+
+  /// 난이도별 랜덤 퍼즐 가져오기
+  Future<Puzzle?> getRandomPuzzleByDifficulty(Difficulty difficulty) async {
+    try {
+      debugPrint('FirestoreService: 난이도별 랜덤 퍼즐 조회 - $difficulty');
+
+      // 해당 난이도의 모든 퍼즐 가져오기
+      final querySnapshot = await firestore
+          .collection(_puzzlesCollection)
+          .where('difficulty', isEqualTo: difficulty.name)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        debugPrint('FirestoreService: 해당 난이도의 퍼즐이 존재하지 않음 - $difficulty');
+        return null;
+      }
+
+      // 랜덤 인덱스 생성
+      final random = Random();
+      final randomIndex = random.nextInt(querySnapshot.docs.length);
+      debugPrint(
+          'FirestoreService: 랜덤 인덱스 - $randomIndex / ${querySnapshot.docs.length}');
+
+      // 랜덤 선택된 퍼즐 반환
+      final doc = querySnapshot.docs[randomIndex];
+      final data = doc.data();
+      debugPrint('FirestoreService: 문서 데이터 - $data');
+      final puzzle = Puzzle.fromFirestore(data, doc.id);
+      debugPrint('FirestoreService: 랜덤 퍼즐 조회 완료 - ${puzzle.puzzleId}');
+      return puzzle;
+    } catch (e) {
+      debugPrint('FirestoreService: 랜덤 퍼즐 조회 실패 - $e');
+      rethrow;
+    }
+  }
+
+  /// 난이도별 퍼즐 목록 가져오기
+  Future<List<Puzzle>> getPuzzlesByDifficulty(Difficulty difficulty,
+      {int limit = 10}) async {
+    try {
+      debugPrint(
+          'FirestoreService: 난이도별 퍼즐 목록 조회 - $difficulty, limit: $limit');
+
+      final querySnapshot = await firestore
+          .collection(_puzzlesCollection)
+          .where('difficulty', isEqualTo: difficulty.name)
+          .limit(limit)
+          .get();
+
+      final puzzles = <Puzzle>[];
+      for (final doc in querySnapshot.docs) {
+        final data = doc.data();
+        final puzzle = Puzzle.fromFirestore(data, doc.id);
+        puzzles.add(puzzle);
+      }
+
+      debugPrint('FirestoreService: 퍼즐 목록 조회 완료 - ${puzzles.length}개');
+      return puzzles;
+    } catch (e) {
+      debugPrint('FirestoreService: 퍼즐 목록 조회 실패 - $e');
+      rethrow;
     }
   }
 }

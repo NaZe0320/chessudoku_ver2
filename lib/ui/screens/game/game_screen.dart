@@ -7,13 +7,13 @@ import 'package:chessudoku/core/di/game_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/ui/common/widgets/exit_game_dialog.dart';
 import 'widgets/game_timer.dart';
 import 'widgets/game_action_buttons.dart';
 import 'widgets/number_buttons_grid.dart';
 import 'widgets/game_completion_dialog.dart';
+import 'dart:developer' as developer;
 
 class GameScreen extends HookConsumerWidget {
   const GameScreen({super.key});
@@ -23,44 +23,14 @@ class GameScreen extends HookConsumerWidget {
     final translate = ref.watch(translationProvider);
     final gameState = ref.watch(gameNotifierProvider);
     final gameNotifier = ref.read(gameNotifierProvider.notifier);
-    final mainState = ref.watch(mainNotifierProvider);
     final mainNotifier = ref.read(mainNotifierProvider.notifier);
 
-    // 화면 진입 시 MainNotifier의 정보를 받아 GameNotifier 초기화
+    // 화면 진입 시 게임 상태 확인
     useEffect(() {
-      Future(() async {
-        // MainNotifier에서 게임 시작 정보 확인
-        if (mainState.shouldStartNewGame && mainState.savedGameBoard != null) {
-          // 새 게임 시작
-          gameNotifier.initializeGame(
-            mainState.savedGameBoard!,
-            difficulty: mainState.selectedDifficulty,
-          );
-          // 게임 시작 정보 초기화
-          mainNotifier.handleIntent(const GetGameStartInfoIntent());
-        } else if (mainState.shouldContinueGame &&
-            mainState.savedGameBoard != null) {
-          // 저장된 게임 이어서 하기
-          gameNotifier.loadSavedGame();
-          // 게임 시작 정보 초기화
-          mainNotifier.handleIntent(const GetGameStartInfoIntent());
-        } else {
-          // 기본 테스트 보드로 시작 (기존 로직 유지)
-          mainNotifier
-              .handleIntent(const StartNewGameIntent(Difficulty.medium));
-          // 다음 프레임에서 다시 확인
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final updatedMainState = ref.read(mainNotifierProvider);
-            if (updatedMainState.savedGameBoard != null) {
-              gameNotifier.initializeGame(
-                updatedMainState.savedGameBoard!,
-                difficulty: updatedMainState.selectedDifficulty,
-              );
-              mainNotifier.handleIntent(const GetGameStartInfoIntent());
-            }
-          });
-        }
-      });
+      // GameScreen은 이미 MainScreen에서 준비된 게임 데이터로 시작됨
+      // GameNotifier는 MainScreen에서 이미 초기화되어 있음
+      developer.log('GameScreen 진입 - 게임 상태 확인', name: 'GameScreen');
+
       return null;
     }, []);
 
@@ -91,54 +61,61 @@ class GameScreen extends HookConsumerWidget {
           if (shouldExit == true) {
             // 게임 저장 후 나가기
             await gameNotifier.autoSave();
+
+            // 메인 화면에서 저장된 게임 상태 업데이트
+            mainNotifier.handleIntent(const CheckSavedGameIntent());
+
             return true;
           }
 
           return false;
         },
         child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textWhite,
-            title: Text(translate('game_screen', '게임')),
-            centerTitle: true,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () async {
-                // 게임이 완료되었거나 보드가 없는 경우 바로 나가기
-                if (gameState.isGameCompleted ||
-                    gameState.currentBoard == null) {
-                  Navigator.of(context).pop();
-                  return;
-                }
+          appBar: (() {
+            final appBar = AppBar(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textWhite,
+              title: Text(translate('game_screen', '게임')),
+              centerTitle: true,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () async {
+                  // 게임이 완료되었거나 보드가 없는 경우 바로 나가기
+                  if (gameState.isGameCompleted ||
+                      gameState.currentBoard == null) {
+                    Navigator.of(context).pop();
+                    return;
+                  }
 
-                // 중단 확인 다이얼로그 표시
-                final shouldExit = await showDialog<bool>(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (BuildContext context) {
-                    return ExitGameDialog(
-                      title: translate('exit_game_title', '게임 중단'),
-                      message: translate(
-                          'exit_game_message', '게임을 중단하시겠습니까?\n진행 상황이 저장됩니다.'),
-                      cancelText: translate('cancel', '취소'),
-                      exitText: translate('exit', '중단'),
-                      onCancel: () => Navigator.of(context).pop(false),
-                      onExit: () => Navigator.of(context).pop(true),
-                    );
-                  },
-                );
+                  // 중단 확인 다이얼로그 표시
+                  final shouldExit = await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (BuildContext context) {
+                      return ExitGameDialog(
+                        title: translate('exit_game_title', '게임 중단'),
+                        message: translate('exit_game_message',
+                            '게임을 중단하시겠습니까?\n진행 상황이 저장됩니다.'),
+                        cancelText: translate('cancel', '취소'),
+                        exitText: translate('exit', '중단'),
+                        onCancel: () => Navigator.of(context).pop(false),
+                        onExit: () => Navigator.of(context).pop(true),
+                      );
+                    },
+                  );
 
-                if (shouldExit == true) {
-                  // 게임 저장 후 나가기
-                  await gameNotifier.autoSave();
-                  // 메인 화면에서 저장된 게임 상태 업데이트
-                  mainNotifier.handleIntent(const CheckSavedGameIntent());
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ),
+                  if (shouldExit == true) {
+                    // 게임 저장 후 나가기
+                    await gameNotifier.autoSave();
+                    // 메인 화면에서 저장된 게임 상태 업데이트
+                    mainNotifier.handleIntent(const CheckSavedGameIntent());
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            );
+            return appBar;
+          })(),
           body: Stack(
             children: [
               Container(
@@ -234,22 +211,31 @@ class GameScreen extends HookConsumerWidget {
               ),
               // 게임 완료 다이얼로그 오버레이
               if (gameState.showCompletionDialog)
-                Container(
-                  color: Colors.black54,
-                  child: Center(
-                    child: GameCompletionDialog(
-                      elapsedSeconds: gameState.elapsedSeconds,
-                      onContinue: () {
-                        // 메인 화면으로 이동
-                        Navigator.of(context).pop();
-                        // 메인 화면에서 저장된 게임 상태 업데이트 (게임 완료로 삭제됨)
-                        mainNotifier.handleIntent(const CheckSavedGameIntent());
-                        // 통계 새로고침
-                        mainNotifier.handleIntent(const RefreshStatsIntent());
-                      },
+                Builder(builder: (context) {
+                  final appBarHeight =
+                      Scaffold.of(context).appBarMaxHeight ?? kToolbarHeight;
+                  return Container(
+                    color: Colors.black54,
+                    child: Center(
+                      child: Transform.translate(
+                        offset: Offset(0, -appBarHeight / 2),
+                        child: GameCompletionDialog(
+                          elapsedSeconds: gameState.elapsedSeconds,
+                          onContinue: () {
+                            // 메인 화면으로 이동
+                            Navigator.of(context).pop();
+                            // 메인 화면에서 저장된 게임 상태 업데이트 (게임 완료로 삭제됨)
+                            mainNotifier
+                                .handleIntent(const CheckSavedGameIntent());
+                            // 통계 새로고침
+                            mainNotifier
+                                .handleIntent(const RefreshStatsIntent());
+                          },
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                }),
             ],
           ),
         ));

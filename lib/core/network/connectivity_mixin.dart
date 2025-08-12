@@ -1,36 +1,123 @@
+import 'package:chessudoku/core/network/network_service.dart';
+import 'package:chessudoku/ui/common/widgets/offline_dialog.dart';
+import 'package:chessudoku/data/services/api_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'network_service.dart';
 
-/// 위젯에서 네트워크 상태를 쉽게 사용할 수 있는 mixin
-mixin ConnectivityMixin<T extends StatefulWidget> on State<T> {
-  NetworkService get _networkService => NetworkService();
+/// 네트워크 연결 상태를 확인하는 Mixin
+mixin ConnectivityMixin {
+  final NetworkService _networkService = NetworkService();
 
-  /// 현재 온라인 상태
-  bool get isOnline => _networkService.isOnline;
-
-  /// 네트워크 상태 스트림
-  Stream<bool> get connectionStatusStream =>
-      _networkService.connectionStatusStream;
-
-  /// 네트워크 상태 확인
+  /// 현재 연결 상태 확인
   Future<bool> checkConnectivity() => _networkService.checkConnectivity();
-}
 
-/// Hook을 사용하는 위젯용 네트워크 상태 hook
-bool useNetworkStatus() {
-  final networkService = NetworkService();
-  final isOnline = useState(networkService.isOnline);
+  /// 인터넷 연결 확인 후 오프라인 다이얼로그 표시 (일괄 처리)
+  Future<bool> checkConnectivityWithDialog(
+    BuildContext context, {
+    String title = '인터넷 연결 필요',
+    String message = '이 기능을 사용하려면 인터넷 연결이 필요합니다.',
+    VoidCallback? onRetry,
+    VoidCallback? onCancel,
+  }) async {
+    final isOnline = await checkConnectivity();
 
-  useEffect(() {
-    final subscription = networkService.connectionStatusStream.listen(
-      (bool online) {
-        isOnline.value = online;
-      },
-    );
+    if (!isOnline) {
+      // mounted 체크 추가
+      if (context.mounted) {
+        // 오프라인 다이얼로그 표시
+        await OfflineDialog.show(
+          context: context,
+          title: title,
+          message: message,
+          onRetry: onRetry,
+          onCancel: onCancel,
+        );
+      }
+      return false;
+    }
 
-    return subscription.cancel;
-  }, []);
+    return true;
+  }
 
-  return isOnline.value;
+  /// 인터넷 연결 확인 후 콜백 실행 (간단한 버전)
+  Future<bool> checkConnectivityAndExecute(
+    BuildContext context,
+    Future<void> Function() onOnline, {
+    String title = '인터넷 연결 필요',
+    String message = '이 기능을 사용하려면 인터넷 연결이 필요합니다.',
+  }) async {
+    final isOnline = await checkConnectivity();
+
+    if (!isOnline) {
+      if (context.mounted) {
+        await OfflineDialog.show(
+          context: context,
+          title: title,
+          message: message,
+          onRetry: () async {
+            // 재시도 시 다시 연결 확인
+            final retryOnline = await checkConnectivity();
+            if (retryOnline && context.mounted) {
+              await onOnline();
+            }
+          },
+        );
+      }
+      return false;
+    }
+
+    await onOnline();
+    return true;
+  }
+
+  /// API 호출 시 오프라인 처리 (BuildContext 없이)
+  Future<T?> executeApiCall<T>(
+    Future<T> Function() apiCall, {
+    String errorMessage = '인터넷 연결이 필요합니다.',
+  }) async {
+    try {
+      final isOnline = await checkConnectivity();
+      if (!isOnline) {
+        throw ApiException(errorMessage, 0);
+      }
+
+      return await apiCall();
+    } on ApiException catch (_) {
+      // 오프라인 에러는 상위에서 처리하도록 rethrow
+      rethrow;
+    } catch (e) {
+      // 기타 에러는 일반적인 API 에러로 변환
+      throw const ApiException('네트워크 오류가 발생했습니다.', null);
+    }
+  }
+
+  /// API 호출 시 오프라인 다이얼로그 표시 (BuildContext 필요)
+  Future<T?> executeApiCallWithDialog<T>(
+    BuildContext context,
+    Future<T> Function() apiCall, {
+    String title = '인터넷 연결 필요',
+    String message = '이 기능을 사용하려면 인터넷 연결이 필요합니다.',
+    VoidCallback? onRetry,
+    VoidCallback? onCancel,
+  }) async {
+    try {
+      final isOnline = await checkConnectivity();
+      if (!isOnline) {
+        if (context.mounted) {
+          await OfflineDialog.show(
+            context: context,
+            title: title,
+            message: message,
+            onRetry: onRetry,
+            onCancel: onCancel,
+          );
+        }
+        return null;
+      }
+
+      return await apiCall();
+    } catch (e) {
+      // 기타 에러는 일반적인 API 에러로 변환
+      throw const ApiException('네트워크 오류가 발생했습니다.', null);
+    }
+  }
 }

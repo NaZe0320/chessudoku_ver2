@@ -156,6 +156,157 @@ class SudokuBoard {
     return true;
   }
 
+  /// 체스 기물 제약을 고려한 유효성 검사
+  ///
+  /// 규칙 적용 방식:
+  /// - 기본 스도쿠 제약(행/열/블록)은 항상 적용
+  /// - 체스 제약은 "각 체스 기물 칸을 기점으로" 그 기물이 도달하는 범위 내에서만 적용
+  ///   예) Knight 기물이 위치한 칸에서 L자 범위로 뻗은 칸들 사이에서는 동일 숫자 금지
+  ///       (보드 전역 anti-knight가 아님)
+  bool isValidWithChessConstraints({
+    required Position position,
+    required int number,
+  }) {
+    if (!isValidMove(position, number)) {
+      return false;
+    }
+
+    bool inBounds(int r, int c) => r >= 0 && r < 9 && c >= 0 && c < 9;
+
+    bool hasSameNumberAt(Position p) {
+      final content = getCellContent(p);
+      return content?.number == number;
+    }
+
+    // 보드의 모든 체스 기물 칸을 순회하며, 해당 칸을 기점으로 한 제약만 적용
+    for (int or = 0; or < 9; or++) {
+      for (int oc = 0; oc < 9; oc++) {
+        final origin = Position(row: or, col: oc);
+        final piece = getCellContent(origin)?.chessPiece;
+        if (piece == null) continue;
+
+        switch (piece) {
+          case ChessPiece.king:
+            // origin의 인접 8칸 집합 S
+            bool isInCoverage = false;
+            for (int dr = -1; dr <= 1; dr++) {
+              for (int dc = -1; dc <= 1; dc++) {
+                if (dr == 0 && dc == 0) continue;
+                final r = or + dr;
+                final c = oc + dc;
+                if (!inBounds(r, c)) continue;
+                if (position.row == r && position.col == c) {
+                  isInCoverage = true;
+                }
+              }
+            }
+            if (isInCoverage) {
+              for (int dr = -1; dr <= 1; dr++) {
+                for (int dc = -1; dc <= 1; dc++) {
+                  if (dr == 0 && dc == 0) continue;
+                  final r = or + dr;
+                  final c = oc + dc;
+                  if (!inBounds(r, c)) continue;
+                  if (r == position.row && c == position.col) continue;
+                  if (hasSameNumberAt(Position(row: r, col: c))) {
+                    return false;
+                  }
+                }
+              }
+            }
+            break;
+
+          case ChessPiece.knight:
+            const deltas = [
+              [2, 1],
+              [2, -1],
+              [-2, 1],
+              [-2, -1],
+              [1, 2],
+              [1, -2],
+              [-1, 2],
+              [-1, -2],
+            ];
+            bool isInCoverage = false;
+            for (final d in deltas) {
+              final r = or + d[0];
+              final c = oc + d[1];
+              if (!inBounds(r, c)) continue;
+              if (position.row == r && position.col == c) {
+                isInCoverage = true;
+                break;
+              }
+            }
+            if (isInCoverage) {
+              for (final d in deltas) {
+                final r = or + d[0];
+                final c = oc + d[1];
+                if (!inBounds(r, c)) continue;
+                if (r == position.row && c == position.col) continue;
+                if (hasSameNumberAt(Position(row: r, col: c))) {
+                  return false;
+                }
+              }
+            }
+            break;
+
+          case ChessPiece.bishop:
+          case ChessPiece.queen:
+            {
+              // 후보 칸이 origin으로부터 어느 대각선(NE-SW 또는 NW-SE)에 놓여 있는지 판정
+              final dr = position.row - or;
+              final dc = position.col - oc;
+              if (dr == 0 && dc == 0) break; // 같은 칸이면 스킵
+              if (dr.abs() != dc.abs()) break; // 대각선이 아니면 스킵
+
+              // 같은 대각선 라인에 대해서만 검사 (양 대각선 전체를 묶지 않음)
+              // diagSameSign: (1,1) / (-1,-1) 라인, diagOppSign: (1,-1) / (-1,1) 라인
+              final bool diagSameSign =
+                  (dr > 0 && dc > 0) || (dr < 0 && dc < 0);
+
+              List<List<int>> directions;
+              if (diagSameSign) {
+                directions = const [
+                  [1, 1],
+                  [-1, -1],
+                ];
+              } else {
+                directions = const [
+                  [1, -1],
+                  [-1, 1],
+                ];
+              }
+
+              for (final d in directions) {
+                var r = or + d[0];
+                var c = oc + d[1];
+                while (inBounds(r, c)) {
+                  if (!(r == position.row && c == position.col) &&
+                      hasSameNumberAt(Position(row: r, col: c))) {
+                    return false;
+                  }
+                  r += d[0];
+                  c += d[1];
+                }
+              }
+              // Rook 성분(행/열)은 기본 스도쿠 제약으로 충분
+              break;
+            }
+
+          case ChessPiece.rook:
+            // 행/열은 스도쿠 기본 제약으로 이미 차단됨
+            break;
+
+          case ChessPiece.pawn:
+            // 현재 별도 제약 없음
+            break;
+        }
+      }
+    }
+
+    return true;
+  }
+
   /// 보드가 완성되었는지 확인
   bool get isCompleted {
     // 모든 셀이 채워져 있는지 확인

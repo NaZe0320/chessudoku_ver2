@@ -21,7 +21,7 @@ class QuickPlayButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chessPiece = ChessPiece.fromDifficulty(difficulty);
-    final difficultyColor = _getDifficultyColor(difficulty);
+    final difficultyColor = difficulty.color;
 
     return Material(
       color: Colors.transparent,
@@ -55,7 +55,7 @@ class QuickPlayButton extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _getDifficultyName(difficulty),
+                      difficulty.label,
                       style: TextStyle(
                         color: isLocked ? Colors.grey : AppColors.textWhite,
                         fontSize: 16,
@@ -64,7 +64,7 @@ class QuickPlayButton extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _getDifficultyDescription(difficulty),
+                      difficulty.description,
                       style: TextStyle(
                         color: isLocked ? Colors.grey : AppColors.textWhite,
                         fontSize: 12,
@@ -118,44 +118,5 @@ class QuickPlayButton extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _getDifficultyColor(Difficulty difficulty) {
-    switch (difficulty) {
-      case Difficulty.easy:
-        return const Color(0xFF4CAF50); // 초록색
-      case Difficulty.medium:
-        return const Color(0xFFFF9800); // 주황색
-      case Difficulty.hard:
-        return const Color(0xFFF44336); // 빨간색
-      case Difficulty.expert:
-        return const Color(0xFF9C27B0); // 보라색
-    }
-  }
-
-  String _getDifficultyName(Difficulty difficulty) {
-    switch (difficulty) {
-      case Difficulty.easy:
-        return '쉬움';
-      case Difficulty.medium:
-        return '보통';
-      case Difficulty.hard:
-        return '어려움';
-      case Difficulty.expert:
-        return '전문가';
-    }
-  }
-
-  String _getDifficultyDescription(Difficulty difficulty) {
-    switch (difficulty) {
-      case Difficulty.easy:
-        return '폰 · 입문자용';
-      case Difficulty.medium:
-        return '나이트 · 적당한 도전';
-      case Difficulty.hard:
-        return '비숍 · 도전적인';
-      case Difficulty.expert:
-        return '퀸 · 최고 난이도';
-    }
   }
 }
