@@ -27,16 +27,16 @@ class LanguageSettingsScreen extends HookConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 64,
-              color: AppColors.textTertiary,
+              color: AppColors.textWhite.withValues(alpha: 0.8),
             ),
             const SizedBox(height: 16),
             Text(
               translate('error'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textWhite,
                   ),
             ),
             const SizedBox(height: 8),
@@ -46,7 +46,7 @@ class LanguageSettingsScreen extends HookConsumerWidget {
                 errorMessage,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textWhite.withValues(alpha: 0.9),
                     ),
               ),
             ),
@@ -87,13 +87,13 @@ class LanguageSettingsScreen extends HookConsumerWidget {
       if (!pack.isDownloaded) {
         return const Icon(
           Icons.download,
-          color: AppColors.info,
+          color: AppColors.textWhite,
         );
       }
 
-      return const Icon(
+      return Icon(
         Icons.chevron_right,
-        color: AppColors.textTertiary,
+        color: AppColors.textWhite.withValues(alpha: 0.8),
       );
     }
 
@@ -201,21 +201,20 @@ class LanguageSettingsScreen extends HookConsumerWidget {
     }) {
       return Container(
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.infoLight : AppColors.surface,
-          border: isSelected
-              ? Border.all(color: AppColors.primary, width: 1.5)
-              : null,
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected
+              ? Colors.white.withValues(alpha: 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor:
-                isSelected ? AppColors.primary : AppColors.secondary,
+            backgroundColor: isSelected
+                ? AppColors.primary
+                : Colors.white.withValues(alpha: 0.15),
             child: Text(
               pack.languageCode.toUpperCase(),
-              style: TextStyle(
-                color:
-                    isSelected ? AppColors.textWhite : AppColors.textSecondary,
+              style: const TextStyle(
+                color: AppColors.textWhite,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),
@@ -225,7 +224,7 @@ class LanguageSettingsScreen extends HookConsumerWidget {
             pack.nativeName,
             style: TextStyle(
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? AppColors.primary : AppColors.textPrimary,
+              color: AppColors.textWhite,
             ),
           ),
           subtitle: Column(
@@ -233,17 +232,17 @@ class LanguageSettingsScreen extends HookConsumerWidget {
             children: [
               Text(
                 pack.name,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: AppColors.textWhite.withValues(alpha: 0.8),
                 ),
               ),
               if (!pack.isDownloaded)
                 Text(
                   '${translate('download')} (${pack.formattedSize})',
                   style: const TextStyle(
-                    color: AppColors.info,
+                    color: AppColors.textWhite,
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
             ],
@@ -269,15 +268,18 @@ class LanguageSettingsScreen extends HookConsumerWidget {
                 translate('current_language'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.textWhite,
                     ),
               ),
               const SizedBox(height: 12),
-              Card(
-                elevation: 2,
-                color: AppColors.surface,
-                shape: RoundedRectangleBorder(
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(8),
@@ -300,31 +302,47 @@ class LanguageSettingsScreen extends HookConsumerWidget {
                 translate('downloaded_languages'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.textWhite,
                     ),
               ),
               const SizedBox(height: 12),
-              Card(
-                elevation: 2,
-                color: AppColors.surface,
-                shape: RoundedRectangleBorder(
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: languageState.downloadedPacks
-                        .where((pack) =>
-                            pack.id != languageState.currentLanguagePack?.id)
-                        .map((pack) => Padding(
+                  child: Builder(
+                    builder: (_) {
+                      final items = languageState.downloadedPacks
+                          .where((pack) =>
+                              pack.id != languageState.currentLanguagePack?.id)
+                          .toList();
+                      return Column(
+                        children: [
+                          for (int i = 0; i < items.length; i++) ...[
+                            Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: buildLanguageItem(
-                                pack,
+                                items[i],
                                 isSelected: false,
                                 translate: translate,
                               ),
-                            ))
-                        .toList(),
+                            ),
+                            if (i != items.length - 1)
+                              Divider(
+                                height: 1,
+                                color: Colors.white.withValues(alpha: 0.2),
+                              ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -337,29 +355,44 @@ class LanguageSettingsScreen extends HookConsumerWidget {
                 translate('available_languages'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.textWhite,
                     ),
               ),
               const SizedBox(height: 12),
-              Card(
-                elevation: 2,
-                color: AppColors.surface,
-                shape: RoundedRectangleBorder(
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: languageState.availablePacks
-                        .map((pack) => Padding(
+                  child: Builder(
+                    builder: (_) {
+                      final items = languageState.availablePacks;
+                      return Column(
+                        children: [
+                          for (int i = 0; i < items.length; i++) ...[
+                            Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: buildLanguageItem(
-                                pack,
+                                items[i],
                                 isSelected: false,
                                 translate: translate,
                               ),
-                            ))
-                        .toList(),
+                            ),
+                            if (i != items.length - 1)
+                              Divider(
+                                height: 1,
+                                color: Colors.white.withValues(alpha: 0.2),
+                              ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -370,7 +403,7 @@ class LanguageSettingsScreen extends HookConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
           translate('language_settings'),
@@ -379,20 +412,37 @@ class LanguageSettingsScreen extends HookConsumerWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textWhite,
         centerTitle: true,
         elevation: 0,
       ),
-      body: languageState.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-            )
-          : languageState.errorMessage != null
-              ? buildErrorView(languageState.errorMessage!)
-              : buildLanguageList(languageState, translate),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primary,
+              AppColors.primaryLight,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: languageState.isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.textWhite),
+                  ),
+                )
+              : languageState.errorMessage != null
+                  ? buildErrorView(languageState.errorMessage!)
+                  : buildLanguageList(languageState, translate),
+        ),
+      ),
     );
   }
 }
