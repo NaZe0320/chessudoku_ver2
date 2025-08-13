@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:chessudoku/core/initialization/app_initializer.dart';
 import 'package:chessudoku/ui/screens/offline/offline_first_launch_app.dart';
+import 'package:chessudoku/core/logging/logging.dart';
 
 /// 앱 재시작을 위한 전역 함수
 void restartApp() {
@@ -21,6 +22,9 @@ void restartApp() {
 void main() async {
   // Flutter 엔진 초기화
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 로깅 초기화
+  setupLogging();
 
   // Firebase 초기화
   await Firebase.initializeApp(
