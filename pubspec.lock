@@ -25,6 +25,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.4.5"
+  android_id:
+    dependency: "direct main"
+    description:
+      name: android_id
+      sha256: "748ba5f93dd5c497e675d8eaa1404346ce4d1794464ea654576ff192d153b92a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
   args:
     dependency: transitive
     description:
@@ -277,10 +285,10 @@ packages:
     dependency: transitive
     description:
       name: file
-      sha256: a3b4f84adafef897088c160faf7dfffb7696046cb13ae90b508c2cbc95d3b8d4
+      sha256: "1b92bec4fc2a72f59a8e15af5f52cd441e4a7860b49499d69dfa817af20e925d"
       url: "https://pub.dev"
     source: hosted
-    version: "7.0.1"
+    version: "6.1.4"
   firebase_core:
     dependency: "direct main"
     description:
