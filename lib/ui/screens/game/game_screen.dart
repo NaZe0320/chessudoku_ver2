@@ -14,6 +14,7 @@ import 'widgets/game_action_buttons.dart';
 import 'widgets/number_buttons_grid.dart';
 import 'widgets/game_completion_dialog.dart';
 import 'dart:developer' as developer;
+import 'package:chessudoku/ui/screens/setting/game_setting_screen.dart';
 
 class GameScreen extends HookConsumerWidget {
   const GameScreen({super.key});
@@ -113,6 +114,31 @@ class GameScreen extends HookConsumerWidget {
                   }
                 },
               ),
+              actions: [
+                // 자동 메모 채우기
+                IconButton(
+                  icon: const Icon(Icons.auto_fix_high),
+                  tooltip: translate('auto_note', '자동 메모'),
+                  onPressed: gameState.isPaused
+                      ? null
+                      : () {
+                          gameNotifier
+                              .handleIntent(const AutoFillNotesIntent());
+                        },
+                ),
+                // 게임 설정 화면으로 이동
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  tooltip: translate('settings', '설정'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const GameSettingScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             );
             return appBar;
           })(),

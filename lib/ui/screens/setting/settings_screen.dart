@@ -1,8 +1,8 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
-import 'package:chessudoku/ui/screens/profile/language_settings_screen.dart';
+import 'package:chessudoku/ui/screens/setting/language_settings_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
-import 'package:chessudoku/ui/screens/profile/widgets/game_settings_card.dart';
-import 'package:chessudoku/ui/screens/profile/widgets/language_tile.dart';
+import 'package:chessudoku/ui/screens/setting/widgets/game_settings_card.dart';
+import 'package:chessudoku/ui/screens/setting/widgets/language_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
