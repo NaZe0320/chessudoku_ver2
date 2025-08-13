@@ -8,9 +8,11 @@ final gameNotifierProvider =
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
   final userProfileRepository = ref.watch(userProfileRepositoryProvider);
   final puzzleRecordRepository = ref.watch(puzzleRecordRepositoryProvider);
+  final gameSettings = ref.watch(gameSettingsNotifierProvider.notifier);
   return GameNotifier(
     gameSaveRepository,
     userProfileRepository,
     puzzleRecordRepository,
+    gameSettings,
   );
 });

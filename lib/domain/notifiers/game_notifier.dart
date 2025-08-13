@@ -14,6 +14,7 @@ import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/notifiers/game_settings_notifier.dart';
 import 'package:chessudoku/data/models/puzzle_record.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/data/models/saved_game_data.dart';
@@ -34,10 +35,13 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
   Position? _lastMemoPosition; // 마지막 메모 입력 위치
   bool _isMemoGroupActive = false; // 메모 그룹 활성화 상태
 
+  final GameSettingsNotifier _settings;
+
   GameNotifier(
     this._gameSaveRepository,
     this._userProfileRepository,
     this._puzzleRecordRepository,
+    this._settings,
   ) : super(const GameState()) {
     // 생명주기 관찰자 등록
     WidgetsBinding.instance.addObserver(this);
@@ -401,8 +405,66 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isInitial: false, // 사용자 입력
       );
 
-      // 숫자 배치 (메모 자동 정리하지 않음)
-      final newBoard = currentBoard.board.setCellContent(position, newContent);
+      // 숫자 배치
+      var newBoard = currentBoard.board.setCellContent(position, newContent);
+
+      // 자동 메모 삭제: 켜져 있으면 동일 행/열/블록에서 입력한 숫자 메모 제거
+      if (_settings.state.autoNoteClear) {
+        final cells = Map<Position, CellContent>.from(newBoard.cells);
+        for (int i = 0; i < 9; i++) {
+          // 같은 행
+          final pRow = Position(row: position.row, col: i);
+          if (pRow != position) {
+            final c = cells[pRow];
+            if (c != null && c.number == null && c.notes.contains(number)) {
+              final newNotes = Set<int>.from(c.notes)..remove(number);
+              cells[pRow] = CellContent(
+                number: null,
+                notes: newNotes,
+                chessPiece: c.chessPiece,
+                isInitial: c.isInitial,
+              );
+            }
+          }
+
+          // 같은 열
+          final pCol = Position(row: i, col: position.col);
+          if (pCol != position) {
+            final c = cells[pCol];
+            if (c != null && c.number == null && c.notes.contains(number)) {
+              final newNotes = Set<int>.from(c.notes)..remove(number);
+              cells[pCol] = CellContent(
+                number: null,
+                notes: newNotes,
+                chessPiece: c.chessPiece,
+                isInitial: c.isInitial,
+              );
+            }
+          }
+        }
+
+        // 같은 3x3 블록
+        final blockRow = position.row ~/ 3;
+        final blockCol = position.col ~/ 3;
+        for (int r = blockRow * 3; r < blockRow * 3 + 3; r++) {
+          for (int cIdx = blockCol * 3; cIdx < blockCol * 3 + 3; cIdx++) {
+            final p = Position(row: r, col: cIdx);
+            if (p == position) continue;
+            final c = cells[p];
+            if (c != null && c.number == null && c.notes.contains(number)) {
+              final newNotes = Set<int>.from(c.notes)..remove(number);
+              cells[p] = CellContent(
+                number: null,
+                notes: newNotes,
+                chessPiece: c.chessPiece,
+                isInitial: c.isInitial,
+              );
+            }
+          }
+        }
+
+        newBoard = newBoard.copyWith(cells: cells);
+      }
 
       // 숫자 입력 시 모든 오류 검사 내용 초기화
       final updatedGameBoard = currentBoard.copyWith(

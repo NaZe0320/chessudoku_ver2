@@ -80,7 +80,7 @@ class LanguageSettingsScreen extends HookConsumerWidget {
       if (isSelected) {
         return const Icon(
           Icons.check_circle,
-          color: AppColors.success,
+          color: AppColors.textWhite,
         );
       }
 

@@ -5,6 +5,7 @@ import 'package:chessudoku/core/di/game_provider.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'sudoku_cell.dart';
+import 'package:chessudoku/core/di/providers.dart';
 
 class SudokuBoard extends HookConsumerWidget {
   const SudokuBoard({super.key});
@@ -40,6 +41,7 @@ class SudokuBoard extends HookConsumerWidget {
     }
 
     final currentBoard = gameState.currentBoard!;
+    final gameSettings = ref.watch(gameSettingsNotifierProvider);
 
     return Center(
       child: Container(
@@ -68,8 +70,22 @@ class SudokuBoard extends HookConsumerWidget {
                   final cellContent =
                       currentBoard.board.getCellContent(position);
                   final isSelected = currentBoard.selectedCell == position;
-                  final isHighlighted =
+                  bool isHighlighted = gameSettings.showScopeOnSelect &&
                       currentBoard.highlightedCells.contains(position);
+                  if (!isHighlighted && gameSettings.highlightSameNumbers) {
+                    final selected = currentBoard.selectedCell;
+                    if (selected != null) {
+                      final selectedValue =
+                          currentBoard.board.getCellContent(selected)?.number;
+                      final thisValue =
+                          currentBoard.board.getCellContent(position)?.number;
+                      if (selectedValue != null &&
+                          thisValue != null &&
+                          selectedValue == thisValue) {
+                        isHighlighted = true;
+                      }
+                    }
+                  }
                   final hasError = currentBoard.errorCells.contains(position);
 
                   return Expanded(

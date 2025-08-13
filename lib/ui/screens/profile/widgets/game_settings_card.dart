@@ -1,8 +1,9 @@
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:chessudoku/core/di/providers.dart';
 
-class GameSettingsCard extends HookWidget {
+class GameSettingsCard extends HookConsumerWidget {
   const GameSettingsCard({
     super.key,
     required this.translate,
@@ -11,9 +12,9 @@ class GameSettingsCard extends HookWidget {
   final String Function(String, [String?]) translate;
 
   @override
-  Widget build(BuildContext context) {
-    final showScope = useState<bool>(true);
-    final autoNoteClear = useState<bool>(true);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(gameSettingsNotifierProvider);
+    final notifier = ref.read(gameSettingsNotifierProvider.notifier);
 
     Widget buildSwitchRow({
       required IconData icon,
@@ -22,7 +23,8 @@ class GameSettingsCard extends HookWidget {
       required String offLabel,
       required String pillOnLabel,
       required String pillOffLabel,
-      required ValueNotifier<bool> controller,
+      required bool isOn,
+      required VoidCallback onToggle,
     }) {
       return SizedBox(
         height: 72,
@@ -48,18 +50,15 @@ class GameSettingsCard extends HookWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    _OnOffLabel(
-                        isOn: controller.value,
-                        onText: onLabel,
-                        offText: offLabel),
+                    _OnOffLabel(isOn: isOn, onText: onLabel, offText: offLabel),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
               GestureDetector(
-                onTap: () => controller.value = !controller.value,
+                onTap: onToggle,
                 child: _PillToggle(
-                  isOn: controller.value,
+                  isOn: isOn,
                   onLabel: pillOnLabel,
                   offLabel: pillOffLabel,
                 ),
@@ -81,24 +80,73 @@ class GameSettingsCard extends HookWidget {
       ),
       child: Column(
         children: [
+          // 같은 숫자 표시 토글
+          SizedBox(
+            height: 72,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(Icons.filter_9_plus, color: AppColors.textWhite),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          translate('highlight_same_numbers', '같은 숫자 표시'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textWhite,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        _OnOffLabel(
+                          isOn: settings.highlightSameNumbers,
+                          onText: translate('display', '표시'),
+                          offText: translate('hide', '표시 안함'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: notifier.toggleHighlightSameNumbers,
+                    child: _PillToggle(
+                      isOn: settings.highlightSameNumbers,
+                      onLabel: translate('on', '켜짐'),
+                      offLabel: translate('off', '꺼짐'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Divider(height: 1, color: Colors.white.withValues(alpha: 0.2)),
           buildSwitchRow(
             icon: Icons.select_all,
             title: translate('show_scope_on_select', '숫자/기물 선택 시 표시 범위'),
-            onLabel: translate('display', '표시'),
-            offLabel: translate('hide', '표시 안함'),
-            pillOnLabel: translate('display', '표시'),
-            pillOffLabel: translate('hide', '표시 안함'),
-            controller: showScope,
+            onLabel: translate('on', '켜짐'),
+            offLabel: translate('off', '꺼짐'),
+            pillOnLabel: translate('on', '켜짐'),
+            pillOffLabel: translate('off', '꺼짐'),
+            isOn: settings.showScopeOnSelect,
+            onToggle: notifier.toggleShowScopeOnSelect,
           ),
           Divider(height: 1, color: Colors.white.withValues(alpha: 0.2)),
           buildSwitchRow(
             icon: Icons.auto_fix_high_outlined,
             title: translate('auto_note_clear', '자동 메모 삭제'),
-            onLabel: translate('auto_delete', '자동 삭제'),
-            offLabel: translate('no_auto_delete', '자동 삭제 안함'),
+            onLabel: translate('on', '켜짐'),
+            offLabel: translate('off', '꺼짐'),
             pillOnLabel: translate('on', '켜짐'),
             pillOffLabel: translate('off', '꺼짐'),
-            controller: autoNoteClear,
+            isOn: settings.autoNoteClear,
+            onToggle: notifier.toggleAutoNoteClear,
           ),
         ],
       ),

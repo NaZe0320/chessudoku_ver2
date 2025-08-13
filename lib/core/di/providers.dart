@@ -29,6 +29,15 @@ import '../sync/sync_manager.dart';
 import '../sync/sync_queue.dart';
 
 import '../initialization/app_initializer.dart';
+import '../../domain/notifiers/game_settings_notifier.dart';
+import '../../domain/states/game_settings_state.dart';
+
+/// GameSettings Provider
+final gameSettingsNotifierProvider =
+    StateNotifierProvider<GameSettingsNotifier, GameSettingsState>((ref) {
+  final cacheService = ref.watch(cacheServiceProvider);
+  return GameSettingsNotifier(cacheService);
+});
 
 /// TestService Provider
 final testServiceProvider = Provider<TestService>((ref) {
