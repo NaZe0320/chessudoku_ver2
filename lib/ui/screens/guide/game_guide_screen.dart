@@ -53,6 +53,20 @@ class GameGuideScreen extends ConsumerWidget {
                 ],
               ),
               _GuideCard(
+                title: translate('chess_pieces_rules', '체스 기물별 규칙'),
+                items: [
+                  translate('king_rule_desc', '♔ 킹: 인접 8칸에 같은 숫자를 둘 수 없습니다.'),
+                  translate('queen_rule_desc',
+                      '♕ 퀸: 같은 행/열/대각선 경로에 같은 숫자를 둘 수 없습니다.'),
+                  translate(
+                      'rook_rule_desc', '♖ 룩: 같은 행/열 경로에 같은 숫자를 둘 수 없습니다.'),
+                  translate(
+                      'bishop_rule_desc', '♗ 비숍: 대각선 경로에 같은 숫자를 둘 수 없습니다.'),
+                  translate('knight_rule_desc',
+                      '♘ 나이트: 나이트 이동(ㄴ자) 위치에 같은 숫자를 둘 수 없습니다.'),
+                ],
+              ),
+              _GuideCard(
                 title: translate('hints_and_helpers', '힌트 & 보조 기능'),
                 items: [
                   translate('highlight_same_numbers', '같은 숫자 하이라이트'),
