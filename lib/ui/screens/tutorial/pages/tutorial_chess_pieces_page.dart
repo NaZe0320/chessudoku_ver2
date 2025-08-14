@@ -36,12 +36,6 @@ class TutorialChessPiecesPage extends StatelessWidget {
         title: translate('knight', '나이트'),
         description: translate('knight_desc', '나이트는 L자 형태(2칸+1칸)로 이동하며 점프합니다.'),
       ),
-      _PieceRule(
-        icon: Icons.looks_6,
-        title: translate('pawn', '폰'),
-        description: translate(
-            'pawn_desc', '폰은 앞으로 한 칸 이동하며 처음에는 두 칸 가능할 수 있고 대각선으로 공격합니다.'),
-      ),
     ];
 
     return Container(

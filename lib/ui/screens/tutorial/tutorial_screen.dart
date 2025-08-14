@@ -19,6 +19,8 @@ class TutorialScreen extends HookConsumerWidget {
     final currentPage = useState<int>(0);
     final translate = ref.watch(translationProvider);
 
+    final completedSteps = useState<Set<int>>({});
+
     final pages = [
       TutorialSudokuRulesPage(translate: translate),
       TutorialChessPiecesPage(translate: translate),
@@ -59,10 +61,12 @@ class TutorialScreen extends HookConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
+            // 스와이프는 막되, 내부 위젯 터치는 가능하도록 설정
             Expanded(
               child: PageView.builder(
                 controller: controller,
                 onPageChanged: (i) => currentPage.value = i,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: pages.length,
                 itemBuilder: (_, i) => pages[i],
               ),
@@ -72,15 +76,18 @@ class TutorialScreen extends HookConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(pages.length, (i) {
                 final isActive = i == currentPage.value;
+                final isCompleted = completedSteps.value.contains(i);
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: isActive ? 20 : 8,
+                  width: 10,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isActive
+                    color: isCompleted
                         ? AppColors.accent
-                        : AppColors.textWhite.withValues(alpha: 0.4),
+                        : (isActive
+                            ? AppColors.textWhite
+                            : AppColors.textWhite.withValues(alpha: 0.4)),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -113,28 +120,47 @@ class TutorialScreen extends HookConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final isLast = currentPage.value == pages.length - 1;
-                        if (isLast) {
-                          await completeTutorial();
-                        } else {
-                          controller.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOut,
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                      ),
-                      child: Text(
-                        currentPage.value == pages.length - 1
-                            ? translate('start_playing', '시작하기')
-                            : translate('next', '다음'),
-                        style: const TextStyle(color: AppColors.textWhite),
-                      ),
-                    ),
+                    child: Builder(builder: (context) {
+                      final isLast = currentPage.value == pages.length - 1;
+                      final requiresCompletion = <int>{};
+                      final mustComplete =
+                          requiresCompletion.contains(currentPage.value);
+                      final isStepCompleted =
+                          completedSteps.value.contains(currentPage.value);
+                      final isDisabled =
+                          mustComplete && !isStepCompleted && !isLast;
+
+                      return ElevatedButton(
+                        onPressed: isDisabled
+                            ? null
+                            : () async {
+                                if (isLast) {
+                                  await completeTutorial();
+                                } else {
+                                  controller.nextPage(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeOut,
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          disabledBackgroundColor:
+                              AppColors.textWhite.withValues(alpha: 0.25),
+                          disabledForegroundColor:
+                              AppColors.textWhite.withValues(alpha: 0.6),
+                        ),
+                        child: Text(
+                          isLast
+                              ? translate('start_playing', '시작하기')
+                              : (isDisabled
+                                  ? translate('complete_step_to_continue',
+                                      '이 단계를 완료하면 계속할 수 있어요')
+                                  : translate('next', '다음')),
+                          style: const TextStyle(color: AppColors.textWhite),
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ),

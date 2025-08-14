@@ -6,8 +6,6 @@ import 'package:chessudoku/ui/screens/setting/widgets/language_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:chessudoku/ui/screens/tutorial/tutorial_screen.dart';
-import 'package:chessudoku/ui/screens/guide/game_guide_screen.dart';
 
 class SettingsScreen extends HookConsumerWidget {
   const SettingsScreen({super.key});
@@ -230,14 +228,7 @@ class SettingsScreen extends HookConsumerWidget {
                         icon: Icons.school_outlined,
                         title: translate('tutorial', '튜토리얼'),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TutorialScreen(
-                                launchedFromSettings: true,
-                              ),
-                            ),
-                          );
+                          // 튜토리얼
                         },
                       ),
                       Divider(
@@ -249,12 +240,7 @@ class SettingsScreen extends HookConsumerWidget {
                         icon: Icons.menu_book_outlined,
                         title: translate('game_guide', '게임 가이드'),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const GameGuideScreen(),
-                            ),
-                          );
+                          // 게임 가이드
                         },
                       ),
                     ],
