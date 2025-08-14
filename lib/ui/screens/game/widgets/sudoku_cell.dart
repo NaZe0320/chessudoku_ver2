@@ -164,15 +164,15 @@ class SudokuCell extends StatelessWidget {
       return Colors.red.withValues(alpha: 0.2);
     }
     if (isSelected) {
-      return AppColors.primary.withValues(alpha: 0.3);
+      return AppColors.primary.withValues(alpha: 0.36);
     }
     if (isHighlighted) {
-      return AppColors.primary.withValues(alpha: 0.1);
+      return AppColors.primary.withValues(alpha: 0.14);
     }
 
     // 초기값이거나 체스 기물이 있는 경우 연한 회색 배경
     if (cellContent?.isInitial == true || cellContent?.chessPiece != null) {
-      return Colors.grey.withValues(alpha: 0.1);
+      return Colors.grey.withValues(alpha: 0.06);
     }
 
     return AppColors.surface;
