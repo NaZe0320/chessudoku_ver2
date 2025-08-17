@@ -6,6 +6,7 @@ import 'package:chessudoku/main.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
+import 'package:chessudoku/data/services/api_service.dart';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/device_service.dart';
 import 'package:chessudoku/data/repositories/game_save_repository_impl.dart';
@@ -108,12 +109,16 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
     final deviceService = DeviceService();
     final networkService = NetworkService();
     final syncManager = SyncManager();
+    final apiService = ApiService();
+    final cacheService = CacheService();
 
     return UserProfileRepositoryImpl(
       databaseService,
       deviceService,
       networkService,
       syncManager,
+      apiService,
+      cacheService,
     );
   }
 

@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'sync_strategy.dart';
-import '../../data/services/firestore_service.dart';
+import '../../data/services/api_service.dart';
 
 /// 지연 동기화를 위한 큐 시스템
 class SyncQueue {
@@ -17,11 +17,11 @@ class SyncQueue {
 
   bool _isProcessing = false;
   static const String _queueKey = 'sync_queue';
-  FirestoreService? _firestoreService;
+  ApiService? _apiService;
 
-  /// FirestoreService 설정
-  void setFirestoreService(FirestoreService firestoreService) {
-    _firestoreService = firestoreService;
+  /// ApiService 설정
+  void setApiService(ApiService apiService) {
+    _apiService = apiService;
   }
 
   /// 큐에 작업 추가
@@ -143,23 +143,62 @@ class SyncQueue {
     return false;
   }
 
-  /// 프로필 업데이트 처리
+  /// 프로필 업데이트 처리 (HTTP API 사용)
   Future<void> _processProfileUpdate(Map<String, dynamic> data) async {
     developer.log('프로필 업데이트 처리 시작', name: 'SyncQueue');
 
-    if (_firestoreService == null) {
-      developer.log('FirestoreService가 설정되지 않음', name: 'SyncQueue');
-      throw Exception('FirestoreService가 설정되지 않았습니다.');
+    if (_apiService == null) {
+      developer.log('ApiService가 설정되지 않음', name: 'SyncQueue');
+      throw Exception('ApiService가 설정되지 않았습니다.');
     }
 
     final deviceId = data['deviceId'] as String;
     developer.log('프로필 업데이트 처리 중: $deviceId', name: 'SyncQueue');
 
     try {
-      await _firestoreService!.createOrUpdateUser(deviceId, data);
+      // 계정 생성 또는 업데이트
+      await _createOrUpdateAccount(deviceId, data);
       developer.log('프로필 업데이트 동기화 완료: $deviceId', name: 'SyncQueue');
     } catch (e) {
       developer.log('프로필 업데이트 동기화 실패: $deviceId - $e', name: 'SyncQueue');
+      rethrow;
+    }
+  }
+
+  /// 계정 생성 또는 업데이트 (HTTP API 사용)
+  Future<void> _createOrUpdateAccount(
+      String deviceId, Map<String, dynamic> data) async {
+    try {
+      // 먼저 기존 계정이 있는지 확인
+      try {
+        await _apiService!.get('/account/$deviceId');
+        // 기존 계정이 있으면 업데이트
+        developer.log('기존 계정 발견, 업데이트 진행: $deviceId', name: 'SyncQueue');
+
+        final updateData = {
+          'username': data['username'] ?? 'Player',
+          'total_play_time': data['totalPlayTime'] ?? 0,
+          'completed_puzzles': data['completedPuzzles'] ?? 0,
+          'current_streak': data['currentStreak'] ?? 0,
+          'best_streak': data['bestStreak'] ?? 0,
+          'updated_at': DateTime.now().toIso8601String(),
+        };
+
+        await _apiService!.put('/account/$deviceId', data: updateData);
+        developer.log('계정 업데이트 완료: $deviceId', name: 'SyncQueue');
+      } catch (e) {
+        // 기존 계정이 없으면 생성
+        developer.log('기존 계정 없음, 새로 생성: $deviceId', name: 'SyncQueue');
+
+        final createData = {
+          'device_id': deviceId,
+        };
+
+        await _apiService!.post('/account/register', data: createData);
+        developer.log('계정 생성 완료: $deviceId', name: 'SyncQueue');
+      }
+    } catch (e) {
+      developer.log('계정 생성/업데이트 실패: $deviceId - $e', name: 'SyncQueue');
       rethrow;
     }
   }

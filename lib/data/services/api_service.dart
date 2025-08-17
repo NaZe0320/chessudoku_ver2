@@ -1,19 +1,15 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:chessudoku/core/network/connectivity_mixin.dart';
+import 'dart:developer' as developer;
 
-/// 앱 전체에서 사용할 수 있는 API 서비스
-/// HTTP 통신을 담당하는 싱글톤 클래스
-class ApiService with ConnectivityMixin {
+/// HTTP API 서비스
+/// Node.js 서버와의 통신을 담당하는 싱글톤 클래스
+class ApiService {
   static final ApiService _instance = ApiService._internal();
   static Dio? _dio;
 
-  // 기본 설정
-  static const String _baseUrl =
-      'https://api.example.com'; // TODO: 실제 API URL로 변경
-  static const int _connectTimeout = 30000; // 30초
-  static const int _receiveTimeout = 30000; // 30초
-  static const int _sendTimeout = 30000; // 30초
+  // API 기본 설정
+  static const String _baseUrl = 'http://localhost:3000/api';
+  static const Duration _timeout = Duration(seconds: 30);
 
   // 싱글톤 패턴 적용
   factory ApiService() {
@@ -25,314 +21,149 @@ class ApiService with ConnectivityMixin {
   /// Dio 인스턴스 가져오기
   Dio get dio {
     if (_dio != null) return _dio!;
-    _dio = _initDio();
-    return _dio!;
-  }
 
-  /// Dio 클라이언트 초기화
-  Dio _initDio() {
-    debugPrint('API 서비스 초기화: $_baseUrl');
-
-    final dio = Dio(BaseOptions(
+    _dio = Dio(BaseOptions(
       baseUrl: _baseUrl,
-      connectTimeout: const Duration(milliseconds: _connectTimeout),
-      receiveTimeout: const Duration(milliseconds: _receiveTimeout),
-      sendTimeout: const Duration(milliseconds: _sendTimeout),
-      responseType: ResponseType.json,
-      contentType: 'application/json',
+      connectTimeout: _timeout,
+      receiveTimeout: _timeout,
+      sendTimeout: _timeout,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     ));
 
-    // 인터셉터 추가
-    dio.interceptors.add(_createInterceptor());
-
-    // 디버그 모드에서 로깅 인터셉터 추가
-    if (kDebugMode) {
-      dio.interceptors.add(LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        requestHeader: true,
-        responseHeader: false,
-        error: true,
-        logPrint: (obj) => debugPrint('[API] $obj'),
-      ));
-    }
-
-    return dio;
-  }
-
-  /// 커스텀 인터셉터 생성
-  InterceptorsWrapper _createInterceptor() {
-    return InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        // 요청 전 처리 (토큰 추가 등)
-        final token = await _getAuthToken();
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-
-        debugPrint('[API 요청] ${options.method} ${options.path}');
+    // 인터셉터 설정
+    _dio!.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        developer.log('API 요청: ${options.method} ${options.path}',
+            name: 'ApiService');
+        developer.log('요청 데이터: ${options.data}', name: 'ApiService');
         handler.next(options);
       },
       onResponse: (response, handler) {
-        debugPrint(
-            '[API 응답] ${response.statusCode} ${response.requestOptions.path}');
+        developer.log(
+            'API 응답: ${response.statusCode} ${response.requestOptions.path}',
+            name: 'ApiService');
+        developer.log('응답 데이터: ${response.data}', name: 'ApiService');
         handler.next(response);
       },
       onError: (error, handler) {
-        debugPrint(
-            '[API 오류] ${error.response?.statusCode} ${error.requestOptions.path}');
-        debugPrint('[API 오류 메시지] ${error.message}');
+        developer.log('API 오류: ${error.message}', name: 'ApiService');
+        developer.log('오류 상세: ${error.response?.data}', name: 'ApiService');
         handler.next(error);
       },
-    );
+    ));
+
+    return _dio!;
   }
 
-  /// 인증 토큰 가져오기 (SharedPreferences 등에서)
-  Future<String?> _getAuthToken() async {
-    // TODO: SharedPreferences나 다른 저장소에서 토큰 가져오기
-    return null;
-  }
+  // ==================== HTTP 메서드 ====================
 
   /// GET 요청
-  Future<Response<T>> get<T>(
-    String path, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) async {
+  Future<Response> get(String path,
+      {Map<String, dynamic>? queryParameters}) async {
     try {
-      // 인터넷 연결 확인
-      final isOnline = await checkConnectivity();
-      if (!isOnline) {
-        throw const ApiException('인터넷 연결이 필요합니다.', 0);
-      }
-
-      final response = await dio.get<T>(
-        path,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+      developer.log('GET 요청: $path', name: 'ApiService');
+      final response = await dio.get(path, queryParameters: queryParameters);
       return response;
     } on DioException catch (e) {
-      throw _handleError(e);
+      developer.log('GET 요청 실패: $path - ${e.message}', name: 'ApiService');
+      throw _handleDioError(e, 'GET 요청');
     }
   }
 
   /// POST 요청
-  Future<Response<T>> post<T>(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) async {
+  Future<Response> post(String path, {dynamic data}) async {
     try {
-      // 인터넷 연결 확인
-      final isOnline = await checkConnectivity();
-      if (!isOnline) {
-        throw const ApiException('인터넷 연결이 필요합니다.', 0);
-      }
-
-      final response = await dio.post<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+      developer.log('POST 요청: $path', name: 'ApiService');
+      final response = await dio.post(path, data: data);
       return response;
     } on DioException catch (e) {
-      throw _handleError(e);
+      developer.log('POST 요청 실패: $path - ${e.message}', name: 'ApiService');
+      throw _handleDioError(e, 'POST 요청');
     }
   }
 
   /// PUT 요청
-  Future<Response<T>> put<T>(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) async {
+  Future<Response> put(String path, {dynamic data}) async {
     try {
-      final response = await dio.put<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+      developer.log('PUT 요청: $path', name: 'ApiService');
+      final response = await dio.put(path, data: data);
       return response;
     } on DioException catch (e) {
-      throw _handleError(e);
+      developer.log('PUT 요청 실패: $path - ${e.message}', name: 'ApiService');
+      throw _handleDioError(e, 'PUT 요청');
     }
   }
 
   /// DELETE 요청
-  Future<Response<T>> delete<T>(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) async {
+  Future<Response> delete(String path) async {
     try {
-      final response = await dio.delete<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+      developer.log('DELETE 요청: $path', name: 'ApiService');
+      final response = await dio.delete(path);
       return response;
     } on DioException catch (e) {
-      throw _handleError(e);
+      developer.log('DELETE 요청 실패: $path - ${e.message}', name: 'ApiService');
+      throw _handleDioError(e, 'DELETE 요청');
     }
   }
 
-  /// PATCH 요청
-  Future<Response<T>> patch<T>(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) async {
-    try {
-      final response = await dio.patch<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
+  // ==================== 유틸리티 메서드 ====================
 
-  /// 파일 다운로드
-  Future<Response> download(
-    String urlPath,
-    String savePath, {
-    ProgressCallback? onReceiveProgress,
-    Map<String, dynamic>? queryParameters,
-    CancelToken? cancelToken,
-    bool deleteOnError = true,
-    String lengthHeader = Headers.contentLengthHeader,
-    Options? options,
-  }) async {
-    try {
-      final response = await dio.download(
-        urlPath,
-        savePath,
-        onReceiveProgress: onReceiveProgress,
-        queryParameters: queryParameters,
-        cancelToken: cancelToken,
-        deleteOnError: deleteOnError,
-        lengthHeader: lengthHeader,
-        options: options,
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
+  /// DioException을 ApiException으로 변환
+  ApiException _handleDioError(DioException e, String operation) {
+    String message;
+    int? statusCode;
 
-  /// 에러 처리
-  Exception _handleError(DioException error) {
-    String message = '네트워크 오류가 발생했습니다.';
-
-    switch (error.type) {
+    switch (e.type) {
       case DioExceptionType.connectionTimeout:
-        message = '연결 시간이 초과되었습니다.';
+        message = '$operation: 연결 시간 초과';
         break;
       case DioExceptionType.sendTimeout:
-        message = '요청 전송 시간이 초과되었습니다.';
+        message = '$operation: 전송 시간 초과';
         break;
       case DioExceptionType.receiveTimeout:
-        message = '응답 수신 시간이 초과되었습니다.';
+        message = '$operation: 수신 시간 초과';
         break;
       case DioExceptionType.badResponse:
-        final statusCode = error.response?.statusCode;
-        switch (statusCode) {
-          case 400:
-            message = '잘못된 요청입니다.';
-            break;
-          case 401:
-            message = '인증이 필요합니다.';
-            break;
-          case 403:
-            message = '접근 권한이 없습니다.';
-            break;
-          case 404:
-            message = '요청한 리소스를 찾을 수 없습니다.';
-            break;
-          case 500:
-            message = '서버 내부 오류가 발생했습니다.';
-            break;
-          default:
-            message = '서버 오류가 발생했습니다. (${statusCode ?? 'unknown'})';
+        statusCode = e.response?.statusCode;
+        final responseData = e.response?.data;
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('message')) {
+          message = responseData['message'] as String;
+        } else {
+          message = '$operation: 서버 오류 (${e.response?.statusCode})';
         }
         break;
       case DioExceptionType.cancel:
-        message = '요청이 취소되었습니다.';
+        message = '$operation: 요청이 취소되었습니다';
         break;
-      case DioExceptionType.unknown:
-        message = '알 수 없는 오류가 발생했습니다.';
+      case DioExceptionType.connectionError:
+        message = '$operation: 네트워크 연결 오류';
         break;
       default:
-        message = '네트워크 오류가 발생했습니다.';
+        message = '$operation: 네트워크 오류가 발생했습니다';
     }
 
-    debugPrint('[API 오류 처리] $message');
-    debugPrint('[API 오류 상세] ${error.toString()}');
-
-    return ApiException(message, error.response?.statusCode);
+    return ApiException(message, statusCode);
   }
 
-  /// 베이스 URL 업데이트
-  void updateBaseUrl(String newBaseUrl) {
-    dio.options.baseUrl = newBaseUrl;
-    debugPrint('API 베이스 URL 업데이트: $newBaseUrl');
-  }
-
-  /// 헤더 추가/업데이트
-  void updateHeaders(Map<String, String> headers) {
-    dio.options.headers.addAll(headers);
-    debugPrint('API 헤더 업데이트: $headers');
-  }
-
-  /// 인증 토큰 설정
-  void setAuthToken(String token) {
-    dio.options.headers['Authorization'] = 'Bearer $token';
-    debugPrint('API 인증 토큰 설정 완료');
-  }
-
-  /// 인증 토큰 제거
-  void clearAuthToken() {
-    dio.options.headers.remove('Authorization');
-    debugPrint('API 인증 토큰 제거 완료');
-  }
-
-  /// 클라이언트 종료
-  void close() {
+  /// 리소스 정리
+  void dispose() {
     _dio?.close();
     _dio = null;
-    debugPrint('API 서비스 종료');
   }
 }
 
-/// 커스텀 API 예외 클래스
+/// API 예외 클래스
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
 
-  const ApiException(this.message, [this.statusCode]);
+  const ApiException(this.message, this.statusCode);
 
   @override
   String toString() =>
-      'ApiException: $message${statusCode != null ? ' (Code: $statusCode)' : ''}';
+      'ApiException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
 }

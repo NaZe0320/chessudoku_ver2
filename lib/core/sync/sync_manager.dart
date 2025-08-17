@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 import '../network/network_service.dart';
 import 'sync_queue.dart';
 import 'sync_strategy.dart';
-import '../../data/services/firestore_service.dart';
+import '../../data/services/api_service.dart';
 
 /// 전체 동기화를 관리하는 매니저
 class SyncManager {
@@ -13,17 +13,17 @@ class SyncManager {
 
   final NetworkService _networkService = NetworkService();
   final SyncQueue _syncQueue = SyncQueue();
-  FirestoreService? _firestoreService;
+  ApiService? _apiService;
 
   StreamSubscription<bool>? _networkSubscription;
   bool _isInitialized = false;
 
-  /// FirestoreService 설정
+  /// ApiService 설정
   ///
   /// ⚠️ 주의: AppInitializer에서 반드시 호출해야 함
-  void setFirestoreService(FirestoreService firestoreService) {
-    _firestoreService = firestoreService;
-    _syncQueue.setFirestoreService(firestoreService);
+  void setApiService(ApiService apiService) {
+    _apiService = apiService;
+    _syncQueue.setApiService(apiService);
   }
 
   /// 초기화
@@ -103,7 +103,7 @@ class SyncManager {
 
   /// 즉시 동기화 작업 처리
   ///
-  /// 네트워크 상태를 확인하고 즉시 Firestore에 동기화합니다.
+  /// 네트워크 상태를 확인하고 즉시 HTTP API에 동기화합니다.
   Future<void> _processImmediateTask(SyncTask task) async {
     try {
       developer.log('즉시 동기화 작업 처리 중: ${task.description}', name: 'SyncManager');
@@ -148,23 +148,62 @@ class SyncManager {
     return false;
   }
 
-  /// 즉시 프로필 업데이트 처리
+  /// 즉시 프로필 업데이트 처리 (HTTP API 사용)
   Future<void> _processProfileUpdateImmediate(Map<String, dynamic> data) async {
     developer.log('즉시 프로필 업데이트 처리 시작', name: 'SyncManager');
 
-    if (_firestoreService == null) {
-      developer.log('FirestoreService가 설정되지 않음', name: 'SyncManager');
-      throw Exception('FirestoreService가 설정되지 않았습니다.');
+    if (_apiService == null) {
+      developer.log('ApiService가 설정되지 않음', name: 'SyncManager');
+      throw Exception('ApiService가 설정되지 않았습니다.');
     }
 
     final deviceId = data['deviceId'] as String;
     developer.log('즉시 프로필 업데이트 처리 중: $deviceId', name: 'SyncManager');
 
     try {
-      await _firestoreService!.createOrUpdateUser(deviceId, data);
+      // 계정 생성 또는 업데이트
+      await _createOrUpdateAccount(deviceId, data);
       developer.log('즉시 프로필 업데이트 완료: $deviceId', name: 'SyncManager');
     } catch (e) {
       developer.log('즉시 프로필 업데이트 실패: $deviceId - $e', name: 'SyncManager');
+      rethrow;
+    }
+  }
+
+  /// 계정 생성 또는 업데이트 (HTTP API 사용)
+  Future<void> _createOrUpdateAccount(
+      String deviceId, Map<String, dynamic> data) async {
+    try {
+      // 먼저 기존 계정이 있는지 확인
+      try {
+        await _apiService!.get('/account/$deviceId');
+        // 기존 계정이 있으면 업데이트
+        developer.log('기존 계정 발견, 업데이트 진행: $deviceId', name: 'SyncManager');
+
+        final updateData = {
+          'username': data['username'] ?? 'Player',
+          'total_play_time': data['totalPlayTime'] ?? 0,
+          'completed_puzzles': data['completedPuzzles'] ?? 0,
+          'current_streak': data['currentStreak'] ?? 0,
+          'best_streak': data['bestStreak'] ?? 0,
+          'updated_at': DateTime.now().toIso8601String(),
+        };
+
+        await _apiService!.put('/account/$deviceId', data: updateData);
+        developer.log('계정 업데이트 완료: $deviceId', name: 'SyncManager');
+      } catch (e) {
+        // 기존 계정이 없으면 생성
+        developer.log('기존 계정 없음, 새로 생성: $deviceId', name: 'SyncManager');
+
+        final createData = {
+          'device_id': deviceId,
+        };
+
+        await _apiService!.post('/account/register', data: createData);
+        developer.log('계정 생성 완료: $deviceId', name: 'SyncManager');
+      }
+    } catch (e) {
+      developer.log('계정 생성/업데이트 실패: $deviceId - $e', name: 'SyncManager');
       rethrow;
     }
   }
@@ -183,7 +222,7 @@ class SyncManager {
     await addDelayedTask(task);
   }
 
-  /// 서버에서 프로필 데이터 가져오기
+  /// 서버에서 프로필 데이터 가져오기 (HTTP API 사용)
   ///
   /// 서버에 저장된 사용자 프로필 데이터를 가져옵니다.
   /// 온라인 상태에서만 사용 가능합니다.
@@ -196,17 +235,45 @@ class SyncManager {
         return null;
       }
 
-      if (_firestoreService == null) {
-        developer.log('FirestoreService가 설정되지 않음', name: 'SyncManager');
+      if (_apiService == null) {
+        developer.log('ApiService가 설정되지 않음', name: 'SyncManager');
         return null;
       }
 
-      final serverData = await _firestoreService!.getUserData(deviceId);
-      if (serverData != null) {
-        developer.log('서버에서 프로필 데이터 발견: $deviceId', name: 'SyncManager');
-        return serverData;
-      } else {
+      final response = await _apiService!.get('/account/$deviceId');
+
+      if (response.statusCode == 200) {
+        final responseData = response.data as Map<String, dynamic>;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final accountData =
+              responseData['data']['account'] as Map<String, dynamic>;
+
+          // API 응답을 기존 형식으로 변환
+          final profileData = {
+            'deviceId': accountData['device_id'] ?? deviceId,
+            'username': accountData['username'] ?? 'Player',
+            'createdAt':
+                accountData['created_at'] ?? DateTime.now().toIso8601String(),
+            'lastLoginAt': accountData['last_login_at'] ??
+                DateTime.now().toIso8601String(),
+            'totalPlayTime': accountData['total_play_time'] ?? 0,
+            'completedPuzzles': accountData['completed_puzzles'] ?? 0,
+            'currentStreak': accountData['current_streak'] ?? 0,
+            'bestStreak': accountData['best_streak'] ?? 0,
+          };
+
+          developer.log('서버에서 프로필 데이터 발견: $deviceId', name: 'SyncManager');
+          return profileData;
+        } else {
+          developer.log('서버 응답 형식 오류: $deviceId', name: 'SyncManager');
+          return null;
+        }
+      } else if (response.statusCode == 404) {
         developer.log('서버에 프로필 데이터 없음: $deviceId', name: 'SyncManager');
+        return null;
+      } else {
+        developer.log('서버 응답 오류: ${response.statusCode}', name: 'SyncManager');
         return null;
       }
     } catch (e) {

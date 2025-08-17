@@ -101,12 +101,12 @@ Future<void> _initializeServices(ProviderContainer container) async {
   container.read(firestoreServiceProvider).firestore;
   debugPrint('Main: Firestore 서비스 초기화 완료');
 
-  // SyncManager 초기화 및 FirestoreService 설정
+  // SyncManager 초기화 및 ApiService 설정
   final syncManager = container.read(syncManagerProvider);
-  final firestoreService = container.read(firestoreServiceProvider);
+  final apiService = container.read(apiServiceProvider);
 
-  // FirestoreService 설정
-  syncManager.setFirestoreService(firestoreService);
+  // ApiService 설정
+  syncManager.setApiService(apiService);
 
   // SyncManager 초기화
   await syncManager.initialize();

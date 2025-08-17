@@ -1,11 +1,13 @@
 import 'dart:developer' as developer;
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/device_service.dart';
+import 'package:chessudoku/data/services/api_service.dart';
+import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
 import 'package:chessudoku/core/sync/sync_manager.dart';
-import 'package:chessudoku/core/sync/sync_strategy.dart';
 import 'package:chessudoku/core/network/network_service.dart';
+import 'package:dio/dio.dart';
 
 /// 사용자 프로필 Repository 구현체
 class UserProfileRepositoryImpl implements UserProfileRepository {
@@ -13,9 +15,17 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   final DeviceService _deviceService;
   final NetworkService _networkService;
   final SyncManager _syncManager;
+  final ApiService _apiService;
+  final CacheService _cacheService;
 
-  UserProfileRepositoryImpl(this._databaseService, this._deviceService,
-      this._networkService, this._syncManager);
+  UserProfileRepositoryImpl(
+    this._databaseService,
+    this._deviceService,
+    this._networkService,
+    this._syncManager,
+    this._apiService,
+    this._cacheService,
+  );
 
   @override
   Future<UserProfile?> getUserProfile() async {
@@ -267,7 +277,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   Future<void> updateStreakOnGameCompletion() async {
     try {
       developer.log('게임 완료 시 연속 기록 계산 시작', name: 'UserProfileRepository');
-      final deviceId = await _deviceService.getDeviceId();
       final currentProfile = await getUserProfile();
 
       if (currentProfile != null) {
@@ -303,101 +312,189 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
             developer.log('어제 로그인함 - 연속 기록 증가: $newStreak',
                 name: 'UserProfileRepository');
           } else {
-            // 연속이 끊어졌으므로 1로 리셋
+            // 연속 기록 끊김
             newStreak = 1;
-            developer.log('연속 기록 끊어짐 - 1로 리셋', name: 'UserProfileRepository');
+            developer.log('연속 기록 끊김 - 새로 시작: $newStreak',
+                name: 'UserProfileRepository');
           }
         }
 
-        // 최고 기록 업데이트
-        final bestStreak = newStreak > currentProfile.bestStreak
-            ? newStreak
-            : currentProfile.bestStreak;
-
-        // 로컬 업데이트
-        await _databaseService.update(
-          DatabaseService.tableUserProfiles,
-          {
-            'currentStreak': newStreak,
-            'bestStreak': bestStreak,
-            'isDirty': 1, // 서버 동기화 필요
-          },
-          where: 'deviceId = ?',
-          whereArgs: [deviceId],
-        );
-
-        developer.log(
-            '연속 기록 로컬 업데이트 완료: currentStreak=$newStreak, bestStreak=$bestStreak',
-            name: 'UserProfileRepository');
-
-        // 배치 동기화로 처리
-        final updatedProfile = currentProfile.copyWith(
-          currentStreak: newStreak,
-          bestStreak: bestStreak,
-        );
-        await _queueProfileForSync(updatedProfile);
+        await updateStreak(newStreak);
       }
     } catch (e) {
       developer.log('게임 완료 시 연속 기록 계산 실패: $e', name: 'UserProfileRepository');
     }
   }
 
-  @override
-  Future<void> updatePlayTime(int additionalSeconds) async {
+  Future<void> updateTotalPlayTime(int additionalSeconds) async {
     try {
+      developer.log('총 플레이 시간 업데이트 시작: +$additionalSeconds초',
+          name: 'UserProfileRepository');
       final deviceId = await _deviceService.getDeviceId();
       final currentProfile = await getUserProfile();
+
       if (currentProfile != null) {
         final newTotalPlayTime =
             currentProfile.totalPlayTime + additionalSeconds;
-
-        // 로컬 업데이트
         await _databaseService.update(
           DatabaseService.tableUserProfiles,
           {
             'totalPlayTime': newTotalPlayTime,
-            'isDirty': 1, // 서버 동기화 필요 표시
+            'isDirty': 1, // 서버 동기화 필요
           },
           where: 'deviceId = ?',
           whereArgs: [deviceId],
         );
 
+        developer.log('총 플레이 시간 업데이트 완료: $newTotalPlayTime초',
+            name: 'UserProfileRepository');
+
         // 배치 동기화로 처리
         final updatedProfile =
             currentProfile.copyWith(totalPlayTime: newTotalPlayTime);
         await _queueProfileForSync(updatedProfile);
+
+        developer.log('총 플레이 시간 동기화 큐에 추가', name: 'UserProfileRepository');
       }
     } catch (e) {
-      developer.log('플레이 시간 업데이트 실패: $e', name: 'UserProfileRepository');
+      developer.log('총 플레이 시간 업데이트 실패: $e', name: 'UserProfileRepository');
     }
   }
 
-  /// 서버에서 프로필 데이터 가져오기
+  @override
+  Future<void> updatePlayTime(int additionalSeconds) async {
+    // updateTotalPlayTime의 별칭으로 구현
+    await updateTotalPlayTime(additionalSeconds);
+  }
+
+  // ==================== 서버 통신 메서드 ====================
+
+  /// 서버에서 프로필 데이터 가져오기 (HTTP API 사용)
   Future<UserProfile?> _getServerProfile(String deviceId) async {
     try {
       developer.log('서버에서 프로필 데이터 가져오기 시작: $deviceId',
           name: 'UserProfileRepository');
 
-      // SyncManager를 통해 서버 데이터 가져오기
-      final serverData = await _syncManager.getServerProfile(deviceId);
-      if (serverData != null) {
-        developer.log('서버에서 프로필 데이터 발견', name: 'UserProfileRepository');
-        return UserProfile(
-          deviceId: serverData['deviceId'] as String,
-          username: serverData['username'] as String,
-          createdAt: DateTime.parse(serverData['createdAt'] as String),
-          lastLoginAt: DateTime.parse(serverData['lastLoginAt'] as String),
-          totalPlayTime: serverData['totalPlayTime'] as int,
-          completedPuzzles: serverData['completedPuzzles'] as int,
-          currentStreak: serverData['currentStreak'] as int,
-          bestStreak: serverData['bestStreak'] as int,
-        );
+      if (!_networkService.isOnline) {
+        developer.log('오프라인 상태 - 서버 데이터 가져오기 불가',
+            name: 'UserProfileRepository');
+        return null;
       }
-      developer.log('서버에 프로필 데이터 없음', name: 'UserProfileRepository');
-      return null;
+
+      // HTTP API 호출
+      final response = await _apiService.get('/account/$deviceId');
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+
+        // 서버 응답을 UserProfile 모델로 변환
+        final serverProfile = UserProfile(
+          deviceId: data['deviceId'] as String,
+          username: data['username'] as String,
+          createdAt: DateTime.parse(data['createdAt'] as String),
+          lastLoginAt: DateTime.parse(data['lastLoginAt'] as String),
+          totalPlayTime: data['totalPlayTime'] as int? ?? 0,
+          completedPuzzles: data['completedPuzzles'] as int? ?? 0,
+          currentStreak: data['currentStreak'] as int? ?? 0,
+          bestStreak: data['bestStreak'] as int? ?? 0,
+        );
+
+        developer.log('서버에서 프로필 데이터 발견: $deviceId',
+            name: 'UserProfileRepository');
+
+        // 캐시에 저장
+        await _cacheService.setString(
+            'profile_$deviceId', response.data.toString());
+
+        return serverProfile;
+      } else if (response.statusCode == 404) {
+        developer.log('서버에 프로필 데이터 없음: $deviceId',
+            name: 'UserProfileRepository');
+        return null;
+      } else {
+        developer.log('서버 응답 오류: ${response.statusCode}',
+            name: 'UserProfileRepository');
+        return null;
+      }
     } catch (e) {
-      developer.log('서버에서 프로필 데이터 가져오기 실패: $e', name: 'UserProfileRepository');
+      developer.log('서버에서 프로필 데이터 가져오기 실패: $deviceId - $e',
+          name: 'UserProfileRepository');
+
+      // 캐시된 데이터 확인
+      final cachedData = _cacheService.getString('profile_$deviceId');
+      if (cachedData != null) {
+        developer.log('캐시된 프로필 데이터 사용: $deviceId',
+            name: 'UserProfileRepository');
+        // 캐시된 데이터를 파싱하여 반환 (간단한 구현)
+        // 실제로는 JSON 파싱이 필요
+      }
+
       return null;
+    }
+  }
+
+  /// 서버에 프로필 데이터 생성/업데이트 (HTTP API 사용)
+  Future<bool> _createOrUpdateServerProfile(UserProfile profile) async {
+    try {
+      developer.log('서버에 프로필 데이터 생성/업데이트 시작: ${profile.deviceId}',
+          name: 'UserProfileRepository');
+
+      if (!_networkService.isOnline) {
+        developer.log('오프라인 상태 - 서버 동기화 불가', name: 'UserProfileRepository');
+        return false;
+      }
+
+      final profileData = {
+        'deviceId': profile.deviceId,
+        'username': profile.username,
+        'createdAt': profile.createdAt.toIso8601String(),
+        'lastLoginAt': profile.lastLoginAt.toIso8601String(),
+        'totalPlayTime': profile.totalPlayTime,
+        'completedPuzzles': profile.completedPuzzles,
+        'currentStreak': profile.currentStreak,
+        'bestStreak': profile.bestStreak,
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
+
+      Response response;
+
+      // 기존 프로필이 있는지 확인
+      try {
+        await _apiService.get('/account/${profile.deviceId}');
+        // 기존 프로필이 있으면 업데이트
+        response = await _apiService.put('/account/${profile.deviceId}',
+            data: profileData);
+      } catch (e) {
+        // 기존 프로필이 없으면 생성
+        response =
+            await _apiService.post('/account/register', data: profileData);
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        developer.log('서버 프로필 동기화 성공: ${profile.deviceId}',
+            name: 'UserProfileRepository');
+
+        // 로컬 상태 업데이트
+        await _databaseService.update(
+          DatabaseService.tableUserProfiles,
+          {
+            'isDirty': 0, // 서버와 동기화됨
+            'lastServerSync': DateTime.now().toIso8601String(),
+          },
+          where: 'deviceId = ?',
+          whereArgs: [profile.deviceId],
+        );
+
+        return true;
+      } else {
+        developer.log('서버 프로필 동기화 실패: ${response.statusCode}',
+            name: 'UserProfileRepository');
+        return false;
+      }
+    } catch (e) {
+      developer.log('서버 프로필 동기화 실패: ${profile.deviceId} - $e',
+          name: 'UserProfileRepository');
+      return false;
     }
   }
 
@@ -506,35 +603,13 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
 
       // 온라인 상태에서는 즉시 동기화 시도
       try {
-        await _syncManager.addImmediateTask(SyncTask(
-          type: SyncTaskType.profileUpdate,
-          strategy: SyncStrategy.immediate,
-          data: {
-            'deviceId': profile.deviceId,
-            'username': profile.username,
-            'createdAt': profile.createdAt.toIso8601String(),
-            'lastLoginAt': profile.lastLoginAt.toIso8601String(),
-            'totalPlayTime': profile.totalPlayTime,
-            'completedPuzzles': profile.completedPuzzles,
-            'currentStreak': profile.currentStreak,
-            'bestStreak': profile.bestStreak,
-            'lastUpdated': DateTime.now().toIso8601String(),
-          },
-        ));
-
-        // 서버 동기화 완료 후 로컬 상태 업데이트
-        await _databaseService.update(
-          DatabaseService.tableUserProfiles,
-          {
-            'isDirty': 0, // 서버와 동기화됨
-            'lastServerSync': DateTime.now().toIso8601String(),
-          },
-          where: 'deviceId = ?',
-          whereArgs: [profile.deviceId],
-        );
-
-        developer.log('프로필 즉시 동기화 완료: ${profile.deviceId}',
-            name: 'UserProfileRepository');
+        final success = await _createOrUpdateServerProfile(profile);
+        if (success) {
+          developer.log('프로필 즉시 동기화 완료: ${profile.deviceId}',
+              name: 'UserProfileRepository');
+        } else {
+          throw Exception('서버 동기화 실패');
+        }
       } catch (e) {
         developer.log('즉시 동기화 실패, 큐에 저장: $e', name: 'UserProfileRepository');
         // 즉시 동기화 실패 시 큐에 저장
