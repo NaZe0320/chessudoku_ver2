@@ -3,29 +3,22 @@ import 'dart:convert';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/device_service.dart';
 import 'package:chessudoku/data/services/api_service.dart';
-import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
-import 'package:chessudoku/core/sync/sync_manager.dart';
 import 'package:chessudoku/core/network/network_service.dart';
-import 'package:dio/dio.dart';
 
 /// 사용자 프로필 Repository 구현체
 class UserProfileRepositoryImpl implements UserProfileRepository {
   final DatabaseService _databaseService;
   final DeviceService _deviceService;
   final NetworkService _networkService;
-  final SyncManager _syncManager;
   final ApiService _apiService;
-  final CacheService _cacheService;
 
   UserProfileRepositoryImpl(
     this._databaseService,
     this._deviceService,
     this._networkService,
-    this._syncManager,
     this._apiService,
-    this._cacheService,
   );
 
   @override

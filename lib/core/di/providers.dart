@@ -101,17 +101,13 @@ final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
   final deviceService = ref.watch(deviceServiceProvider);
   final networkService = ref.watch(networkServiceProvider);
-  final syncManager = ref.watch(syncManagerProvider);
   final apiService = ref.watch(apiServiceProvider);
-  final cacheService = ref.watch(cacheServiceProvider);
 
   return UserProfileRepositoryImpl(
     databaseService,
     deviceService,
     networkService,
-    syncManager,
     apiService,
-    cacheService,
   );
 });
 
