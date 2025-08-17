@@ -13,10 +13,6 @@ class ClearSavedGameIntent extends MainIntent {
   const ClearSavedGameIntent();
 }
 
-class LoadStatsIntent extends MainIntent {
-  const LoadStatsIntent();
-}
-
 // 게임 시작 관련 Intent 추가
 class StartNewGameIntent extends MainIntent {
   final Difficulty difficulty;
@@ -30,8 +26,4 @@ class ContinueSavedGameIntent extends MainIntent {
 
 class GetGameStartInfoIntent extends MainIntent {
   const GetGameStartInfoIntent();
-}
-
-class RefreshStatsIntent extends MainIntent {
-  const RefreshStatsIntent();
 }

@@ -334,9 +334,6 @@ class SplashScreen extends HookConsumerWidget {
           ref
               .read(mainNotifierProvider.notifier)
               .handleIntent(const CheckSavedGameIntent());
-          ref
-              .read(mainNotifierProvider.notifier)
-              .handleIntent(const LoadStatsIntent());
           break;
 
         case InitializationResult.firstLaunchOffline:
@@ -346,9 +343,6 @@ class SplashScreen extends HookConsumerWidget {
           ref
               .read(mainNotifierProvider.notifier)
               .handleIntent(const CheckSavedGameIntent());
-          ref
-              .read(mainNotifierProvider.notifier)
-              .handleIntent(const LoadStatsIntent());
           break;
 
         case InitializationResult.failure:
@@ -358,9 +352,6 @@ class SplashScreen extends HookConsumerWidget {
           ref
               .read(mainNotifierProvider.notifier)
               .handleIntent(const CheckSavedGameIntent());
-          ref
-              .read(mainNotifierProvider.notifier)
-              .handleIntent(const LoadStatsIntent());
           break;
       }
     } catch (e) {
@@ -370,9 +361,6 @@ class SplashScreen extends HookConsumerWidget {
       ref
           .read(mainNotifierProvider.notifier)
           .handleIntent(const CheckSavedGameIntent());
-      ref
-          .read(mainNotifierProvider.notifier)
-          .handleIntent(const LoadStatsIntent());
     }
   }
 }

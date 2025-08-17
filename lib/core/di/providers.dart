@@ -139,8 +139,7 @@ final puzzleRepositoryProvider = Provider<PuzzleRepository>((ref) {
 final mainNotifierProvider =
     StateNotifierProvider<MainNotifier, MainState>((ref) {
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
-  final userProfileRepository = ref.watch(userProfileRepositoryProvider);
-  return MainNotifier(gameSaveRepository, userProfileRepository);
+  return MainNotifier(gameSaveRepository);
 });
 
 /// GamePreparationNotifier Provider

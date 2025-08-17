@@ -141,10 +141,6 @@ class DatabaseService {
         username TEXT NOT NULL,
         createdAt TEXT NOT NULL,
         lastLoginAt TEXT NOT NULL,
-        totalPlayTime INTEGER NOT NULL DEFAULT 0,
-        completedPuzzles INTEGER NOT NULL DEFAULT 0,
-        currentStreak INTEGER NOT NULL DEFAULT 0,
-        bestStreak INTEGER NOT NULL DEFAULT 0,
         serverVersion INTEGER NOT NULL DEFAULT 0,
         lastServerSync TEXT,
         isDirty INTEGER NOT NULL DEFAULT 0

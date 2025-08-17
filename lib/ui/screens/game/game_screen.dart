@@ -253,9 +253,6 @@ class GameScreen extends HookConsumerWidget {
                             // 메인 화면에서 저장된 게임 상태 업데이트 (게임 완료로 삭제됨)
                             mainNotifier
                                 .handleIntent(const CheckSavedGameIntent());
-                            // 통계 새로고침
-                            mainNotifier
-                                .handleIntent(const RefreshStatsIntent());
                           },
                         ),
                       ),

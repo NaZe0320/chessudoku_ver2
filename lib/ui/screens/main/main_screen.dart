@@ -7,12 +7,10 @@ import 'package:chessudoku/domain/intents/game_preparation_intent.dart';
 import 'package:chessudoku/domain/intents/game_intent.dart';
 import 'package:chessudoku/ui/screens/main/widgets/quick_play_grid.dart';
 import 'package:chessudoku/ui/screens/main/widgets/continue_play_card.dart';
-import 'package:chessudoku/ui/common/widgets/stat_card.dart';
 import 'package:chessudoku/ui/common/widgets/game_selection_dialog.dart';
 import 'package:chessudoku/ui/common/widgets/offline_dialog.dart';
 import 'package:chessudoku/ui/screens/game/game_screen.dart';
 import 'package:chessudoku/ui/screens/setting/settings_screen.dart';
-import 'package:chessudoku/ui/screens/setting/game_records_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -30,16 +28,9 @@ class MainScreen extends HookConsumerWidget {
     final gamePreparationNotifier =
         ref.read(gamePreparationNotifierProvider.notifier);
 
-    // 화면 진입 시 저장된 게임 확인 및 통계 로드 (한 번만 실행)
+    // 화면 진입 시 저장된 게임 확인 (한 번만 실행)
     useEffect(() {
       mainNotifier.handleIntent(const CheckSavedGameIntent());
-      mainNotifier.handleIntent(const LoadStatsIntent());
-
-      // GameNotifier에 MainNotifier 업데이트 콜백 설정
-      final gameNotifier = ref.read(gameNotifierProvider.notifier);
-      gameNotifier.setOnMainIntent((intent) {
-        mainNotifier.handleIntent(intent);
-      });
 
       return null;
     }, []);
@@ -68,8 +59,6 @@ class MainScreen extends HookConsumerWidget {
               builder: (context) => const GameScreen(),
             ),
           ).then((_) {
-            // 게임 화면에서 돌아올 때 통계 새로고침
-            mainNotifier.handleIntent(const LoadStatsIntent());
             // 게임 시작 정보 초기화
             mainNotifier.handleIntent(const GetGameStartInfoIntent());
             // 게임 준비 상태 초기화
@@ -143,8 +132,6 @@ class MainScreen extends HookConsumerWidget {
               builder: (context) => const GameScreen(),
             ),
           ).then((_) {
-            // 게임 화면에서 돌아올 때 통계 새로고침
-            mainNotifier.handleIntent(const LoadStatsIntent());
             // 게임 시작 정보 초기화
             mainNotifier.handleIntent(const GetGameStartInfoIntent());
           });
@@ -316,48 +303,6 @@ class MainScreen extends HookConsumerWidget {
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 24),
-
-                // 통계 카드들 (사용자 프로필 데이터 사용)
-                Row(
-                  children: [
-                    Expanded(
-                      child: StatCard(
-                        value: mainState.completedPuzzles.toString(),
-                        label: translate('completed_puzzles', '완료한 퍼즐'),
-                        icon: Icons.check_circle,
-                        onTap: () {
-                          // 게임 기록 화면으로 이동
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const GameRecordsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StatCard(
-                        value: '${mainState.currentStreak}일',
-                        label: translate('current_streak', '연속 기록'),
-                        icon: Icons.local_fire_department,
-                        onTap: () {
-                          // 통계 새로고침 (테스트용)
-                          mainNotifier.handleIntent(const RefreshStatsIntent());
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  '통계 새로고침 완료: ${mainState.currentStreak}일 연속 (최고: ${mainState.bestStreak}일)'),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
                 ),
                 const SizedBox(height: 24),
 

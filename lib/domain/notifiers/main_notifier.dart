@@ -2,24 +2,20 @@ import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/domain/states/main_state.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
-import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
+
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:chessudoku/data/models/saved_game_data.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
-import 'package:chessudoku/data/models/user_profile.dart';
-import 'package:chessudoku/data/services/device_service.dart';
+
 import 'dart:developer' as developer;
 
 class MainNotifier extends BaseNotifier<MainIntent, MainState> {
   final GameSaveRepository _gameSaveRepository;
-  final UserProfileRepository _userProfileRepository;
-  final DeviceService _deviceService = DeviceService();
 
-  MainNotifier(this._gameSaveRepository, this._userProfileRepository)
-      : super(const MainState());
+  MainNotifier(this._gameSaveRepository) : super(const MainState());
 
   @override
   void onIntent(MainIntent intent) {
@@ -28,16 +24,13 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
         _handleCheckSavedGame();
       case ClearSavedGameIntent():
         _handleClearSavedGame();
-      case LoadStatsIntent():
-        _handleLoadStats();
+
       case StartNewGameIntent():
         _handleStartNewGame(intent.difficulty);
       case ContinueSavedGameIntent():
         _handleContinueSavedGame(intent.difficulty);
       case GetGameStartInfoIntent():
         _handleGetGameStartInfo();
-      case RefreshStatsIntent():
-        _handleRefreshStats();
     }
   }
 
@@ -81,66 +74,6 @@ class MainNotifier extends BaseNotifier<MainIntent, MainState> {
     } catch (e) {
       // 에러 처리
     }
-  }
-
-  Future<void> _handleLoadStats() async {
-    try {
-      developer.log('통계 로드 시작', name: 'MainNotifier');
-      var userProfile = await _userProfileRepository.getUserProfile();
-      developer.log('사용자 프로필 조회 결과: ${userProfile != null ? '존재' : '없음'}',
-          name: 'MainNotifier');
-
-      // 사용자 프로필이 없으면 자동 생성 (AppInitializer에서 이미 처리했지만 안전장치)
-      if (userProfile == null) {
-        developer.log('새 사용자 프로필 생성 시작', name: 'MainNotifier');
-        final deviceId = await _getDeviceId();
-        developer.log('생성할 DeviceId: $deviceId', name: 'MainNotifier');
-
-        userProfile = await _userProfileRepository.createUserProfile(
-          UserProfile(
-            deviceId: deviceId,
-            username: '플레이어',
-            createdAt: DateTime.now(),
-            lastLoginAt: DateTime.now(),
-          ),
-        );
-        developer.log('새 사용자 프로필 생성 완료: $deviceId', name: 'MainNotifier');
-      } else {
-        developer.log('기존 사용자 프로필 사용: ${userProfile.deviceId}',
-            name: 'MainNotifier');
-        // 마지막 로그인 시간 업데이트 및 서버 동기화
-        await _userProfileRepository.updateLastLogin();
-      }
-
-      state = state.copyWith(
-        completedPuzzles: userProfile.completedPuzzles,
-        currentStreak: userProfile.currentStreak,
-        bestStreak: userProfile.bestStreak,
-      );
-
-      developer.log(
-          '통계 로드 완료 - completedPuzzles: ${userProfile.completedPuzzles}, currentStreak: ${userProfile.currentStreak}, bestStreak: ${userProfile.bestStreak}',
-          name: 'MainNotifier');
-    } catch (e) {
-      developer.log('통계 로드 실패: $e', name: 'MainNotifier');
-    }
-  }
-
-  Future<String> _getDeviceId() async {
-    return await _deviceService.getDeviceId();
-  }
-
-  // 통계 새로고침 처리
-  Future<void> _handleRefreshStats() async {
-    developer.log('통계 새로고침 시작', name: 'MainNotifier');
-    await _handleLoadStats();
-
-    // 저장된 게임 상태도 함께 새로고침
-    await _handleCheckSavedGame();
-
-    developer.log(
-        '통계 새로고침 완료 - completedPuzzles: ${state.completedPuzzles}, currentStreak: ${state.currentStreak}, bestStreak: ${state.bestStreak}',
-        name: 'MainNotifier');
   }
 
   // 새 게임 시작 처리
