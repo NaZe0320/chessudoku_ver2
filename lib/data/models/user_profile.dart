@@ -6,10 +6,12 @@ part 'user_profile.g.dart';
 @freezed
 class UserProfile with _$UserProfile {
   const factory UserProfile({
+    required String id,
     required String deviceId,
-    required String username,
     required DateTime createdAt,
     required DateTime lastLoginAt,
+    required bool isPremium,
+    required Map<String, dynamic> settings,
   }) = _UserProfile;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) =>

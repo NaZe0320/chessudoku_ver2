@@ -7,13 +7,11 @@ import '../../data/services/cache_service.dart';
 import '../../data/services/test_service.dart';
 import '../../data/repositories/user_profile_repository_impl.dart';
 import '../../data/repositories/version_repository_impl.dart';
-import '../../data/repositories/test_repository_impl.dart';
 import '../../data/repositories/game_save_repository_impl.dart';
 import '../../data/repositories/puzzle_record_repository_impl.dart';
 import '../../data/repositories/puzzle_repository_impl.dart';
 import '../../domain/repositories/user_profile_repository.dart';
 import '../../domain/repositories/version_repository.dart';
-import '../../domain/repositories/test_repository.dart';
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/puzzle_record_repository.dart';
 import '../../domain/repositories/puzzle_repository.dart';
@@ -81,12 +79,6 @@ final syncNotifierProvider =
     StateNotifierProvider<SyncNotifier, SyncState>((ref) {
   final versionRepository = ref.watch(versionRepositoryProvider);
   return SyncNotifier(versionRepository: versionRepository);
-});
-
-/// TestRepository Provider
-final testRepositoryProvider = Provider<TestRepository>((ref) {
-  final testService = ref.watch(testServiceProvider);
-  return TestRepositoryImpl(testService);
 });
 
 /// GameSaveRepository Provider

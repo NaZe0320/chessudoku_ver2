@@ -11,7 +11,7 @@ class DatabaseService {
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
   // 데이터베이스 버전
-  static const int _dbVersion = 4;
+  static const int _dbVersion = 5;
 
   // 테이블 이름
   static const String tableDataVersions = 'data_versions';
@@ -74,9 +74,9 @@ class DatabaseService {
       await _createPuzzleRecordsTable(db);
     }
 
-    if (oldVersion < 4) {
-      // 버전 4: 사용자 프로필 테이블에 서버 동기화 컬럼 추가
-      await _addServerSyncColumns(db);
+    if (oldVersion < 5) {
+      // 버전 5: 사용자 프로필 테이블 스키마 변경 (username 제거, id/isPremium/settings 추가)
+      await _migrateUserProfileTable(db);
     }
   }
 
@@ -137,13 +137,12 @@ class DatabaseService {
     // 사용자 프로필 테이블 생성
     await db.execute('''
       CREATE TABLE $tableUserProfiles (
-        deviceId TEXT PRIMARY KEY,
-        username TEXT NOT NULL,
+        id TEXT PRIMARY KEY,
+        deviceId TEXT NOT NULL UNIQUE,
         createdAt TEXT NOT NULL,
         lastLoginAt TEXT NOT NULL,
-        serverVersion INTEGER NOT NULL DEFAULT 0,
-        lastServerSync TEXT,
-        isDirty INTEGER NOT NULL DEFAULT 0
+        isPremium INTEGER NOT NULL DEFAULT 0,
+        settings TEXT NOT NULL DEFAULT '{}'
       )
     ''');
     debugPrint('사용자 프로필 테이블 생성 완료: $tableUserProfiles');
@@ -252,33 +251,43 @@ class DatabaseService {
     debugPrint('언어 팩 테이블 생성 완료: $tableLanguagePacks');
   }
 
-  /// 서버 동기화 컬럼 추가
-  Future<void> _addServerSyncColumns(Database db) async {
-    try {
-      // serverVersion 컬럼 추가
-      await db.execute(
-          'ALTER TABLE $tableUserProfiles ADD COLUMN serverVersion INTEGER NOT NULL DEFAULT 0');
-      debugPrint('serverVersion 컬럼 추가 완료');
-    } catch (e) {
-      debugPrint('serverVersion 컬럼이 이미 존재함: $e');
-    }
+  /// 사용자 프로필 테이블 마이그레이션 (버전 5)
+  Future<void> _migrateUserProfileTable(Database db) async {
+    debugPrint('사용자 프로필 테이블 마이그레이션 시작');
 
     try {
-      // lastServerSync 컬럼 추가
+      // 기존 테이블 백업
       await db.execute(
-          'ALTER TABLE $tableUserProfiles ADD COLUMN lastServerSync TEXT');
-      debugPrint('lastServerSync 컬럼 추가 완료');
-    } catch (e) {
-      debugPrint('lastServerSync 컬럼이 이미 존재함: $e');
-    }
+          'ALTER TABLE $tableUserProfiles RENAME TO ${tableUserProfiles}_backup');
 
-    try {
-      // isDirty 컬럼 추가
-      await db.execute(
-          'ALTER TABLE $tableUserProfiles ADD COLUMN isDirty INTEGER NOT NULL DEFAULT 0');
-      debugPrint('isDirty 컬럼 추가 완료');
+      // 새 스키마로 테이블 생성
+      await _createUserProfileTable(db);
+
+      // 기존 데이터 마이그레이션 (가능한 경우)
+      try {
+        await db.execute('''
+          INSERT INTO $tableUserProfiles (id, deviceId, createdAt, lastLoginAt, isPremium, settings)
+          SELECT 
+            deviceId as id, 
+            deviceId, 
+            createdAt, 
+            lastLoginAt, 
+            0 as isPremium, 
+            '{}' as settings
+          FROM ${tableUserProfiles}_backup
+        ''');
+        debugPrint('기존 데이터 마이그레이션 완료');
+      } catch (e) {
+        debugPrint('기존 데이터 마이그레이션 실패: $e');
+      }
+
+      // 백업 테이블 삭제
+      await db.execute('DROP TABLE ${tableUserProfiles}_backup');
+
+      debugPrint('사용자 프로필 테이블 마이그레이션 완료');
     } catch (e) {
-      debugPrint('isDirty 컬럼이 이미 존재함: $e');
+      debugPrint('사용자 프로필 테이블 마이그레이션 실패: $e');
+      rethrow;
     }
   }
 }
