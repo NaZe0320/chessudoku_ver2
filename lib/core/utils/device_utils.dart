@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:android_id/android_id.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -48,8 +49,22 @@ class DeviceUtils {
 
   /// iOS 디바이스 ID 획득
   static Future<String> getIOSDeviceId() async {
-    // device_info_plus 없이 fallback ID 사용
-    debugPrint('DeviceUtils: iOS에서 identifierForVendor 없음, fallback ID 사용');
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final iosInfo = await deviceInfo.iosInfo;
+
+      if (iosInfo.identifierForVendor != null &&
+          iosInfo.identifierForVendor!.isNotEmpty) {
+        debugPrint(
+            'DeviceUtils: identifierForVendor 사용: ${iosInfo.identifierForVendor}');
+        return iosInfo.identifierForVendor!;
+      }
+    } catch (e) {
+      debugPrint('DeviceUtils: device_info_plus 패키지 오류: $e');
+    }
+
+    // identifierForVendor를 가져올 수 없는 경우 fallback
+    debugPrint('DeviceUtils: identifierForVendor 없음, fallback ID 사용');
     return await getFallbackDeviceId();
   }
 
@@ -122,6 +137,19 @@ class DeviceUtils {
         return 'Android Fallback ID';
       }
     } else if (Platform.isIOS) {
+      try {
+        // identifierForVendor 확인
+        final deviceInfo = DeviceInfoPlugin();
+        final iosInfo = await deviceInfo.iosInfo;
+        if (iosInfo.identifierForVendor != null &&
+            iosInfo.identifierForVendor!.isNotEmpty &&
+            deviceId == iosInfo.identifierForVendor) {
+          return 'identifierForVendor (최우선)';
+        }
+      } catch (e) {
+        debugPrint('DeviceUtils: getDeviceIdType에서 device_info_plus 확인 오류: $e');
+      }
+
       // fallback ID 패턴 확인
       if (deviceId.startsWith('ios_fallback_')) {
         return 'iOS Fallback ID';
