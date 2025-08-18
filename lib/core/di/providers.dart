@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/database_service.dart';
-import '../../data/services/device_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/cache_service.dart';
@@ -32,11 +31,6 @@ import '../../domain/repositories/language_repository.dart';
 /// DatabaseService Provider
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
   return DatabaseService();
-});
-
-/// DeviceService Provider
-final deviceServiceProvider = Provider<DeviceService>((ref) {
-  return DeviceService();
 });
 
 /// CacheService Provider
@@ -98,13 +92,11 @@ final syncManagerProvider = Provider<SyncManager>((ref) {
 /// UserProfileRepository Provider
 final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
-  final deviceService = ref.watch(deviceServiceProvider);
   final networkService = ref.watch(networkServiceProvider);
   final apiService = ref.watch(apiServiceProvider);
 
   return UserProfileRepositoryImpl(
     databaseService,
-    deviceService,
     networkService,
     apiService,
   );

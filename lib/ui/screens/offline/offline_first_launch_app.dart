@@ -8,7 +8,6 @@ import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/data/services/api_service.dart';
 import 'package:chessudoku/data/services/database_service.dart';
-import 'package:chessudoku/data/services/device_service.dart';
 import 'package:chessudoku/data/repositories/game_save_repository_impl.dart';
 import 'package:chessudoku/data/repositories/user_profile_repository_impl.dart';
 
@@ -104,13 +103,11 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
   /// UserProfileRepository 인스턴스 생성
   UserProfileRepository _createUserProfileRepository() {
     final databaseService = DatabaseService();
-    final deviceService = DeviceService();
     final networkService = NetworkService();
     final apiService = ApiService();
 
     return UserProfileRepositoryImpl(
       databaseService,
-      deviceService,
       networkService,
       apiService,
     );

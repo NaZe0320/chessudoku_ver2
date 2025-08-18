@@ -85,10 +85,6 @@ Future<void> _initializeServices(ProviderContainer container) async {
   // 캐시 서비스 초기화
   await container.read(cacheServiceProvider).init();
 
-  // 디바이스 서비스 초기화
-  final deviceId = await container.read(deviceServiceProvider).getDeviceId();
-  debugPrint('Main: 앱 시작 - 디바이스 ID: $deviceId');
-
   // 데이터베이스 서비스 초기화
   await container.read(databaseServiceProvider).database;
   debugPrint('Main: 데이터베이스 서비스 초기화 완료');

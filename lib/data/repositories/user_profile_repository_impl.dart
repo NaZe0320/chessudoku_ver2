@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:convert';
 import 'package:chessudoku/data/services/database_service.dart';
-import 'package:chessudoku/data/services/device_service.dart';
+import 'package:chessudoku/core/utils/device_utils.dart';
 import 'package:chessudoku/data/services/api_service.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
@@ -10,13 +10,11 @@ import 'package:chessudoku/core/network/network_service.dart';
 /// 사용자 프로필 Repository 구현체
 class UserProfileRepositoryImpl implements UserProfileRepository {
   final DatabaseService _databaseService;
-  final DeviceService _deviceService;
   final NetworkService _networkService;
   final ApiService _apiService;
 
   UserProfileRepositoryImpl(
     this._databaseService,
-    this._deviceService,
     this._networkService,
     this._apiService,
   );
@@ -24,7 +22,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   @override
   Future<UserProfile?> getUserProfile() async {
     try {
-      final deviceId = await _deviceService.getDeviceId();
+      final deviceId = await DeviceUtils.getDeviceId();
 
       // 1. 로컬에서 프로필 조회
       final localProfile = await _getLocalProfile(deviceId);
