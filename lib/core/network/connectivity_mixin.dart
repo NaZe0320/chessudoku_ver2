@@ -3,7 +3,9 @@ import 'package:chessudoku/ui/common/widgets/offline_dialog.dart';
 import 'package:chessudoku/data/services/api_service.dart';
 import 'package:flutter/material.dart';
 
-/// 네트워크 연결 상태를 확인하는 Mixin
+// TODO: MVI 아키텍처 리팩토링 필요
+// - mixin 대신 NetworkNotifier 사용 고려
+// - Provider 기반 상태 관리로 변경
 mixin ConnectivityMixin {
   final NetworkService _networkService = NetworkService();
 

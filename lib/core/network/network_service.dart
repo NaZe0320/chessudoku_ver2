@@ -2,6 +2,10 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+// TODO: MVI 아키텍처 리팩토링 필요
+// - 싱글톤 패턴 제거하고 Provider 기반으로 변경
+// - 상태 관리를 NetworkNotifier로 이동
+// - lib/data/services/로 이동 고려
 /// 네트워크 연결 상태를 관리하는 서비스
 class NetworkService {
   static final NetworkService _instance = NetworkService._internal();
