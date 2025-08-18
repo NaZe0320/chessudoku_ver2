@@ -5,6 +5,7 @@ import 'package:chessudoku/core/utils/device_utils.dart';
 import 'package:chessudoku/data/services/api_service.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
+import 'package:chessudoku/core/config/database_config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// 사용자 프로필 Repository 구현체
@@ -44,7 +45,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   /// 로컬에서 프로필 조회
   Future<UserProfile?> _getLocalProfile(String deviceId) async {
     final result = await _databaseService.query(
-      DatabaseService.tableUserProfiles,
+      DatabaseConfig.tableUserProfiles,
       where: 'deviceId = ?',
       whereArgs: [deviceId],
     );
@@ -124,7 +125,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   Future<void> _saveProfileToLocal(UserProfile profile) async {
     try {
       await _databaseService.insert(
-        DatabaseService.tableUserProfiles,
+        DatabaseConfig.tableUserProfiles,
         {
           'id': profile.id,
           'deviceId': profile.deviceId,

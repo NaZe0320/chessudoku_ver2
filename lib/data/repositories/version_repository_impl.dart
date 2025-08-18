@@ -2,6 +2,7 @@ import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/data/services/firestore_service.dart';
 import 'package:chessudoku/domain/repositories/language_repository.dart';
 import 'package:chessudoku/domain/repositories/version_repository.dart';
+import 'package:chessudoku/core/config/database_config.dart';
 import 'package:flutter/foundation.dart';
 
 class VersionRepositoryImpl implements VersionRepository {
@@ -83,7 +84,7 @@ class VersionRepositoryImpl implements VersionRepository {
   /// 로컬 DB에서 데이터 타입별 버전 조회
   Future<int> _getDataVersion(String dataType) async {
     final result = await _databaseService.query(
-      DatabaseService.tableDataVersions,
+      DatabaseConfig.tableDataVersions,
       columns: ['version'],
       where: 'dataType = ?',
       whereArgs: [dataType],
@@ -100,7 +101,7 @@ class VersionRepositoryImpl implements VersionRepository {
   /// 로컬 DB의 데이터 타입별 버전 업데이트 또는 삽입
   Future<void> _updateDataVersion(String dataType, int version) async {
     await _databaseService.insert(
-      DatabaseService.tableDataVersions,
+      DatabaseConfig.tableDataVersions,
       {
         'dataType': dataType,
         'version': version,
