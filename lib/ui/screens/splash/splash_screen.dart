@@ -1,41 +1,12 @@
-import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
-import 'package:chessudoku/core/initialization/app_initializer.dart';
 import 'package:chessudoku/domain/intents/main_intent.dart';
 import 'package:chessudoku/ui/screens/main/main_screen.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:chessudoku/ui/screens/tutorial/tutorial_screen.dart';
+import 'package:chessudoku/core/constants/splash_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-/// 스플래시 화면 상수
-class SplashScreenConstants {
-  // 애니메이션 지속 시간
-  static const logoAnimationDuration = Duration(milliseconds: 1200);
-  static const progressAnimationDuration = Duration(milliseconds: 800);
-
-  // UI 크기
-  static const logoSize = 120.0;
-  static const iconSize = 60.0;
-  static const borderRadius = 24.0;
-  static const shadowBlur = 20.0;
-  static const shadowOffset = 10.0;
-
-  // 간격
-  static const logoSpacing = 32.0;
-  static const descriptionSpacing = 16.0;
-  static const progressSpacing = 24.0;
-  static const progressBarHeight = 6.0;
-  static const progressBarWidthRatio = 0.7;
-
-  // 투명도
-  static const shadowAlpha = 0.2;
-  static const descriptionAlpha = 0.8;
-  static const progressBackgroundAlpha = 0.2;
-  static const progressBorderAlpha = 0.2;
-  static const progressTextAlpha = 0.7;
-}
 
 class SplashScreen extends HookConsumerWidget {
   const SplashScreen({super.key});
@@ -43,11 +14,11 @@ class SplashScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final logoController = useAnimationController(
-      duration: SplashScreenConstants.logoAnimationDuration,
+      duration: SplashConstants.logoAnimationDuration,
     );
 
     final progressController = useAnimationController(
-      duration: SplashScreenConstants.progressAnimationDuration,
+      duration: SplashConstants.progressAnimationDuration,
     );
 
     // 애니메이션 시작
@@ -107,7 +78,7 @@ class SplashScreen extends HookConsumerWidget {
   Widget _buildLogoSection(AnimationController logoController,
       String Function(String, String) translate) {
     return TweenAnimationBuilder<double>(
-      duration: SplashScreenConstants.logoAnimationDuration,
+      duration: SplashConstants.logoAnimationDuration,
       tween: Tween(begin: 0.0, end: 1.0),
       curve: Curves.elasticOut,
       builder: (context, value, child) {
@@ -117,19 +88,18 @@ class SplashScreen extends HookConsumerWidget {
             Transform.scale(
               scale: value.clamp(0.0, 1.0),
               child: Container(
-                width: SplashScreenConstants.logoSize,
-                height: SplashScreenConstants.logoSize,
+                width: SplashConstants.logoSize,
+                height: SplashConstants.logoSize,
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius:
-                      BorderRadius.circular(SplashScreenConstants.borderRadius),
+                      BorderRadius.circular(SplashConstants.borderRadius),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black
-                          .withValues(alpha: SplashScreenConstants.shadowAlpha),
-                      blurRadius: SplashScreenConstants.shadowBlur,
-                      offset:
-                          const Offset(0, SplashScreenConstants.shadowOffset),
+                          .withValues(alpha: SplashConstants.shadowAlpha),
+                      blurRadius: SplashConstants.shadowBlur,
+                      offset: const Offset(0, SplashConstants.shadowOffset),
                     ),
                   ],
                 ),
@@ -141,7 +111,7 @@ class SplashScreen extends HookConsumerWidget {
               ),
             ),
 
-            const SizedBox(height: SplashScreenConstants.logoSpacing),
+            const SizedBox(height: SplashConstants.logoSpacing),
 
             // 앱 이름
             Opacity(
@@ -156,7 +126,7 @@ class SplashScreen extends HookConsumerWidget {
               ),
             ),
 
-            const SizedBox(height: SplashScreenConstants.descriptionSpacing),
+            const SizedBox(height: SplashConstants.descriptionSpacing),
 
             // 앱 설명
             Opacity(
@@ -164,8 +134,8 @@ class SplashScreen extends HookConsumerWidget {
               child: Text(
                 translate('app_description', '체스와 스도쿠의 만남'),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textWhite.withValues(
-                          alpha: SplashScreenConstants.descriptionAlpha),
+                      color: AppColors.textWhite
+                          .withValues(alpha: SplashConstants.descriptionAlpha),
                       letterSpacing: 0.5,
                     ),
               ),
@@ -183,7 +153,7 @@ class SplashScreen extends HookConsumerWidget {
     String Function(String, String) translate,
   ) {
     return TweenAnimationBuilder<double>(
-      duration: SplashScreenConstants.progressAnimationDuration,
+      duration: SplashConstants.progressAnimationDuration,
       tween: Tween(begin: 0.0, end: 1.0),
       curve: Curves.easeInOut,
       builder: (context, value, child) {
@@ -199,27 +169,27 @@ class SplashScreen extends HookConsumerWidget {
                   valueColor:
                       const AlwaysStoppedAnimation<Color>(AppColors.accent),
                   backgroundColor: AppColors.textWhite.withValues(
-                      alpha: SplashScreenConstants.progressBackgroundAlpha),
+                      alpha: SplashConstants.progressBackgroundAlpha),
                   strokeWidth: 3,
                 ),
               ),
-              const SizedBox(height: SplashScreenConstants.progressSpacing),
+              const SizedBox(height: SplashConstants.progressSpacing),
               // 상태 텍스트
               _buildStatusText(syncState, translate),
 
-              const SizedBox(height: SplashScreenConstants.progressSpacing),
+              const SizedBox(height: SplashConstants.progressSpacing),
 
               // 프로그레스 바
               _buildProgressBar(syncState),
 
-              const SizedBox(height: SplashScreenConstants.descriptionSpacing),
+              const SizedBox(height: SplashConstants.descriptionSpacing),
 
               // 진행률 퍼센트
               Text(
                 '${(syncState.progress * 100).toInt()}%',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textWhite.withValues(
-                          alpha: SplashScreenConstants.progressTextAlpha),
+                      color: AppColors.textWhite
+                          .withValues(alpha: SplashConstants.progressTextAlpha),
                       fontWeight: FontWeight.w500,
                     ),
               ),
@@ -241,7 +211,7 @@ class SplashScreen extends HookConsumerWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: AppColors.textWhite
-                .withValues(alpha: SplashScreenConstants.progressBorderAlpha),
+                .withValues(alpha: SplashConstants.progressBorderAlpha),
             width: 1,
           ),
         ),
@@ -265,11 +235,11 @@ class SplashScreen extends HookConsumerWidget {
     return Builder(
       builder: (context) => Container(
         width: MediaQuery.of(context).size.width *
-            SplashScreenConstants.progressBarWidthRatio,
-        height: SplashScreenConstants.progressBarHeight,
+            SplashConstants.progressBarWidthRatio,
+        height: SplashConstants.progressBarHeight,
         decoration: BoxDecoration(
           color: AppColors.textWhite
-              .withValues(alpha: SplashScreenConstants.progressBackgroundAlpha),
+              .withValues(alpha: SplashConstants.progressBackgroundAlpha),
           borderRadius: BorderRadius.circular(3),
         ),
         child: ClipRRect(
