@@ -1,7 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../sync/sync_manager.dart';
 
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/user_profile_repository.dart';
@@ -12,8 +11,6 @@ class AppInitializer {
   factory AppInitializer() => _instance;
   AppInitializer._internal();
 
-  final SyncManager _syncManager = SyncManager();
-
   static const String _firstLaunchKey = 'is_first_launch';
 
   /// 앱 초기화
@@ -23,11 +20,6 @@ class AppInitializer {
   }) async {
     try {
       developer.log('앱 초기화 시작', name: 'AppInitializer');
-
-      // 동기화 매니저는 main.dart에서 이미 초기화됨
-      developer.log(
-          '동기화 매니저 상태 확인 - 온라인: ${_syncManager.isOnline}, 큐 크기: ${_syncManager.queueSize}',
-          name: 'AppInitializer');
 
       // 최초 실행 여부 확인
       final isFirstLaunch = await _checkFirstLaunch();
@@ -263,9 +255,6 @@ class AppInitializer {
       // 저장된 게임 확인 실패는 치명적이지 않으므로 rethrow하지 않음
     }
   }
-
-  /// 동기화 매니저 접근
-  SyncManager get syncManager => _syncManager;
 }
 
 /// 초기화 결과 타입

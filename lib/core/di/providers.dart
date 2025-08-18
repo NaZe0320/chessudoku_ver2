@@ -21,8 +21,7 @@ import '../../domain/states/sync_state.dart';
 import '../../domain/states/main_state.dart';
 import '../../domain/states/game_preparation_state.dart';
 import '../../domain/states/game_settings_state.dart';
-import '../../core/sync/sync_manager.dart';
-import '../../core/sync/sync_queue.dart';
+
 import '../../core/initialization/app_initializer.dart';
 import '../../data/repositories/language_repository_impl.dart';
 import '../../domain/repositories/language_repository.dart';
@@ -144,26 +143,6 @@ final gameSettingsNotifierProvider =
 });
 
 // ==================== Infrastructure ====================
-
-/// SyncManager Provider - 싱크 관리자
-final syncManagerProvider = Provider<SyncManager>((ref) {
-  final syncManager = SyncManager();
-  // ApiService 설정
-  final apiService = ref.watch(apiServiceProvider);
-  syncManager.setApiService(apiService);
-
-  // 앱 종료 시 정리 작업
-  ref.onDispose(() {
-    syncManager.dispose();
-  });
-
-  return syncManager;
-});
-
-/// SyncQueue Provider - 싱크 큐
-final syncQueueProvider = Provider<SyncQueue>((ref) {
-  return SyncQueue();
-});
 
 /// AppInitializer Provider - 앱 초기화
 final appInitializerProvider = Provider<AppInitializer>((ref) {
