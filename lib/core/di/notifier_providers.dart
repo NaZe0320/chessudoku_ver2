@@ -29,12 +29,10 @@ final gamePreparationNotifierProvider =
     StateNotifierProvider<GamePreparationNotifier, GamePreparationState>((ref) {
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
   final puzzleRepository = ref.watch(puzzleRepositoryProvider);
-  final networkService = ref.watch(networkServiceProvider);
   return GamePreparationNotifier(
     gameSaveRepository: gameSaveRepository,
     puzzleRepository: puzzleRepository,
     puzzleRecordRepository: ref.watch(puzzleRecordRepositoryProvider),
-    networkService: networkService,
   );
 });
 

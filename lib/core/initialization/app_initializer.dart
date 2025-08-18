@@ -1,6 +1,5 @@
 import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../network/network_service.dart';
 
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/user_profile_repository.dart';
@@ -10,8 +9,6 @@ class AppInitializer {
   static final AppInitializer _instance = AppInitializer._internal();
   factory AppInitializer() => _instance;
   AppInitializer._internal();
-
-  final NetworkService _networkService = NetworkService();
 
   static const String _firstLaunchKey = 'is_first_launch';
 
@@ -23,22 +20,14 @@ class AppInitializer {
     try {
       developer.log('앱 초기화 시작', name: 'AppInitializer');
 
-      // 네트워크 서비스 초기화
-      await _networkService.initialize();
+      // TODO: 나중에 서버 연결 실패 시 처리로 변경
+      // 현재는 기본적으로 온라인으로 가정
 
       // 최초 실행 여부 확인
       final isFirstLaunch = await _checkFirstLaunch();
 
       if (isFirstLaunch) {
-        // 최초 실행 시 온라인 체크
-        final isOnline = _networkService.isOnline;
-
-        if (!isOnline) {
-          developer.log('최초 실행 시 오프라인 상태 감지', name: 'AppInitializer');
-          return InitializationResult.firstLaunchOffline;
-        }
-
-        // 최초 실행 시 온라인 상태 - 기본 데이터 다운로드 및 사용자 프로필 생성
+        // 최초 실행 시 - 기본 데이터 다운로드 및 사용자 프로필 생성
         await _downloadInitialData();
         await _initializeUserProfile(userProfileRepository);
         await _markFirstLaunchComplete();
@@ -67,12 +56,8 @@ class AppInitializer {
     try {
       developer.log('앱 재초기화 시작', name: 'AppInitializer');
 
-      // 네트워크 상태 재확인
-      final isOnline = _networkService.isOnline;
-      if (!isOnline) {
-        developer.log('재초기화 시에도 오프라인 상태', name: 'AppInitializer');
-        return InitializationResult.firstLaunchOffline;
-      }
+      // TODO: 나중에 서버 연결 실패 시 처리로 변경
+      // 현재는 기본적으로 온라인으로 가정
 
       // 최초 실행 여부 재확인
       final isFirstLaunch = await _checkFirstLaunch();
@@ -258,10 +243,15 @@ class AppInitializer {
   }
 
   /// 현재 온라인 상태 확인
-  bool get isOnline => _networkService.isOnline;
+  bool get isOnline {
+    // TODO: 나중에 서버 연결 실패 시 처리로 변경
+    // 현재는 기본적으로 온라인으로 가정
+    return true;
+  }
 
-  /// 네트워크 서비스 접근
-  NetworkService get networkService => _networkService;
+  /// 네트워크 서비스 접근 (더 이상 사용하지 않음)
+  // TODO: 나중에 서버 연결 실패 시 처리로 변경
+  // NetworkService get networkService => _networkService;
 }
 
 /// 초기화 결과 타입

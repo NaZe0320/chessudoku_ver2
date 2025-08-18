@@ -5,19 +5,16 @@ import 'package:chessudoku/data/services/device_service.dart';
 import 'package:chessudoku/data/services/api_service.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
 import 'package:chessudoku/data/models/user_profile.dart';
-import 'package:chessudoku/core/network/network_service.dart';
 
 /// 사용자 프로필 Repository 구현체
 class UserProfileRepositoryImpl implements UserProfileRepository {
   final DatabaseService _databaseService;
   final DeviceService _deviceService;
-  final NetworkService _networkService;
   final ApiService _apiService;
 
   UserProfileRepositoryImpl(
     this._databaseService,
     this._deviceService,
-    this._networkService,
     this._apiService,
   );
 
@@ -68,9 +65,13 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
 
   /// 새 프로필 생성 (서버 또는 로컬)
   Future<UserProfile> _createNewProfile(String deviceId) async {
-    if (_networkService.isOnline) {
+    // TODO: 나중에 서버 연결 실패 시 처리로 변경
+    // 현재는 기본적으로 온라인으로 가정
+    try {
       return await _createProfileWithServer(deviceId);
-    } else {
+    } catch (e) {
+      // 서버 연결 실패 시 로컬에서 생성
+      developer.log('서버 연결 실패, 로컬에서 프로필 생성: $e', name: 'UserProfileRepository');
       return _createProfileLocally(deviceId);
     }
   }

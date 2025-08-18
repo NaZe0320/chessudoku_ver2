@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
-import 'package:chessudoku/core/network/network_service.dart';
 import 'package:chessudoku/core/initialization/app_initializer.dart';
 import 'package:chessudoku/main.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
@@ -21,7 +20,6 @@ class OfflineFirstLaunchApp extends StatefulWidget {
 }
 
 class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
-  final NetworkService _networkService = NetworkService();
   final AppInitializer _appInitializer = AppInitializer();
   bool _isCheckingConnection = false;
   bool _isInitializing = false;
@@ -29,12 +27,8 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
   @override
   void initState() {
     super.initState();
-    // 네트워크 상태 변화 모니터링
-    _networkService.connectionStatusStream.listen((isOnline) {
-      if (isOnline && mounted) {
-        _onNetworkRestored();
-      }
-    });
+    // TODO: 나중에 서버 연결 실패 시 처리로 변경
+    // 현재는 기본적으로 온라인으로 가정하므로 네트워크 모니터링 불필요
   }
 
   /// 네트워크 연결 복구 시 처리
@@ -105,13 +99,11 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
   UserProfileRepository _createUserProfileRepository() {
     final databaseService = DatabaseService();
     final deviceService = DeviceService();
-    final networkService = NetworkService();
     final apiService = ApiService();
 
     return UserProfileRepositoryImpl(
       databaseService,
       deviceService,
-      networkService,
       apiService,
     );
   }
@@ -131,20 +123,9 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
     });
 
     try {
-      final isOnline = await _networkService.checkConnectivity();
-      if (isOnline) {
-        await _onNetworkRestored();
-      } else {
-        // 여전히 오프라인 상태
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('인터넷 연결을 확인해주세요.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      }
+      // TODO: 나중에 서버 연결 실패 시 처리로 변경
+      // 현재는 기본적으로 온라인으로 가정
+      await _onNetworkRestored();
     } catch (e) {
       debugPrint('연결 확인 실패: $e');
     } finally {

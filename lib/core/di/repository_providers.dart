@@ -42,13 +42,11 @@ final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
 final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
   final deviceService = ref.watch(deviceServiceProvider);
-  final networkService = ref.watch(networkServiceProvider);
   final apiService = ref.watch(apiServiceProvider);
 
   return UserProfileRepositoryImpl(
     databaseService,
     deviceService,
-    networkService,
     apiService,
   );
 });

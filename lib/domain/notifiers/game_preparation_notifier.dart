@@ -7,14 +7,11 @@ import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
-import 'package:chessudoku/core/network/network_service.dart';
-import 'package:chessudoku/core/network/connectivity_mixin.dart';
 import 'dart:developer' as developer;
 import 'dart:math';
 
 class GamePreparationNotifier
-    extends BaseNotifier<GamePreparationIntent, GamePreparationState>
-    with ConnectivityMixin {
+    extends BaseNotifier<GamePreparationIntent, GamePreparationState> {
   final GameSaveRepository _gameSaveRepository;
   final PuzzleRepository _puzzleRepository;
   final PuzzleRecordRepository _puzzleRecordRepository;
@@ -23,7 +20,6 @@ class GamePreparationNotifier
     required GameSaveRepository gameSaveRepository,
     required PuzzleRepository puzzleRepository,
     required PuzzleRecordRepository puzzleRecordRepository,
-    NetworkService? networkService,
   })  : _gameSaveRepository = gameSaveRepository,
         _puzzleRepository = puzzleRepository,
         _puzzleRecordRepository = puzzleRecordRepository,
@@ -103,18 +99,8 @@ class GamePreparationNotifier
   }
 
   Future<GameBoard?> _prepareNewGame(Difficulty difficulty) async {
-    // 네트워크 상태 확인
-    final isOnline = await checkConnectivity();
-
-    if (!isOnline) {
-      // 오프라인 상태를 상태로 관리 (Exception 대신)
-      state = state.copyWith(
-        isPreparing: false,
-        isReady: false,
-        error: 'OFFLINE_ERROR: 인터넷 연결이 필요합니다. 새 퍼즐을 다운로드하려면 온라인 상태여야 합니다.',
-      );
-      return null;
-    }
+    // TODO: 나중에 서버 연결 실패 시 처리로 변경
+    // 현재는 기본적으로 온라인으로 가정
 
     // Firestore에서 퍼즐 가져오기
     return _loadPuzzleFromFirestore(difficulty);
