@@ -2,21 +2,16 @@ import 'package:dio/dio.dart';
 import 'dart:developer' as developer;
 
 /// HTTP API 서비스
-/// Node.js 서버와의 통신을 담당하는 싱글톤 클래스
+/// Node.js 서버와의 통신을 담당하는 클래스
 class ApiService {
-  static final ApiService _instance = ApiService._internal();
-  static Dio? _dio;
+  Dio? _dio;
 
   // API 기본 설정
   static const String _baseUrl = 'http://localhost:3000/api';
   static const Duration _timeout = Duration(seconds: 30);
 
-  // 싱글톤 패턴 적용
-  factory ApiService() {
-    return _instance;
-  }
-
-  ApiService._internal();
+  // 일반 생성자 사용
+  ApiService();
 
   /// Dio 인스턴스 가져오기
   Dio get dio {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:chessudoku/ui/theme/color_palette.dart';
-import 'package:chessudoku/core/network/network_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:chessudoku/core/initialization/app_initializer.dart';
 import 'package:chessudoku/main.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
@@ -20,7 +20,6 @@ class OfflineFirstLaunchApp extends StatefulWidget {
 }
 
 class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
-  final NetworkService _networkService = NetworkService();
   final AppInitializer _appInitializer = AppInitializer();
   bool _isCheckingConnection = false;
   bool _isInitializing = false;
@@ -29,7 +28,8 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
   void initState() {
     super.initState();
     // 네트워크 상태 변화 모니터링
-    _networkService.connectionStatusStream.listen((isOnline) {
+    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+      final isOnline = result != ConnectivityResult.none;
       if (isOnline && mounted) {
         _onNetworkRestored();
       }
@@ -103,12 +103,10 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
   /// UserProfileRepository 인스턴스 생성
   UserProfileRepository _createUserProfileRepository() {
     final databaseService = DatabaseService();
-    final networkService = NetworkService();
     final apiService = ApiService();
 
     return UserProfileRepositoryImpl(
       databaseService,
-      networkService,
       apiService,
     );
   }
@@ -128,7 +126,9 @@ class _OfflineFirstLaunchAppState extends State<OfflineFirstLaunchApp> {
     });
 
     try {
-      final isOnline = await _networkService.checkConnectivity();
+      final connectivity = Connectivity();
+      final isOnline =
+          await connectivity.checkConnectivity() != ConnectivityResult.none;
       if (isOnline) {
         await _onNetworkRestored();
       } else {

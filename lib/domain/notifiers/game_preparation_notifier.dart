@@ -7,14 +7,12 @@ import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
-import 'package:chessudoku/core/network/network_service.dart';
-import 'package:chessudoku/core/network/connectivity_mixin.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:developer' as developer;
 import 'dart:math';
 
 class GamePreparationNotifier
-    extends BaseNotifier<GamePreparationIntent, GamePreparationState>
-    with ConnectivityMixin {
+    extends BaseNotifier<GamePreparationIntent, GamePreparationState> {
   final GameSaveRepository _gameSaveRepository;
   final PuzzleRepository _puzzleRepository;
   final PuzzleRecordRepository _puzzleRecordRepository;
@@ -23,7 +21,6 @@ class GamePreparationNotifier
     required GameSaveRepository gameSaveRepository,
     required PuzzleRepository puzzleRepository,
     required PuzzleRecordRepository puzzleRecordRepository,
-    NetworkService? networkService,
   })  : _gameSaveRepository = gameSaveRepository,
         _puzzleRepository = puzzleRepository,
         _puzzleRecordRepository = puzzleRecordRepository,
@@ -104,7 +101,9 @@ class GamePreparationNotifier
 
   Future<GameBoard?> _prepareNewGame(Difficulty difficulty) async {
     // 네트워크 상태 확인
-    final isOnline = await checkConnectivity();
+    final connectivity = Connectivity();
+    final isOnline =
+        await connectivity.checkConnectivity() != ConnectivityResult.none;
 
     if (!isOnline) {
       // 오프라인 상태를 상태로 관리 (Exception 대신)

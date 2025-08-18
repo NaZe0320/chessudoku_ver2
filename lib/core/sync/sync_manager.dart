@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import '../network/network_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'sync_queue.dart';
 import 'sync_strategy.dart';
 import '../../data/services/api_service.dart';
@@ -11,11 +11,10 @@ class SyncManager {
   factory SyncManager() => _instance;
   SyncManager._internal();
 
-  final NetworkService _networkService = NetworkService();
   final SyncQueue _syncQueue = SyncQueue();
   ApiService? _apiService;
 
-  StreamSubscription<bool>? _networkSubscription;
+  StreamSubscription<ConnectivityResult>? _networkSubscription;
   bool _isInitialized = false;
 
   /// ApiService 설정
@@ -34,15 +33,13 @@ class SyncManager {
     if (_isInitialized) return;
 
     try {
-      // 네트워크 서비스 초기화
-      await _networkService.initialize();
-
       // 동기화 큐 초기화
       await _syncQueue.initialize();
 
-      // 네트워크 상태 변화 모니터링
-      _networkSubscription = _networkService.connectionStatusStream.listen(
-        (bool isOnline) {
+      // 네트워크 상태 변화 모니터링 (간소화)
+      _networkSubscription = Connectivity().onConnectivityChanged.listen(
+        (ConnectivityResult result) {
+          final isOnline = result != ConnectivityResult.none;
           _onNetworkStatusChanged(isOnline);
         },
       );
@@ -83,7 +80,11 @@ class SyncManager {
   Future<void> addImmediateTask(SyncTask task) async {
     developer.log('즉시 동기화 작업 추가: ${task.description}', name: 'SyncManager');
 
-    if (!_networkService.isOnline) {
+    final connectivity = Connectivity();
+    final isOnline =
+        await connectivity.checkConnectivity() != ConnectivityResult.none;
+
+    if (!isOnline) {
       developer.log('오프라인 상태 - 즉시 동기화를 큐에 저장', name: 'SyncManager');
       await addDelayedTask(task);
       return;
@@ -109,7 +110,11 @@ class SyncManager {
       developer.log('즉시 동기화 작업 처리 중: ${task.description}', name: 'SyncManager');
 
       // 네트워크 상태 재확인
-      if (!_networkService.isOnline) {
+      final connectivity = Connectivity();
+      final isOnline =
+          await connectivity.checkConnectivity() != ConnectivityResult.none;
+
+      if (!isOnline) {
         developer.log('즉시 동기화 중 오프라인 상태 감지 - 큐에 저장', name: 'SyncManager');
         await addDelayedTask(task);
         return;
@@ -230,7 +235,11 @@ class SyncManager {
     try {
       developer.log('서버에서 프로필 데이터 가져오기 시작: $deviceId', name: 'SyncManager');
 
-      if (!_networkService.isOnline) {
+      final connectivity = Connectivity();
+      final isOnline =
+          await connectivity.checkConnectivity() != ConnectivityResult.none;
+
+      if (!isOnline) {
         developer.log('오프라인 상태 - 서버 데이터 가져오기 불가', name: 'SyncManager');
         return null;
       }
@@ -284,7 +293,10 @@ class SyncManager {
   }
 
   /// 현재 온라인 상태 확인
-  bool get isOnline => _networkService.isOnline;
+  Future<bool> get isOnline async {
+    final connectivity = Connectivity();
+    return await connectivity.checkConnectivity() != ConnectivityResult.none;
+  }
 
   /// 동기화 큐 상태 확인
   bool get isQueueEmpty => _syncQueue.isEmpty;
@@ -301,7 +313,8 @@ class SyncManager {
   /// ⚠️ 주의: 온라인 상태에서만 사용 가능
   /// 네트워크 오류 시 예외가 발생합니다.
   Future<void> processDelayedSync() async {
-    if (!isOnline) {
+    final online = await isOnline;
+    if (!online) {
       throw Exception('오프라인 상태입니다. 온라인 연결이 필요합니다.');
     }
     await _processDelayedSync();

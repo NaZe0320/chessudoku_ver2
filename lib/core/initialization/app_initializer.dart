@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../network/network_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../sync/sync_manager.dart';
 
 import '../../domain/repositories/game_save_repository.dart';
@@ -12,7 +12,6 @@ class AppInitializer {
   factory AppInitializer() => _instance;
   AppInitializer._internal();
 
-  final NetworkService _networkService = NetworkService();
   final SyncManager _syncManager = SyncManager();
 
   static const String _firstLaunchKey = 'is_first_launch';
@@ -25,9 +24,6 @@ class AppInitializer {
     try {
       developer.log('앱 초기화 시작', name: 'AppInitializer');
 
-      // 네트워크 서비스 초기화
-      await _networkService.initialize();
-
       // 동기화 매니저는 main.dart에서 이미 초기화됨
       developer.log(
           '동기화 매니저 상태 확인 - 온라인: ${_syncManager.isOnline}, 큐 크기: ${_syncManager.queueSize}',
@@ -38,7 +34,9 @@ class AppInitializer {
 
       if (isFirstLaunch) {
         // 최초 실행 시 온라인 체크
-        final isOnline = _networkService.isOnline;
+        final connectivity = Connectivity();
+        final isOnline =
+            await connectivity.checkConnectivity() != ConnectivityResult.none;
 
         if (!isOnline) {
           developer.log('최초 실행 시 오프라인 상태 감지', name: 'AppInitializer');
@@ -75,7 +73,9 @@ class AppInitializer {
       developer.log('앱 재초기화 시작', name: 'AppInitializer');
 
       // 네트워크 상태 재확인
-      final isOnline = _networkService.isOnline;
+      final connectivity = Connectivity();
+      final isOnline =
+          await connectivity.checkConnectivity() != ConnectivityResult.none;
       if (!isOnline) {
         developer.log('재초기화 시에도 오프라인 상태', name: 'AppInitializer');
         return InitializationResult.firstLaunchOffline;
@@ -264,14 +264,8 @@ class AppInitializer {
     }
   }
 
-  /// 현재 온라인 상태 확인
-  bool get isOnline => _networkService.isOnline;
-
   /// 동기화 매니저 접근
   SyncManager get syncManager => _syncManager;
-
-  /// 네트워크 서비스 접근
-  NetworkService get networkService => _networkService;
 }
 
 /// 초기화 결과 타입

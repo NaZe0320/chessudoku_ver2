@@ -3,10 +3,9 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// 앱 전체에서 사용할 수 있는 데이터베이스 서비스
-/// SQLite 데이터베이스 관리를 담당하는 싱글톤 클래스
+/// SQLite 데이터베이스 관리를 담당하는 클래스
 class DatabaseService {
-  static final DatabaseService _instance = DatabaseService._internal();
-  static Database? _database;
+  Database? _database;
 
   // 데이터베이스 이름
   static const String _dbName = 'chessudoku.db';
@@ -20,12 +19,8 @@ class DatabaseService {
   static const String tableUserProfiles = 'user_profiles';
   static const String tablePuzzleRecords = 'puzzle_records';
 
-  // 싱글톤 패턴 적용
-  factory DatabaseService() {
-    return _instance;
-  }
-
-  DatabaseService._internal();
+  // 일반 생성자 사용
+  DatabaseService();
 
   /// 데이터베이스 인스턴스 가져오기
   Future<Database> get database async {

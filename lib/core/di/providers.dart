@@ -23,19 +23,29 @@ import '../../domain/states/game_preparation_state.dart';
 import '../../domain/states/game_settings_state.dart';
 import '../../core/sync/sync_manager.dart';
 import '../../core/sync/sync_queue.dart';
-import '../../core/network/network_service.dart';
 import '../../core/initialization/app_initializer.dart';
 import '../../data/repositories/language_repository_impl.dart';
 import '../../domain/repositories/language_repository.dart';
 
-/// DatabaseService Provider
+// ==================== Core Services ====================
+
+/// DatabaseService Provider - 앱 시작 시 초기화
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
-  return DatabaseService();
+  final service = DatabaseService();
+  // 앱 종료 시 정리 작업을 위한 리스너 등록
+  ref.onDispose(() {
+    // 데이터베이스 연결 정리
+    service.close();
+  });
+  return service;
 });
 
-/// CacheService Provider
+/// CacheService Provider - 앱 시작 시 초기화
 final cacheServiceProvider = Provider<CacheService>((ref) {
-  return CacheService();
+  final service = CacheService();
+  // 앱 시작 시 캐시 서비스 초기화
+  service.init();
+  return service;
 });
 
 /// ApiService Provider
@@ -47,6 +57,8 @@ final apiServiceProvider = Provider<ApiService>((ref) {
 final firestoreServiceProvider = Provider<FirestoreService>((ref) {
   return FirestoreService();
 });
+
+// ==================== Repositories ====================
 
 /// LanguageRepository Provider
 final languageRepositoryProvider = Provider<LanguageRepository>((ref) {
@@ -67,37 +79,19 @@ final versionRepositoryProvider = Provider<VersionRepository>((ref) {
   );
 });
 
-/// SyncNotifier Provider
-final syncNotifierProvider =
-    StateNotifierProvider<SyncNotifier, SyncState>((ref) {
-  final versionRepository = ref.watch(versionRepositoryProvider);
-  return SyncNotifier(versionRepository: versionRepository);
-});
-
 /// GameSaveRepository Provider
 final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
   final cacheService = ref.watch(cacheServiceProvider);
   return GameSaveRepositoryImpl(cacheService);
 });
 
-/// SyncManager Provider
-final syncManagerProvider = Provider<SyncManager>((ref) {
-  final syncManager = SyncManager();
-  // ApiService 설정
-  final apiService = ref.watch(apiServiceProvider);
-  syncManager.setApiService(apiService);
-  return syncManager;
-});
-
 /// UserProfileRepository Provider
 final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
-  final networkService = ref.watch(networkServiceProvider);
   final apiService = ref.watch(apiServiceProvider);
 
   return UserProfileRepositoryImpl(
     databaseService,
-    networkService,
     apiService,
   );
 });
@@ -114,6 +108,15 @@ final puzzleRepositoryProvider = Provider<PuzzleRepository>((ref) {
   return PuzzleRepositoryImpl(firestoreService: firestoreService);
 });
 
+// ==================== Business Logic ====================
+
+/// SyncNotifier Provider
+final syncNotifierProvider =
+    StateNotifierProvider<SyncNotifier, SyncState>((ref) {
+  final versionRepository = ref.watch(versionRepositoryProvider);
+  return SyncNotifier(versionRepository: versionRepository);
+});
+
 /// MainNotifier Provider
 final mainNotifierProvider =
     StateNotifierProvider<MainNotifier, MainState>((ref) {
@@ -126,12 +129,10 @@ final gamePreparationNotifierProvider =
     StateNotifierProvider<GamePreparationNotifier, GamePreparationState>((ref) {
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
   final puzzleRepository = ref.watch(puzzleRepositoryProvider);
-  final networkService = ref.watch(networkServiceProvider);
   return GamePreparationNotifier(
     gameSaveRepository: gameSaveRepository,
     puzzleRepository: puzzleRepository,
     puzzleRecordRepository: ref.watch(puzzleRecordRepositoryProvider),
-    networkService: networkService,
   );
 });
 
@@ -142,17 +143,29 @@ final gameSettingsNotifierProvider =
   return GameSettingsNotifier(cacheService);
 });
 
-/// NetworkService Provider
-final networkServiceProvider = Provider<NetworkService>((ref) {
-  return NetworkService();
+// ==================== Infrastructure ====================
+
+/// SyncManager Provider - 싱크 관리자
+final syncManagerProvider = Provider<SyncManager>((ref) {
+  final syncManager = SyncManager();
+  // ApiService 설정
+  final apiService = ref.watch(apiServiceProvider);
+  syncManager.setApiService(apiService);
+
+  // 앱 종료 시 정리 작업
+  ref.onDispose(() {
+    syncManager.dispose();
+  });
+
+  return syncManager;
 });
 
-/// SyncQueue Provider
+/// SyncQueue Provider - 싱크 큐
 final syncQueueProvider = Provider<SyncQueue>((ref) {
   return SyncQueue();
 });
 
-/// AppInitializer Provider
+/// AppInitializer Provider - 앱 초기화
 final appInitializerProvider = Provider<AppInitializer>((ref) {
   return AppInitializer();
 });
