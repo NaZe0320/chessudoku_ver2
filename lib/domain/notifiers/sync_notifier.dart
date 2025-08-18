@@ -2,6 +2,7 @@ import 'package:chessudoku/domain/repositories/version_repository.dart';
 import 'package:chessudoku/domain/states/sync_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+// 앱 실행 시 버전 체크 및 동기화
 class SyncNotifier extends StateNotifier<SyncState> {
   final VersionRepository _versionRepository;
 
