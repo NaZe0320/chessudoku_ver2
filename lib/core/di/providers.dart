@@ -23,8 +23,6 @@ import '../../domain/states/sync_state.dart';
 import '../../domain/states/main_state.dart';
 import '../../domain/states/game_preparation_state.dart';
 import '../../domain/states/game_settings_state.dart';
-import '../../core/sync/sync_manager.dart';
-import '../../core/sync/sync_queue.dart';
 import '../../core/network/network_service.dart';
 import '../../core/initialization/app_initializer.dart';
 import '../../data/repositories/language_repository_impl.dart';
@@ -87,15 +85,6 @@ final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
   return GameSaveRepositoryImpl(cacheService);
 });
 
-/// SyncManager Provider
-final syncManagerProvider = Provider<SyncManager>((ref) {
-  final syncManager = SyncManager();
-  // ApiService 설정
-  final apiService = ref.watch(apiServiceProvider);
-  syncManager.setApiService(apiService);
-  return syncManager;
-});
-
 /// UserProfileRepository Provider
 final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
@@ -154,11 +143,6 @@ final gameSettingsNotifierProvider =
 /// NetworkService Provider
 final networkServiceProvider = Provider<NetworkService>((ref) {
   return NetworkService();
-});
-
-/// SyncQueue Provider
-final syncQueueProvider = Provider<SyncQueue>((ref) {
-  return SyncQueue();
 });
 
 /// AppInitializer Provider

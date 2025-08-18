@@ -17,21 +17,6 @@ lib/
 └── ui/             # 프레젠테이션 레이어 (View/Widget)
 ```
 
-### 동기화 시스템
-모든 데이터 동기화는 `SyncManager`를 통해 중앙화되어 관리됩니다.
-
-#### 동기화 규칙
-- ✅ **SyncManager를 통한 동기화**: `await _syncManager.syncProfileUpdate(data)`
-- ❌ **직접 Firestore 호출 금지**: `await _firestoreService.createOrUpdateUser()`
-- ✅ **로컬 DB 즉시 업데이트**: UI 반영을 위한 즉시 처리
-- ✅ **서버 동기화 백그라운드**: 네트워크 상태에 따른 지연 처리
-
-#### 네트워크 상태별 동작
-- **온라인**: 즉시 또는 지연 동기화
-- **오프라인**: 큐에 저장, 네트워크 복구 시 자동 처리
-
-자세한 동기화 가이드는 [lib/core/sync/README.md](lib/core/sync/README.md)를 참조하세요.
-
 ## 🚀 시작하기
 
 ### 필수 요구사항
@@ -69,22 +54,6 @@ flutter run
 - **Provider 네이밍**: `[name]Provider`
 - **StateNotifier**: `[name]Notifier`
 - **State 클래스**: `[name]State`
-
-### 동기화 시스템 사용법
-```dart
-// Repository에서 SyncManager 사용
-class UserProfileRepositoryImpl {
-  final SyncManager _syncManager = SyncManager();
-  
-  Future<void> updateProfile() async {
-    // 1. 로컬 DB 즉시 업데이트
-    await _databaseService.update(/* 업데이트 */);
-    
-    // 2. SyncManager를 통한 서버 동기화
-    await _syncManager.syncProfileUpdate(profileData);
-  }
-}
-```
 
 ## 📄 라이선스
 
