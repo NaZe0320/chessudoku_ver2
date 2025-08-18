@@ -4,7 +4,6 @@ import '../../data/services/device_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/cache_service.dart';
-import '../../data/services/test_service.dart';
 import '../../data/repositories/user_profile_repository_impl.dart';
 import '../../data/repositories/version_repository_impl.dart';
 import '../../data/repositories/game_save_repository_impl.dart';
@@ -164,9 +163,4 @@ final syncQueueProvider = Provider<SyncQueue>((ref) {
 /// AppInitializer Provider
 final appInitializerProvider = Provider<AppInitializer>((ref) {
   return AppInitializer();
-});
-
-/// TestService Provider
-final testServiceProvider = Provider<TestService>((ref) {
-  return TestService();
 });
