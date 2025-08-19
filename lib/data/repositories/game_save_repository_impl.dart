@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 import 'package:chessudoku/application/states/game_state.dart';
-import 'package:chessudoku/data/models/saved_game_data.dart';
+import 'package:chessudoku/domain/entities/saved_game_data.dart';
 import 'package:chessudoku/core/enums/difficulty.dart';
 
 /// 게임 저장/로드를 위한 Repository 구현체

@@ -1,5 +1,5 @@
 import 'package:chessudoku/application/states/game_state.dart';
-import 'package:chessudoku/data/models/saved_game_data.dart';
+import 'package:chessudoku/domain/entities/saved_game_data.dart';
 import 'package:chessudoku/core/enums/difficulty.dart';
 
 /// 게임 저장/로드를 위한 Repository 인터페이스

@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
-import 'package:chessudoku/data/models/puzzle_record.dart';
+import 'package:chessudoku/domain/entities/puzzle_record.dart';
 import 'package:chessudoku/core/enums/difficulty.dart';
 import 'package:chessudoku/core/config/database_config.dart';
 

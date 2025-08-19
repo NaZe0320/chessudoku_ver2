@@ -4,7 +4,7 @@ import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/core/utils/device_utils.dart';
 import 'package:chessudoku/data/services/api_service.dart';
 import 'package:chessudoku/domain/repositories/user_profile_repository.dart';
-import 'package:chessudoku/data/models/user_profile.dart';
+import 'package:chessudoku/domain/entities/user_profile.dart';
 import 'package:chessudoku/core/config/database_config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 

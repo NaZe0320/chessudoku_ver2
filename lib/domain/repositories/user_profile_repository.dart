@@ -1,4 +1,4 @@
-import 'package:chessudoku/data/models/user_profile.dart';
+import 'package:chessudoku/domain/entities/user_profile.dart';
 
 /// 사용자 프로필 관리를 위한 Repository 인터페이스
 abstract class UserProfileRepository {

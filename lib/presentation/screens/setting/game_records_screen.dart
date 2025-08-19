@@ -4,7 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/enums/difficulty.dart';
-import 'package:chessudoku/data/models/puzzle_record.dart';
+import 'package:chessudoku/domain/entities/puzzle_record.dart';
 import 'package:chessudoku/presentation/theme/color_palette.dart';
 import 'package:chessudoku/presentation/theme/typography.dart';
 import 'package:chessudoku/presentation/theme/dimensions.dart';

@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import 'package:flutter/widgets.dart';
-import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/application/intents/game_intent.dart';
+import 'package:chessudoku/application/notifiers/game_settings_notifier.dart';
 import 'package:chessudoku/application/states/game_state.dart';
-import 'package:chessudoku/domain/entities/game_board.dart';
-import 'package:chessudoku/domain/entities/sudoku_board.dart';
-import 'package:chessudoku/domain/entities/position.dart';
-import 'package:chessudoku/domain/entities/cell_content.dart';
+import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/core/enums/chess_piece.dart';
+import 'package:chessudoku/core/enums/difficulty.dart';
+import 'package:chessudoku/domain/entities/puzzle_record.dart';
+import 'package:chessudoku/domain/entities/saved_game_data.dart';
+import 'package:chessudoku/domain/entities/cell_content.dart';
 import 'package:chessudoku/domain/entities/checkpoint.dart';
+import 'package:chessudoku/domain/entities/game_board.dart';
+import 'package:chessudoku/domain/entities/position.dart';
+import 'package:chessudoku/domain/entities/sudoku_board.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
-import 'package:chessudoku/core/enums/difficulty.dart';
-import 'package:chessudoku/application/notifiers/game_settings_notifier.dart';
-import 'package:chessudoku/data/models/puzzle_record.dart';
-import 'package:chessudoku/data/models/saved_game_data.dart';
+import 'package:flutter/widgets.dart';
 
 class GameNotifier extends BaseNotifier<GameIntent, GameState>
     with WidgetsBindingObserver {
