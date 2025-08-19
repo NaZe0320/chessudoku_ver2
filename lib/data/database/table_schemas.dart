@@ -1,4 +1,4 @@
-import '../../core/config/database_config.dart';
+import 'package:chessudoku/core/config/database_config.dart';
 
 /// 데이터베이스 테이블 스키마 정의 클래스
 class TableSchemas {
