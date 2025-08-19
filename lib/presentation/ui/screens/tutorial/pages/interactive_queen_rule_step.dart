@@ -2,7 +2,7 @@ import 'package:chessudoku/presentation/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:chessudoku/presentation/ui/screens/game/widgets/number_buttons_grid.dart';
 import 'package:chessudoku/presentation/ui/screens/game/widgets/sudoku_cell.dart';
-import 'package:chessudoku/domain/models/cell_content.dart';
+import 'package:chessudoku/domain/entities/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 
 class InteractiveQueenRuleStep extends StatefulWidget {

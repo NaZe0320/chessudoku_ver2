@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
-import 'package:chessudoku/domain/models/cell_content.dart';
+import 'package:chessudoku/domain/entities/cell_content.dart';
 
 part 'game_state.freezed.dart';
 

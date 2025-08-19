@@ -1,5 +1,5 @@
-import 'package:chessudoku/domain/models/position.dart';
-import 'package:chessudoku/domain/models/cell_content.dart';
+import 'package:chessudoku/domain/entities/position.dart';
+import 'package:chessudoku/domain/entities/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'dart:developer' as developer;
 

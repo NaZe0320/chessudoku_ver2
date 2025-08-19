@@ -6,7 +6,7 @@ import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
-import 'package:chessudoku/domain/models/position.dart';
+import 'package:chessudoku/domain/entities/position.dart';
 import 'package:chessudoku/data/models/saved_game_data.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 

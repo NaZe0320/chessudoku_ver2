@@ -1,6 +1,6 @@
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
-import 'package:chessudoku/domain/models/position.dart';
+import 'package:chessudoku/domain/entities/position.dart';
 import 'package:flutter/foundation.dart';
 
 /// 퍼즐 데이터 모델

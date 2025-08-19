@@ -1,6 +1,6 @@
 import 'package:chessudoku/core/base/base_intent.dart';
 import 'package:chessudoku/data/models/game_board.dart';
-import 'package:chessudoku/domain/models/position.dart';
+import 'package:chessudoku/domain/entities/position.dart';
 
 abstract class GameIntent extends BaseIntent {
   const GameIntent();

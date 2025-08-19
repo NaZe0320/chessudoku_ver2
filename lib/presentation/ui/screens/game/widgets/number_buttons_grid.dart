@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:chessudoku/core/di/language_pack_provider.dart';
-import 'package:chessudoku/domain/models/cell_content.dart';
+import 'package:chessudoku/domain/entities/cell_content.dart';
 import 'number_button.dart';
 
 class NumberButtonsGrid extends HookConsumerWidget {
