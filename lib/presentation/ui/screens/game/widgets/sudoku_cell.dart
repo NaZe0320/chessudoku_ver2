@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:chessudoku/presentation/ui/theme/color_palette.dart';
-import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/domain/models/cell_content.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';
 
 class SudokuCell extends StatelessWidget {

@@ -1,4 +1,4 @@
-import 'package:chessudoku/data/models/position.dart';
+import 'package:chessudoku/domain/models/position.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 

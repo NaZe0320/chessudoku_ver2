@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:chessudoku/data/models/game_board.dart';
 import 'package:chessudoku/data/models/sudoku_board.dart';
-import 'package:chessudoku/data/models/position.dart';
-import 'package:chessudoku/data/models/cell_content.dart';
+import 'package:chessudoku/domain/models/position.dart';
+import 'package:chessudoku/domain/models/cell_content.dart';
 import 'package:chessudoku/data/models/checkpoint.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 import 'package:chessudoku/domain/enums/chess_piece.dart';

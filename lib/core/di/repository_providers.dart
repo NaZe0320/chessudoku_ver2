@@ -23,11 +23,9 @@ final languageRepositoryProvider = Provider<LanguageRepository>((ref) {
 
 /// VersionRepository Provider
 final versionRepositoryProvider = Provider<VersionRepository>((ref) {
-  final databaseService = ref.watch(databaseServiceProvider);
   final languageRepository = ref.watch(languageRepositoryProvider);
 
   return VersionRepositoryImpl(
-    databaseService: databaseService,
     languageRepository: languageRepository,
   );
 });

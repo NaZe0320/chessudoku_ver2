@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:chessudoku/presentation/ui/theme/color_palette.dart';
 import 'package:chessudoku/core/di/game_provider.dart';
-import 'package:chessudoku/data/models/position.dart';
+import 'package:chessudoku/domain/models/position.dart';
 import 'package:chessudoku/presentation/intents/game_intent.dart';
 import 'sudoku_cell.dart';
 import 'package:chessudoku/core/di/providers.dart';
