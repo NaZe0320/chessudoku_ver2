@@ -1,6 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../presentation/notifiers/game_notifier.dart';
-import '../../presentation/states/game_state.dart';
+import '../../application/notifiers/game_notifier.dart';
+import '../../application/states/game_state.dart';
 import '../di/providers.dart';
 
 final gameNotifierProvider =

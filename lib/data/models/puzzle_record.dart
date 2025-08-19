@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/core/enums/difficulty.dart';
 
 part 'puzzle_record.freezed.dart';
 part 'puzzle_record.g.dart';

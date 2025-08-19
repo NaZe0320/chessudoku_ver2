@@ -1,5 +1,5 @@
-import 'package:chessudoku/data/models/puzzle.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/entities/puzzle.dart';
+import 'package:chessudoku/core/enums/difficulty.dart';
 
 /// 퍼즐 데이터 접근을 위한 repository 인터페이스
 abstract class PuzzleRepository {

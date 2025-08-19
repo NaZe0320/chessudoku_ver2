@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:chessudoku/domain/enums/chess_piece.dart';
+import 'package:chessudoku/core/enums/chess_piece.dart';
 
 part 'cell_content.freezed.dart';
 

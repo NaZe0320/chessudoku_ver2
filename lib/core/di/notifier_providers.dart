@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../presentation/notifiers/main_notifier.dart';
-import '../../presentation/notifiers/game_preparation_notifier.dart';
-import '../../presentation/notifiers/sync_notifier.dart';
-import '../../presentation/notifiers/game_settings_notifier.dart';
-import '../../presentation/states/sync_state.dart';
-import '../../presentation/states/main_state.dart';
-import '../../presentation/states/game_preparation_state.dart';
-import '../../presentation/states/game_settings_state.dart';
+import '../../application/notifiers/main_notifier.dart';
+import '../../application/notifiers/game_preparation_notifier.dart';
+import '../../application/notifiers/sync_notifier.dart';
+import '../../application/notifiers/game_settings_notifier.dart';
+import '../../application/states/sync_state.dart';
+import '../../application/states/main_state.dart';
+import '../../application/states/game_preparation_state.dart';
+import '../../application/states/game_settings_state.dart';
 import 'repository_providers.dart';
 import 'service_providers.dart';
 

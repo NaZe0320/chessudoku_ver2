@@ -1,11 +1,11 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:chessudoku/data/models/game_board.dart';
-import 'package:chessudoku/data/models/sudoku_board.dart';
+import 'package:chessudoku/domain/entities/game_board.dart';
+import 'package:chessudoku/domain/entities/sudoku_board.dart';
 import 'package:chessudoku/domain/entities/position.dart';
 import 'package:chessudoku/domain/entities/cell_content.dart';
-import 'package:chessudoku/data/models/checkpoint.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
-import 'package:chessudoku/domain/enums/chess_piece.dart';
+import 'package:chessudoku/domain/entities/checkpoint.dart';
+import 'package:chessudoku/core/enums/difficulty.dart';
+import 'package:chessudoku/core/enums/chess_piece.dart';
 
 part 'saved_game_data.freezed.dart';
 
