@@ -1,5 +1,5 @@
 import 'package:chessudoku/core/di/providers.dart';
-import 'package:chessudoku/data/repositories/language_repository_impl.dart';
+import 'package:chessudoku/data/repositories/_language_repository_impl.dart';
 import 'package:chessudoku/domain/notifiers/language_pack_notifier.dart';
 import 'package:chessudoku/domain/repositories/language_repository.dart';
 import 'package:chessudoku/domain/states/language_pack_state.dart';

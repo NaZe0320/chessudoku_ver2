@@ -4,8 +4,8 @@ import 'package:chessudoku/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:chessudoku/core/initialization/app_initializer.dart';
-import 'package:chessudoku/ui/screens/offline/offline_first_launch_app.dart';
 import 'package:chessudoku/core/utils/logging.dart';
 
 /// 앱 재시작을 위한 전역 함수
@@ -45,22 +45,10 @@ void main() async {
   final gameSaveRepository = container.read(gameSaveRepositoryProvider);
   final userProfileRepository = container.read(userProfileRepositoryProvider);
 
-  final initResult = await appInitializer.initialize(
+  await appInitializer.initialize(
     gameSaveRepository: gameSaveRepository,
     userProfileRepository: userProfileRepository,
   );
-
-  if (initResult == InitializationResult.firstLaunchOffline) {
-    // 최초 실행 시 오프라인 상태 - 앱 시작 차단
-    debugPrint('Main: 최초 실행 시 오프라인 상태 감지 - 앱 시작 차단');
-    // 오프라인 안내 화면으로 시작
-    runApp(
-      const ProviderScope(
-        child: OfflineFirstLaunchApp(),
-      ),
-    );
-    return;
-  }
 
   // 사용이 끝난 임시 컨테이너는 폐기
   container.dispose();
@@ -81,15 +69,6 @@ Future<void> _initializeServices(ProviderContainer container) async {
   // 데이터베이스 서비스 초기화
   await container.read(databaseServiceProvider).database;
   debugPrint('Main: 데이터베이스 서비스 초기화 완료');
-
-  // API 서비스 초기화
-  // container.read(apiServiceProvider).dio;
-  // debugPrint('Main: API 서비스 초기화 완료');
-
-  // 데이터 버전 체크 및 동기화 -> SplashScreen으로 로직 이동
-  // debugPrint('Main: 데이터 버전 동기화 시작...');
-  // await container.read(versionRepositoryProvider).checkVersionAndSync();
-  // debugPrint('Main: 데이터 버전 동기화 완료.');
 }
 
 class MainApp extends ConsumerWidget {

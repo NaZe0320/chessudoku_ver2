@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/user_profile_repository_impl.dart';
-import '../../data/repositories/version_repository_impl.dart';
-import '../../data/repositories/game_save_repository_impl.dart';
-import '../../data/repositories/puzzle_record_repository_impl.dart';
-import '../../data/repositories/puzzle_repository_impl.dart';
-import '../../data/repositories/language_repository_impl.dart';
+import '../../data/repositories/_version_repository_impl.dart';
+import '../../data/repositories/_game_save_repository_impl.dart';
+import '../../data/repositories/_puzzle_record_repository_impl.dart';
+import '../../data/repositories/_puzzle_repository_impl.dart';
+import '../../data/repositories/_language_repository_impl.dart';
 import '../../domain/repositories/user_profile_repository.dart';
 import '../../domain/repositories/version_repository.dart';
 import '../../domain/repositories/game_save_repository.dart';
