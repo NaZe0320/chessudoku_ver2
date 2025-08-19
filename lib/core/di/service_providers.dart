@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/database_service.dart';
-import '../../data/services/firestore_service.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/cache_service.dart';
 
@@ -28,9 +27,4 @@ final cacheServiceProvider = Provider<CacheService>((ref) {
 /// ApiService Provider
 final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
-});
-
-/// FirestoreService Provider (기존 호환성을 위해 유지)
-final firestoreServiceProvider = Provider<FirestoreService>((ref) {
-  return FirestoreService();
 });

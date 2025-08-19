@@ -24,12 +24,10 @@ final languageRepositoryProvider = Provider<LanguageRepository>((ref) {
 /// VersionRepository Provider
 final versionRepositoryProvider = Provider<VersionRepository>((ref) {
   final databaseService = ref.watch(databaseServiceProvider);
-  final firestoreService = ref.watch(firestoreServiceProvider);
   final languageRepository = ref.watch(languageRepositoryProvider);
 
   return VersionRepositoryImpl(
     databaseService: databaseService,
-    firestoreService: firestoreService,
     languageRepository: languageRepository,
   );
 });
@@ -59,6 +57,5 @@ final puzzleRecordRepositoryProvider = Provider<PuzzleRecordRepository>((ref) {
 
 /// PuzzleRepository Provider
 final puzzleRepositoryProvider = Provider<PuzzleRepository>((ref) {
-  final firestoreService = ref.watch(firestoreServiceProvider);
-  return PuzzleRepositoryImpl(firestoreService: firestoreService);
+  return PuzzleRepositoryImpl();
 });

@@ -115,14 +115,14 @@ class GamePreparationNotifier
       return null;
     }
 
-    // Firestore에서 퍼즐 가져오기
-    return _loadPuzzleFromFirestore(difficulty);
+    // 로컬 데이터베이스에서 퍼즐 가져오기
+    return _loadPuzzleFromLocal(difficulty);
   }
 
-  /// Firestore에서 퍼즐을 가져와서 GameBoard로 변환
-  Future<GameBoard?> _loadPuzzleFromFirestore(Difficulty difficulty) async {
+  /// 로컬 데이터베이스에서 퍼즐을 가져와서 GameBoard로 변환
+  Future<GameBoard?> _loadPuzzleFromLocal(Difficulty difficulty) async {
     try {
-      developer.log('Firestore에서 퍼즐 로드 시작 - $difficulty',
+      developer.log('로컬 데이터베이스에서 퍼즐 로드 시작 - $difficulty',
           name: 'GamePreparationNotifier');
 
       // 완료한 퍼즐 제외를 위한 임시 필터링
@@ -150,7 +150,7 @@ class GamePreparationNotifier
       developer.log('퍼즐 로드 완료 - ${puzzle.puzzleId}',
           name: 'GamePreparationNotifier');
 
-      // Firestore에서 가져온 체스 기물 사용
+      // 로컬 데이터베이스에서 가져온 체스 기물 사용
       developer.log('체스 기물 개수: ${puzzle.chessPieces.length}',
           name: 'GamePreparationNotifier');
 
@@ -180,7 +180,7 @@ class GamePreparationNotifier
           name: 'GamePreparationNotifier');
       return gameBoard;
     } catch (e) {
-      developer.log('Firestore에서 퍼즐 로드 실패 - $e',
+      developer.log('로컬 데이터베이스에서 퍼즐 로드 실패 - $e',
           name: 'GamePreparationNotifier');
       rethrow;
     }

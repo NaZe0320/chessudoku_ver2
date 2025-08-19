@@ -3,7 +3,7 @@ import 'package:chessudoku/domain/enums/chess_piece.dart';
 import 'package:chessudoku/data/models/position.dart';
 import 'package:flutter/foundation.dart';
 
-/// Firestore에서 가져온 퍼즐 데이터 모델
+/// 퍼즐 데이터 모델
 class Puzzle {
   final String puzzleId;
   final Difficulty difficulty;
@@ -61,75 +61,6 @@ class Puzzle {
     return grid.map((row) {
       return row.map((cell) => cell?.toString() ?? 'null').join(',');
     }).join(';');
-  }
-
-  /// Firestore 문서에서 Puzzle 객체 생성
-  factory Puzzle.fromFirestore(Map<String, dynamic> data, String documentId) {
-    // 난이도 파싱
-    final difficultyString = data['difficulty'] as String;
-    final difficulty = Difficulty.values.firstWhere(
-      (d) => d.name == difficultyString,
-      orElse: () => Difficulty.medium,
-    );
-
-    // 퍼즐 데이터 파싱 (문자열에서 2D 배열로 변환)
-    final puzzleString = data['puzzle'] as String;
-    final puzzle = _parseGridString(puzzleString);
-
-    // 솔루션 데이터 파싱 (문자열에서 2D 배열로 변환)
-    final solutionString = data['solution'] as String;
-    final solution = _parseGridString(solutionString);
-
-    // 체스 기물 파싱
-    final chessPiecesData = data['chessPieces'] as Map<String, dynamic>? ?? {};
-    final chessPieces = <Position, ChessPiece>{};
-
-    chessPiecesData.forEach((key, value) {
-      final coords = key.split(',');
-      if (coords.length == 2) {
-        final row = int.parse(coords[0]);
-        final col = int.parse(coords[1]);
-        final position = Position(row: row, col: col);
-
-        final pieceString = value as String;
-        final piece = ChessPiece.values.firstWhere(
-          (p) => p.name == pieceString,
-          orElse: () => ChessPiece.queen,
-        );
-
-        chessPieces[position] = piece;
-      }
-    });
-
-    // 생성일 파싱
-    final createdAtString = data['createdAt'] as String;
-    final createdAt = DateTime.parse(createdAtString);
-
-    return Puzzle(
-      puzzleId: documentId,
-      difficulty: difficulty,
-      puzzle: puzzle,
-      solution: solution,
-      chessPieces: chessPieces,
-      createdAt: createdAt,
-    );
-  }
-
-  /// Map으로 변환 (Firestore 저장용)
-  Map<String, dynamic> toFirestore() {
-    final chessPiecesMap = <String, String>{};
-    chessPieces.forEach((position, piece) {
-      chessPiecesMap['${position.row},${position.col}'] = piece.name;
-    });
-
-    return {
-      'puzzleId': puzzleId,
-      'difficulty': difficulty.name,
-      'puzzle': _gridToString(puzzle),
-      'solution': _gridToString(solution),
-      'chessPieces': chessPiecesMap,
-      'createdAt': createdAt.toIso8601String(),
-    };
   }
 
   @override

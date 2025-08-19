@@ -1,5 +1,4 @@
 import 'package:chessudoku/data/services/database_service.dart';
-import 'package:chessudoku/data/services/firestore_service.dart';
 import 'package:chessudoku/domain/repositories/language_repository.dart';
 import 'package:chessudoku/domain/repositories/version_repository.dart';
 import 'package:chessudoku/core/config/database_config.dart';
@@ -7,15 +6,12 @@ import 'package:flutter/foundation.dart';
 
 class VersionRepositoryImpl implements VersionRepository {
   final DatabaseService _databaseService;
-  final FirestoreService _firestoreService;
   final LanguageRepository _languageRepository;
 
   VersionRepositoryImpl({
     required DatabaseService databaseService,
-    required FirestoreService firestoreService,
     required LanguageRepository languageRepository,
   })  : _databaseService = databaseService,
-        _firestoreService = firestoreService,
         _languageRepository = languageRepository;
 
   @override
@@ -25,50 +21,12 @@ class VersionRepositoryImpl implements VersionRepository {
     debugPrint('[VersionRepository] 데이터 버전 체크 및 동기화 시작...');
 
     try {
-      // 1. 서버로부터 최신 데이터 버전 정보 가져오기 (Firestore에서 조회)
-      onProgress?.call(0.1, '서버 버전 정보 확인 중...');
-      final serverVersions = await _firestoreService.getServerDataVersions();
-      debugPrint('[VersionRepository] 서버 버전 정보: $serverVersions');
+      // 로컬 데이터베이스에서 버전 정보 확인
+      onProgress?.call(0.3, '로컬 데이터 확인 중...');
 
-      final dataTypes = serverVersions.keys.toList();
-      final totalSteps = dataTypes.length * 2; // 각 타입별 (체크 + 동기화)
-      int currentStep = 0;
-
-      // 2. 각 데이터 타입에 대해 버전 비교 및 동기화
-      for (int i = 0; i < dataTypes.length; i++) {
-        final dataType = dataTypes[i];
-        final serverVersion = serverVersions[dataType]!;
-
-        // 로컬 데이터 버전 조회
-        onProgress?.call(
-          0.1 + (currentStep / totalSteps) * 0.8,
-          '$dataType 데이터 버전 확인 중...',
-        );
-        final localVersion = await _getDataVersion(dataType);
-        debugPrint(
-            '[VersionRepository] 로컬 $dataType 버전: $localVersion, 서버 버전: $serverVersion');
-        currentStep++;
-
-        if (serverVersion > localVersion) {
-          debugPrint(
-              '[VersionRepository] 새로운 $dataType 데이터($serverVersion) 발견. 동기화를 시작합니다.');
-
-          // 3. 데이터 동기화 로직 호출
-          onProgress?.call(
-            0.1 + (currentStep / totalSteps) * 0.8,
-            '$dataType 데이터 다운로드 중...',
-          );
-          await _syncData(dataType, serverVersion);
-
-          // 4. 동기화 완료 후 로컬 데이터 버전 업데이트
-          await _updateDataVersion(dataType, serverVersion);
-          debugPrint(
-              '[VersionRepository] 로컬 $dataType 버전이 $serverVersion 으로 업데이트되었습니다.');
-        } else {
-          debugPrint('[VersionRepository] $dataType 데이터는 이미 최신 버전입니다.');
-        }
-        currentStep++;
-      }
+      // 언어 팩 동기화만 수행 (로컬 데이터베이스 기반)
+      onProgress?.call(0.6, '언어 팩 동기화 중...');
+      await _languageRepository.syncLanguagePacks();
 
       onProgress?.call(0.9, '동기화 완료!');
       debugPrint('[VersionRepository] 데이터 버전 체크 및 동기화 완료.');
@@ -108,32 +66,5 @@ class VersionRepositoryImpl implements VersionRepository {
         'updatedAt': DateTime.now().toIso8601String(),
       },
     );
-  }
-
-  /// 데이터 타입별 동기화 로직
-  Future<void> _syncData(String dataType, int version) async {
-    // TODO: 각 데이터 타입에 맞는 Repository를 통해 실제 데이터 동기화 구현
-    // 예를 들어, NoticeRepository 등을 호출
-    switch (dataType) {
-      case 'puzzles':
-        // 퍼즐 관련 동기화는 제거됨
-        debugPrint('[$dataType] 동기화 건너뜀 (퍼즐 기능 제거됨)');
-        await Future.delayed(
-            const Duration(milliseconds: 1000)); // Simulate network latency
-        break;
-      case 'languages':
-        await _languageRepository.syncLanguagePacks();
-        debugPrint('[$dataType] 동기화 중... (구현)');
-        await Future.delayed(const Duration(milliseconds: 800));
-        break;
-      case 'notices':
-        // await _noticeRepository.syncNotices();
-        debugPrint('[$dataType] 동기화 중... (구현 필요)');
-        await Future.delayed(const Duration(milliseconds: 500));
-        break;
-
-      default:
-        debugPrint('[$dataType] 알 수 없는 데이터 타입입니다. 동기화를 건너뜁니다.');
-    }
   }
 }
