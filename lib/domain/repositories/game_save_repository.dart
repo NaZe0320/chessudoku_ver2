@@ -1,4 +1,4 @@
-import 'package:chessudoku/domain/states/game_state.dart';
+import 'package:chessudoku/presentation/states/game_state.dart';
 import 'package:chessudoku/data/models/saved_game_data.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 

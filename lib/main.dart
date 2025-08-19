@@ -1,6 +1,6 @@
 import 'package:chessudoku/core/di/providers.dart';
-import 'package:chessudoku/ui/screens/splash/splash_screen.dart';
-import 'package:chessudoku/ui/theme/color_palette.dart';
+import 'package:chessudoku/presentation/ui/screens/splash/splash_screen.dart';
+import 'package:chessudoku/presentation/ui/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

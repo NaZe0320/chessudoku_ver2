@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:chessudoku/data/services/cache_service.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
-import 'package:chessudoku/domain/states/game_state.dart';
+import 'package:chessudoku/presentation/states/game_state.dart';
 import 'package:chessudoku/data/models/saved_game_data.dart';
 import 'package:chessudoku/domain/enums/difficulty.dart';
 
