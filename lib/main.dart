@@ -1,13 +1,12 @@
 import 'package:chessudoku/core/di/providers.dart';
-import 'package:chessudoku/ui/screens/splash/splash_screen.dart';
-import 'package:chessudoku/ui/theme/color_palette.dart';
+import 'package:chessudoku/presentation/screens/splash/splash_screen.dart';
+import 'package:chessudoku/presentation/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+
 import 'package:chessudoku/core/initialization/app_initializer.dart';
-import 'package:chessudoku/ui/screens/offline/offline_first_launch_app.dart';
+import 'package:chessudoku/core/utils/logging.dart';
 
 /// 앱 재시작을 위한 전역 함수
 void restartApp() {
@@ -22,10 +21,8 @@ void main() async {
   // Flutter 엔진 초기화
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase 초기화
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // 로깅 초기화
+  setupLogging();
 
   // 상태바 스타일 설정 (앱 전체에 적용)
   SystemChrome.setSystemUIOverlayStyle(
@@ -48,22 +45,10 @@ void main() async {
   final gameSaveRepository = container.read(gameSaveRepositoryProvider);
   final userProfileRepository = container.read(userProfileRepositoryProvider);
 
-  final initResult = await appInitializer.initialize(
+  await appInitializer.initialize(
     gameSaveRepository: gameSaveRepository,
     userProfileRepository: userProfileRepository,
   );
-
-  if (initResult == InitializationResult.firstLaunchOffline) {
-    // 최초 실행 시 오프라인 상태 - 앱 시작 차단
-    debugPrint('Main: 최초 실행 시 오프라인 상태 감지 - 앱 시작 차단');
-    // 오프라인 안내 화면으로 시작
-    runApp(
-      const ProviderScope(
-        child: OfflineFirstLaunchApp(),
-      ),
-    );
-    return;
-  }
 
   // 사용이 끝난 임시 컨테이너는 폐기
   container.dispose();
@@ -81,44 +66,9 @@ Future<void> _initializeServices(ProviderContainer container) async {
   // 캐시 서비스 초기화
   await container.read(cacheServiceProvider).init();
 
-  // 디바이스 서비스 초기화
-  final deviceId = await container.read(deviceServiceProvider).getDeviceId();
-  debugPrint('Main: 앱 시작 - 디바이스 ID: $deviceId');
-
   // 데이터베이스 서비스 초기화
   await container.read(databaseServiceProvider).database;
   debugPrint('Main: 데이터베이스 서비스 초기화 완료');
-
-  // API 서비스 초기화
-  // container.read(apiServiceProvider).dio;
-  // debugPrint('Main: API 서비스 초기화 완료');
-
-  // Firestore 서비스 초기화
-  container.read(firestoreServiceProvider).firestore;
-  debugPrint('Main: Firestore 서비스 초기화 완료');
-
-  // SyncManager 초기화 및 FirestoreService 설정
-  final syncManager = container.read(syncManagerProvider);
-  final firestoreService = container.read(firestoreServiceProvider);
-
-  // FirestoreService 설정
-  syncManager.setFirestoreService(firestoreService);
-
-  // SyncManager 초기화
-  await syncManager.initialize();
-  debugPrint('Main: SyncManager 초기화 완료');
-
-  // 네트워크 상태 확인 및 로그
-  final isOnline = syncManager.isOnline;
-  debugPrint('Main: 네트워크 상태 - ${isOnline ? "온라인" : "오프라인"}');
-
-  // 동기화 큐 상태 확인
-  debugPrint('Main: 동기화 큐 크기 - ${syncManager.queueSize}');
-
-  // 데이터 버전 체크 및 동기화 -> SplashScreen으로 로직 이동
-  // debugPrint('Main: 데이터 버전 동기화 시작...');
-  // await container.read(versionRepositoryProvider).checkVersionAndSync();
-  // debugPrint('Main: 데이터 버전 동기화 완료.');
 }
 
 class MainApp extends ConsumerWidget {

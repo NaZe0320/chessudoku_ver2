@@ -5,6 +5,7 @@ import 'package:chessudoku/data/mock/language_mock_data.dart';
 import 'package:chessudoku/data/models/language_pack.dart';
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/domain/repositories/language_repository.dart';
+import 'package:chessudoku/core/config/database_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,7 +37,7 @@ class LanguageRepositoryImpl implements LanguageRepository {
   Future<List<LanguagePack>> getDownloadedLanguagePacks() async {
     try {
       final maps = await _databaseService.query(
-        DatabaseService.tableLanguagePacks,
+        DatabaseConfig.tableLanguagePacks,
         where: 'isDownloaded = ?',
         whereArgs: [1],
       );
@@ -68,7 +69,7 @@ class LanguageRepositoryImpl implements LanguageRepository {
 
       // 데이터베이스에 저장 또는 업데이트
       await _databaseService.insert(
-        DatabaseService.tableLanguagePacks,
+        DatabaseConfig.tableLanguagePacks,
         downloadedPack.toMap(),
       );
 
@@ -99,7 +100,7 @@ class LanguageRepositoryImpl implements LanguageRepository {
       );
 
       await _databaseService.update(
-        DatabaseService.tableLanguagePacks,
+        DatabaseConfig.tableLanguagePacks,
         finalPack.toMap(),
         where: 'id = ?',
         whereArgs: [languageId],
@@ -124,7 +125,7 @@ class LanguageRepositoryImpl implements LanguageRepository {
       }
 
       final maps = await _databaseService.query(
-        DatabaseService.tableLanguagePacks,
+        DatabaseConfig.tableLanguagePacks,
         where: 'id = ? AND isDownloaded = ?',
         whereArgs: [currentLanguageId, 1],
       );
@@ -168,7 +169,7 @@ class LanguageRepositoryImpl implements LanguageRepository {
   @override
   Future<void> clearLanguageCache() async {
     try {
-      await _databaseService.delete(DatabaseService.tableLanguagePacks);
+      await _databaseService.delete(DatabaseConfig.tableLanguagePacks);
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('current_language_id');

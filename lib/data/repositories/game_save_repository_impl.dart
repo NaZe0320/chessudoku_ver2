@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:chessudoku/application/states/game_state.dart';
+import 'package:chessudoku/core/enums/difficulty.dart';
 import 'package:chessudoku/data/services/cache_service.dart';
+import 'package:chessudoku/domain/entities/saved_game_data.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
-import 'package:chessudoku/domain/states/game_state.dart';
-import 'package:chessudoku/data/models/saved_game_data.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
 
 /// 게임 저장/로드를 위한 Repository 구현체
+/// 임시 저장, SQL 사용으로 변경경
 class GameSaveRepositoryImpl implements GameSaveRepository {
   final CacheService _cacheService;
 

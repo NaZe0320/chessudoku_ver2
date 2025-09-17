@@ -1,31 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import '../../core/config/database_config.dart';
+import '../database/table_schemas.dart';
+import '../database/database_migration.dart';
 
 /// 앱 전체에서 사용할 수 있는 데이터베이스 서비스
-/// SQLite 데이터베이스 관리를 담당하는 싱글톤 클래스
+/// SQLite 데이터베이스 관리를 담당하는 클래스
 class DatabaseService {
-  static final DatabaseService _instance = DatabaseService._internal();
-  static Database? _database;
+  Database? _database;
 
-  // 데이터베이스 이름
-  static const String _dbName = 'chessudoku.db';
-  // 데이터베이스 버전
-  static const int _dbVersion = 4;
-
-  // 테이블 이름
-  static const String tableDataVersions = 'data_versions';
-  static const String tableLanguagePacks = 'language_packs';
-  static const String tableSettings = 'settings';
-  static const String tableUserProfiles = 'user_profiles';
-  static const String tablePuzzleRecords = 'puzzle_records';
-
-  // 싱글톤 패턴 적용
-  factory DatabaseService() {
-    return _instance;
-  }
-
-  DatabaseService._internal();
+  // 일반 생성자 사용
+  DatabaseService();
 
   /// 데이터베이스 인스턴스 가져오기
   Future<Database> get database async {
@@ -37,15 +23,15 @@ class DatabaseService {
   /// 데이터베이스 초기화
   Future<Database> _initDB() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, _dbName);
+    final path = join(dbPath, DatabaseConfig.dbName);
 
-    debugPrint('데이터베이스 초기화: $path (버전 $_dbVersion)');
+    debugPrint('데이터베이스 초기화: $path (버전 ${DatabaseConfig.dbVersion})');
 
     return await openDatabase(
       path,
-      version: _dbVersion,
+      version: DatabaseConfig.dbVersion,
       onCreate: _createDB,
-      onUpgrade: _upgradeDB,
+      onUpgrade: DatabaseMigration.migrate,
       onOpen: (db) {
         debugPrint('데이터베이스 열림: ${db.path}');
       },
@@ -55,134 +41,38 @@ class DatabaseService {
   /// 데이터베이스 생성
   Future<void> _createDB(Database db, int version) async {
     debugPrint('새 데이터베이스 생성 중... 버전: $version');
-    await _createTables(db);
+    await _createAllTables(db);
   }
 
-  /// 데이터베이스 업그레이드
-  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    debugPrint('데이터베이스 업그레이드: $oldVersion -> $newVersion');
-
-    if (oldVersion < 2) {
-      // 버전 2: 언어 팩 테이블 추가
-      await _createLanguagePacksTable(db);
-    }
-
-    if (oldVersion < 3) {
-      // 버전 3: 설정, 사용자 프로필, 퍼즐 기록 테이블 추가
-      await _createSettingsTable(db);
-      await _createUserProfileTable(db);
-      await _createPuzzleRecordsTable(db);
-    }
-
-    if (oldVersion < 4) {
-      // 버전 4: 사용자 프로필 테이블에 서버 동기화 컬럼 추가
-      await _addServerSyncColumns(db);
-    }
-  }
-
-  Future<void> _createTables(Database db) async {
-    await _createDataVersionsTable(db);
-    await _createLanguageTables(db);
-    await _createSettingsTable(db);
-    await _createUserProfileTable(db);
-    await _createPuzzleRecordsTable(db);
-  }
-
-  Future<void> _createDataVersionsTable(Database db) async {
-    // 데이터 버전 관리 테이블 생성
-    await db.execute('''
-      CREATE TABLE $tableDataVersions (
-        dataType TEXT PRIMARY KEY,
-        version INTEGER NOT NULL,
-        updatedAt TEXT NOT NULL
-      )
-    ''');
-    debugPrint('데이터 버전 테이블 생성 완료: $tableDataVersions');
-  }
-
-  Future<void> _createLanguageTables(Database db) async {
-    // 언어팩 테이블 생성
-    await db.execute('''
-      CREATE TABLE $tableLanguagePacks (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        nativeName TEXT NOT NULL,
-        languageCode TEXT NOT NULL,
-        countryCode TEXT NOT NULL,
-        isDownloaded INTEGER NOT NULL DEFAULT 0,
-        isDefault INTEGER NOT NULL DEFAULT 0,
-        version TEXT,
-        lastUpdated INTEGER,
-        downloadSize INTEGER NOT NULL,
-        translations TEXT
-      )
-    ''');
-    debugPrint('언어팩 테이블 생성 완료: $tableLanguagePacks');
-  }
-
-  Future<void> _createSettingsTable(Database db) async {
-    // 설정 테이블 생성
-    await db.execute('''
-      CREATE TABLE $tableSettings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        currentLanguageId TEXT NOT NULL,
-        systemLanguage TEXT,
-        lastUpdated INTEGER NOT NULL
-      )
-    ''');
-    debugPrint('설정 테이블 생성 완료: $tableSettings');
-  }
-
-  Future<void> _createUserProfileTable(Database db) async {
-    // 사용자 프로필 테이블 생성
-    await db.execute('''
-      CREATE TABLE $tableUserProfiles (
-        deviceId TEXT PRIMARY KEY,
-        username TEXT NOT NULL,
-        createdAt TEXT NOT NULL,
-        lastLoginAt TEXT NOT NULL,
-        totalPlayTime INTEGER NOT NULL DEFAULT 0,
-        completedPuzzles INTEGER NOT NULL DEFAULT 0,
-        currentStreak INTEGER NOT NULL DEFAULT 0,
-        bestStreak INTEGER NOT NULL DEFAULT 0,
-        serverVersion INTEGER NOT NULL DEFAULT 0,
-        lastServerSync TEXT,
-        isDirty INTEGER NOT NULL DEFAULT 0
-      )
-    ''');
-    debugPrint('사용자 프로필 테이블 생성 완료: $tableUserProfiles');
-  }
-
-  Future<void> _createPuzzleRecordsTable(Database db) async {
-    // 퍼즐 기록 테이블 생성
-    await db.execute('''
-      CREATE TABLE $tablePuzzleRecords (
-        recordId TEXT PRIMARY KEY,
-        puzzleId TEXT NOT NULL,
-        difficulty TEXT NOT NULL,
-        completedAt TEXT NOT NULL,
-        elapsedSeconds INTEGER NOT NULL,
-        hintCount INTEGER NOT NULL DEFAULT 0
-      )
-    ''');
-    debugPrint('퍼즐 기록 테이블 생성 완료: $tablePuzzleRecords');
+  /// 모든 테이블 생성
+  Future<void> _createAllTables(Database db) async {
+    await db.execute(TableSchemas.createDataVersionsTable);
+    await db.execute(TableSchemas.createLanguagePacksTable);
+    await db.execute(TableSchemas.createSettingsTable);
+    await db.execute(TableSchemas.createUserProfileTable);
+    await db.execute(TableSchemas.createPuzzleRecordsTable);
+    debugPrint('모든 테이블 생성 완료');
   }
 
   /// 데이터베이스 닫기
   Future<void> close() async {
     final db = await database;
-    db.close();
+    await db.close();
     _database = null;
   }
 
   /// 레코드 삽입
   Future<int> insert(String table, Map<String, dynamic> data) async {
-    final db = await database;
-    return await db.insert(
-      table,
-      data,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    try {
+      final db = await database;
+      return await db.insert(
+        table,
+        data,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      throw DatabaseException('데이터 삽입 실패: $e');
+    }
   }
 
   /// 레코드 조회
@@ -195,16 +85,20 @@ class DatabaseService {
     int? limit,
     int? offset,
   }) async {
-    final db = await database;
-    return await db.query(
-      table,
-      columns: columns,
-      where: where,
-      whereArgs: whereArgs,
-      orderBy: orderBy,
-      limit: limit,
-      offset: offset,
-    );
+    try {
+      final db = await database;
+      return await db.query(
+        table,
+        columns: columns,
+        where: where,
+        whereArgs: whereArgs,
+        orderBy: orderBy,
+        limit: limit,
+        offset: offset,
+      );
+    } catch (e) {
+      throw DatabaseException('데이터 조회 실패: $e');
+    }
   }
 
   /// 레코드 업데이트
@@ -214,13 +108,17 @@ class DatabaseService {
     String? where,
     List<dynamic>? whereArgs,
   }) async {
-    final db = await database;
-    return await db.update(
-      table,
-      data,
-      where: where,
-      whereArgs: whereArgs,
-    );
+    try {
+      final db = await database;
+      return await db.update(
+        table,
+        data,
+        where: where,
+        whereArgs: whereArgs,
+      );
+    } catch (e) {
+      throw DatabaseException('데이터 업데이트 실패: $e');
+    }
   }
 
   /// 레코드 삭제
@@ -229,60 +127,42 @@ class DatabaseService {
     String? where,
     List<dynamic>? whereArgs,
   }) async {
-    final db = await database;
-    return await db.delete(
-      table,
-      where: where,
-      whereArgs: whereArgs,
-    );
+    try {
+      final db = await database;
+      return await db.delete(
+        table,
+        where: where,
+        whereArgs: whereArgs,
+      );
+    } catch (e) {
+      throw DatabaseException('데이터 삭제 실패: $e');
+    }
   }
 
   /// 데이터베이스 초기화 (모든 데이터 삭제)
   Future<void> resetDatabase() async {
-    // 퍼즐 관련 테이블 제거됨
-  }
-
-  /// 언어 팩 테이블 생성
-  Future<void> _createLanguagePacksTable(Database db) async {
-    await db.execute('''
-      CREATE TABLE $tableLanguagePacks (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        nativeName TEXT NOT NULL,
-        isDownloaded INTEGER NOT NULL DEFAULT 0,
-        lastUpdated INTEGER NOT NULL
-      )
-    ''');
-    debugPrint('언어 팩 테이블 생성 완료: $tableLanguagePacks');
-  }
-
-  /// 서버 동기화 컬럼 추가
-  Future<void> _addServerSyncColumns(Database db) async {
     try {
-      // serverVersion 컬럼 추가
-      await db.execute(
-          'ALTER TABLE $tableUserProfiles ADD COLUMN serverVersion INTEGER NOT NULL DEFAULT 0');
-      debugPrint('serverVersion 컬럼 추가 완료');
-    } catch (e) {
-      debugPrint('serverVersion 컬럼이 이미 존재함: $e');
-    }
+      final db = await database;
+      await db.close();
+      _database = null;
 
-    try {
-      // lastServerSync 컬럼 추가
-      await db.execute(
-          'ALTER TABLE $tableUserProfiles ADD COLUMN lastServerSync TEXT');
-      debugPrint('lastServerSync 컬럼 추가 완료');
-    } catch (e) {
-      debugPrint('lastServerSync 컬럼이 이미 존재함: $e');
-    }
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, DatabaseConfig.dbName);
 
-    try {
-      // isDirty 컬럼 추가
-      await db.execute(
-          'ALTER TABLE $tableUserProfiles ADD COLUMN isDirty INTEGER NOT NULL DEFAULT 0');
-      debugPrint('isDirty 컬럼 추가 완료');
+      // 데이터베이스 파일 삭제
+      await deleteDatabase(path);
+      debugPrint('데이터베이스 초기화 완료');
     } catch (e) {
-      debugPrint('isDirty 컬럼이 이미 존재함: $e');
+      throw DatabaseException('데이터베이스 초기화 실패: $e');
     }
   }
+}
+
+/// 데이터베이스 예외 클래스
+class DatabaseException implements Exception {
+  final String message;
+  const DatabaseException(this.message);
+
+  @override
+  String toString() => 'DatabaseException: $message';
 }

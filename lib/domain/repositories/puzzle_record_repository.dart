@@ -1,5 +1,5 @@
-import 'package:chessudoku/data/models/puzzle_record.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/entities/puzzle_record.dart';
+import 'package:chessudoku/core/enums/difficulty.dart';
 
 /// 퍼즐 기록 관리를 위한 Repository 인터페이스
 abstract class PuzzleRecordRepository {

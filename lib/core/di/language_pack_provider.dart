@@ -1,8 +1,8 @@
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/data/repositories/language_repository_impl.dart';
-import 'package:chessudoku/domain/notifiers/language_pack_notifier.dart';
+import 'package:chessudoku/application/notifiers/language_pack_notifier.dart';
 import 'package:chessudoku/domain/repositories/language_repository.dart';
-import 'package:chessudoku/domain/states/language_pack_state.dart';
+import 'package:chessudoku/application/states/language_pack_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 언어 Repository Provider

@@ -1,8 +1,9 @@
 import 'dart:developer' as developer;
 import 'package:chessudoku/data/services/database_service.dart';
 import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
-import 'package:chessudoku/data/models/puzzle_record.dart';
-import 'package:chessudoku/domain/enums/difficulty.dart';
+import 'package:chessudoku/domain/entities/puzzle_record.dart';
+import 'package:chessudoku/core/enums/difficulty.dart';
+import 'package:chessudoku/core/config/database_config.dart';
 
 /// 퍼즐 기록 Repository 구현체
 class PuzzleRecordRepositoryImpl implements PuzzleRecordRepository {
@@ -14,7 +15,7 @@ class PuzzleRecordRepositoryImpl implements PuzzleRecordRepository {
   Future<List<PuzzleRecord>> getAllRecords() async {
     try {
       final result = await _databaseService.query(
-        DatabaseService.tablePuzzleRecords,
+        DatabaseConfig.tablePuzzleRecords,
         orderBy: 'completedAt DESC',
       );
 
@@ -41,7 +42,7 @@ class PuzzleRecordRepositoryImpl implements PuzzleRecordRepository {
       Difficulty difficulty) async {
     try {
       final result = await _databaseService.query(
-        DatabaseService.tablePuzzleRecords,
+        DatabaseConfig.tablePuzzleRecords,
         where: 'difficulty = ?',
         whereArgs: [difficulty.name],
         orderBy: 'completedAt DESC',
@@ -69,7 +70,7 @@ class PuzzleRecordRepositoryImpl implements PuzzleRecordRepository {
   Future<PuzzleRecord?> getBestRecord(String puzzleId) async {
     try {
       final result = await _databaseService.query(
-        DatabaseService.tablePuzzleRecords,
+        DatabaseConfig.tablePuzzleRecords,
         where: 'puzzleId = ?',
         whereArgs: [puzzleId],
         orderBy: 'elapsedSeconds ASC',
@@ -100,7 +101,7 @@ class PuzzleRecordRepositoryImpl implements PuzzleRecordRepository {
   Future<void> savePuzzleRecord(PuzzleRecord record) async {
     try {
       await _databaseService.insert(
-        DatabaseService.tablePuzzleRecords,
+        DatabaseConfig.tablePuzzleRecords,
         {
           'recordId': record.recordId,
           'puzzleId': record.puzzleId,
@@ -122,7 +123,7 @@ class PuzzleRecordRepositoryImpl implements PuzzleRecordRepository {
   Future<int> getCompletedPuzzlesCount() async {
     try {
       final result = await _databaseService.query(
-        DatabaseService.tablePuzzleRecords,
+        DatabaseConfig.tablePuzzleRecords,
         columns: ['COUNT(*) as count'],
       );
       return result.first['count'] as int;

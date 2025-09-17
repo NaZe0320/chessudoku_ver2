@@ -1,16 +1,16 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../domain/notifiers/game_notifier.dart';
-import '../../domain/states/game_state.dart';
+import '../../application/notifiers/game_notifier.dart';
+import '../../application/states/game_state.dart';
 import '../di/providers.dart';
 
 final gameNotifierProvider =
     StateNotifierProvider<GameNotifier, GameState>((ref) {
   final gameSaveRepository = ref.watch(gameSaveRepositoryProvider);
-  final userProfileRepository = ref.watch(userProfileRepositoryProvider);
   final puzzleRecordRepository = ref.watch(puzzleRecordRepositoryProvider);
+  final gameSettings = ref.watch(gameSettingsNotifierProvider.notifier);
   return GameNotifier(
     gameSaveRepository,
-    userProfileRepository,
     puzzleRecordRepository,
+    gameSettings,
   );
 });

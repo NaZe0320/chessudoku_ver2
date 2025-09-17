@@ -2,17 +2,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
 /// 앱 전체에서 사용할 수 있는 캐시 서비스
-/// SharedPreferences를 싱글톤 패턴으로 래핑한 클래스
+/// SharedPreferences를 래핑한 클래스
 class CacheService {
-  static final CacheService _instance = CacheService._internal();
   SharedPreferences? _prefs;
 
-  // 싱글톤 패턴 적용
-  factory CacheService() {
-    return _instance;
-  }
-
-  CacheService._internal();
+  // 일반 생성자 사용
+  CacheService();
 
   /// 캐시 서비스 초기화
   Future<void> init() async {
