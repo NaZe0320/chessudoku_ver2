@@ -9,5 +9,4 @@ class DatabaseConfig {
   static const String tableLanguagePacks = 'language_packs';
   static const String tableSettings = 'settings';
   static const String tableUserProfiles = 'user_profiles';
-  static const String tablePuzzleRecords = 'puzzle_records';
 }

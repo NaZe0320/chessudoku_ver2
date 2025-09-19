@@ -34,7 +34,6 @@ final gamePreparationNotifierProvider =
   return GamePreparationNotifier(
     gameSaveRepository: gameSaveRepository,
     puzzleRepository: puzzleRepository,
-    puzzleRecordRepository: ref.watch(puzzleRecordRepositoryProvider),
   );
 });
 

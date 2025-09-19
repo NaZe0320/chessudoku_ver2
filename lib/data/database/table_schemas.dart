@@ -46,14 +46,4 @@ class TableSchemas {
     )
   ''';
 
-  static const String createPuzzleRecordsTable = '''
-    CREATE TABLE ${DatabaseConfig.tablePuzzleRecords} (
-      recordId TEXT PRIMARY KEY,
-      puzzleId TEXT NOT NULL,
-      difficulty TEXT NOT NULL,
-      completedAt TEXT NOT NULL,
-      elapsedSeconds INTEGER NOT NULL,
-      hintCount INTEGER NOT NULL DEFAULT 0
-    )
-  ''';
 }

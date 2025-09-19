@@ -50,7 +50,6 @@ class DatabaseService {
     await db.execute(TableSchemas.createLanguagePacksTable);
     await db.execute(TableSchemas.createSettingsTable);
     await db.execute(TableSchemas.createUserProfileTable);
-    await db.execute(TableSchemas.createPuzzleRecordsTable);
     debugPrint('모든 테이블 생성 완료');
   }
 

@@ -6,7 +6,6 @@ import 'package:chessudoku/application/states/game_state.dart';
 import 'package:chessudoku/core/base/base_notifier.dart';
 import 'package:chessudoku/core/enums/chess_piece.dart';
 import 'package:chessudoku/core/enums/difficulty.dart';
-import 'package:chessudoku/domain/entities/puzzle_record.dart';
 import 'package:chessudoku/domain/entities/saved_game_data.dart';
 import 'package:chessudoku/domain/entities/cell_content.dart';
 import 'package:chessudoku/domain/entities/checkpoint.dart';
@@ -14,14 +13,12 @@ import 'package:chessudoku/domain/entities/game_board.dart';
 import 'package:chessudoku/domain/entities/position.dart';
 import 'package:chessudoku/domain/entities/sudoku_board.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
-import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
 import 'package:flutter/widgets.dart';
 
 class GameNotifier extends BaseNotifier<GameIntent, GameState>
     with WidgetsBindingObserver {
   Timer? _timer;
   final GameSaveRepository _gameSaveRepository;
-  final PuzzleRecordRepository _puzzleRecordRepository;
   bool _wasTimerRunningBeforePause = false; // 앱이 백그라운드로 가기 전 타이머 상태
   Difficulty? _currentDifficulty; // 현재 게임 난이도
 
@@ -33,7 +30,6 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   GameNotifier(
     this._gameSaveRepository,
-    this._puzzleRecordRepository,
     this._settings,
   ) : super(const GameState()) {
     // 생명주기 관찰자 등록
@@ -600,13 +596,6 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isPaused: true,
       );
 
-      // 게임 완료 시 기록 저장 (비동기 처리)
-      _saveGameCompletionRecord().then((_) {
-        developer.log('게임 완료 처리 완료', name: 'GameNotifier');
-      }).catchError((e) {
-        developer.log('게임 완료 처리 실패: $e', name: 'GameNotifier');
-      });
-
       // 게임 완료 시 현재 난이도의 저장된 게임 삭제
       if (_currentDifficulty != null) {
         _gameSaveRepository.clearGameByDifficulty(_currentDifficulty!);
@@ -816,37 +805,6 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
     return res;
   }
 
-  // 게임 완료 기록 저장
-  Future<void> _saveGameCompletionRecord() async {
-    developer.log('게임 완료 기록 저장 시작', name: 'GameNotifier');
-
-    if (state.currentBoard == null || _currentDifficulty == null) {
-      developer.log('게임 완료 기록 저장 실패: 보드 또는 난이도가 null', name: 'GameNotifier');
-      return;
-    }
-
-    try {
-      developer.log('퍼즐 기록 생성 시작', name: 'GameNotifier');
-      // 퍼즐 기록 저장
-      final record = PuzzleRecord(
-        recordId: DateTime.now().millisecondsSinceEpoch.toString(),
-        puzzleId: state.currentBoard!.puzzleId,
-        difficulty: _currentDifficulty!,
-        completedAt: DateTime.now(),
-        elapsedSeconds: state.elapsedSeconds,
-        hintCount: 0, // TODO: 힌트 사용 횟수 추적 구현
-      );
-
-      developer.log('퍼즐 기록 저장 시작: ${record.puzzleId}', name: 'GameNotifier');
-      await _puzzleRecordRepository.savePuzzleRecord(record);
-      developer.log('퍼즐 기록 저장 완료', name: 'GameNotifier');
-
-      developer.log('게임 완료 기록 저장 완료', name: 'GameNotifier');
-    } catch (e) {
-      developer.log('게임 완료 기록 저장 실패: $e', name: 'GameNotifier');
-      rethrow;
-    }
-  }
 
   void _handleHideCompletionDialog() {
     state = state.copyWith(showCompletionDialog: false);
