@@ -1,13 +1,14 @@
-import 'package:chessudoku/core/di/language_pack_provider.dart';
+// import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/di/game_provider.dart';
-import 'package:chessudoku/core/enums/difficulty.dart';
+// import 'package:chessudoku/core/enums/difficulty.dart';
 import 'package:chessudoku/application/intents/main_intent.dart';
 import 'package:chessudoku/application/intents/game_preparation_intent.dart';
 import 'package:chessudoku/application/intents/game_intent.dart';
-import 'package:chessudoku/presentation/screens/main/widgets/quick_play_grid.dart';
-import 'package:chessudoku/presentation/screens/main/widgets/continue_play_card.dart';
-import 'package:chessudoku/presentation/common/widgets/game_selection_dialog.dart';
+// import 'package:chessudoku/presentation/screens/main/widgets/quick_play_grid.dart';
+// import 'package:chessudoku/presentation/screens/main/widgets/continue_play_card.dart';
+import 'package:chessudoku/presentation/screens/main/widgets/home_menu_button.dart';
+// import 'package:chessudoku/presentation/common/widgets/game_selection_dialog.dart';
 import 'package:chessudoku/presentation/common/widgets/offline_dialog.dart';
 import 'package:chessudoku/presentation/screens/game/game_screen.dart';
 import 'package:chessudoku/presentation/screens/setting/settings_screen.dart';
@@ -21,7 +22,7 @@ class MainScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final translate = ref.watch(translationProvider);
+    // final translate = ref.watch(translationProvider);
     final mainState = ref.watch(mainNotifierProvider);
     final mainNotifier = ref.read(mainNotifierProvider.notifier);
     final gamePreparationState = ref.watch(gamePreparationNotifierProvider);
@@ -151,8 +152,8 @@ class MainScreen extends HookConsumerWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.primary,
-                AppColors.primaryLight,
+              AppColors.primaryLight,
+              AppColors.primary,
               ],
             ),
           ),
@@ -188,234 +189,114 @@ class MainScreen extends HookConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.primary,
               AppColors.primaryLight,
+              AppColors.primary,
             ],
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 앱 이름과 설정
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      translate('app_name', 'ChesSudoku'),
-                      style: const TextStyle(
-                        color: AppColors.textWhite,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12.0,
-                            vertical: 6.0,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(16.0),
-                          ),
-                          child: const Text(
-                            'PRO',
-                            style: TextStyle(
-                              color: AppColors.textWhite,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+          child: Stack(
+            children: [
+              // 상단 고정 설정 버튼
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SettingsScreen(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.settings,
-                            color: AppColors.textWhite,
-                            size: 24,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // 사용자 환영 메시지
-                Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12.0),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.white.withValues(alpha: 0.2),
-                        child: const Icon(
-                          Icons.person,
-                          color: AppColors.textWhite,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              translate('welcome_back', '다시 오신 것을 환영합니다!'),
-                              style: const TextStyle(
-                                color: AppColors.textWhite,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              translate('keep_playing', '오늘도 퍼즐을 풀어보세요!'),
-                              style: TextStyle(
-                                color:
-                                    AppColors.textWhite.withValues(alpha: 0.8),
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // 이어서 플레이 카드 (저장된 게임이 있을 때만 표시)
-                if (mainState.hasSavedGame) ...[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ContinuePlayCard(
-                      title: translate('continue_playing', '이어서 플레이'),
-                      subtitle: mainState.savedGameInfo ??
-                          '${translate('normal_difficulty', '보통 난이도')} • ${translate('time_00_00', '00:00')}',
-                      progressText: '',
-                      progressValue: 0.0,
-                      difficulty: Difficulty.medium,
-                      onTap: () {
-                        // 통합된 방식으로 저장된 게임 이어서 하기
-                        mainNotifier
-                            .handleIntent(const ContinueSavedGameIntent());
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // 빠른 플레이 섹션
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.flash_on,
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.settings,
                       color: AppColors.textWhite,
                       size: 24,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      translate('quick_play', '빠른 플레이'),
-                      style: const TextStyle(
-                        color: AppColors.textWhite,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  translate(
-                      'quick_play_subtitle', '난이도를 선택해 바로 시작할 수 있는 새로운 퍼즐'),
-                  style: const TextStyle(
-                    color: AppColors.textWhite,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
                   ),
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // 빠른 플레이 버튼 그리드
-                QuickPlayGrid(
-                  onQuickPlayTap: (difficulty) {
-                    // 저장된 게임이 있는지 확인
-                    final gameSaveRepository =
-                        ref.read(gameSaveRepositoryProvider);
-                    gameSaveRepository
-                        .hasSavedGameByDifficulty(difficulty)
-                        .then((hasSavedGame) {
-                      if (hasSavedGame) {
-                        // 저장된 게임이 있으면 진행시간을 가져와서 선택 다이얼로그 표시
-                        final savedGameData = gameSaveRepository
-                            .getSavedGameByDifficulty(difficulty);
-                        if (savedGameData != null) {
-                          // 진행시간을 분:초 형식으로 변환
-                          final minutes = savedGameData.elapsedSeconds ~/ 60;
-                          final seconds = savedGameData.elapsedSeconds % 60;
-                          final elapsedTimeString =
-                              '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-
-                          GameSelectionDialog.show(
-                            context: context,
-                            title: '게임 선택',
-                            message: '이미 진행 중인 게임이 있습니다. 어떻게 하시겠습니까?',
-                            difficulty: difficulty,
-                            elapsedTime: elapsedTimeString,
-                            onContinueGame: () {
-                              // 통합된 방식으로 저장된 게임 이어서 하기
-                              mainNotifier.handleIntent(
-                                ContinueSavedGameIntent(difficulty),
-                              );
-                            },
-                            onNewGame: () {
-                              // 새 게임 시작
-                              gamePreparationNotifier.handleIntent(
-                                StartGamePreparationIntent(
-                                  difficulty: difficulty,
-                                  isNewGame: true,
-                                ),
-                              );
-                            },
-                          );
-                        }
-                      } else {
-                        // 저장된 게임이 없으면 바로 새 게임 시작
-                        gamePreparationNotifier.handleIntent(
-                          StartGamePreparationIntent(
-                            difficulty: difficulty,
-                            isNewGame: true,
+              // 본문 컨텐츠 (스크롤 제거, Expanded 배치)
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                  child: Center(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 상단 영역: 중앙 아이콘 (가운데 정렬, 확장 없음)
+                          Center(
+                            child: Container(
+                              width: 96,
+                              height: 96,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.grid_view,
+                                color: AppColors.primary,
+                                size: 44,
+                              ),
+                            ),
                           ),
-                        );
-                      }
-                    });
-                  },
+
+                          // 하단 영역: 3개의 컨테이너 버튼
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              HomeMenuButton(
+                                leadingIcon: Icons.grid_view_rounded,
+                                title: '새 게임',
+                                subtitle: '난이도를 선택해 시작하기',
+                                onTap: () {
+                                  // 다음 단계에서 난이도 페이지 연결 예정
+                                },
+                              ),
+                              HomeMenuButton(
+                                leadingIcon: Icons.play_arrow_rounded,
+                                title: '이어서 하기',
+                                subtitle: mainState.hasSavedGame
+                                    ? (mainState.savedGameInfo ?? '최근 기록 불러오기')
+                                    : '저장된 게임이 없습니다',
+                                enabled: mainState.hasSavedGame,
+                                onTap: () {
+                                  // 기능 연결 전 UI만 유지
+                                },
+                              ),
+                              HomeMenuButton(
+                                leadingIcon: Icons.emoji_events_rounded,
+                                title: '데일리 챌린지',
+                                subtitle: '오늘의 퍼즐 도전',
+                                onTap: () {
+                                  // 추후 연결
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 32),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
