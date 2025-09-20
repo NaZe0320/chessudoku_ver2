@@ -152,8 +152,8 @@ class MainScreen extends HookConsumerWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-              AppColors.primaryLight,
-              AppColors.primary,
+                AppColors.primaryLight,
+                AppColors.primary,
               ],
             ),
           ),
@@ -224,7 +224,8 @@ class MainScreen extends HookConsumerWidget {
               // 본문 컨텐츠 (스크롤 제거, Expanded 배치)
               Positioned.fill(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 24.0),
                   child: Center(
                     child: SizedBox(
                       width: double.infinity,
@@ -276,9 +277,13 @@ class MainScreen extends HookConsumerWidget {
                                     ? (mainState.savedGameInfo ?? '최근 기록 불러오기')
                                     : '저장된 게임이 없습니다',
                                 enabled: mainState.hasSavedGame,
-                                onTap: () {
-                                  // 기능 연결 전 UI만 유지
-                                },
+                                onTap: mainState.hasSavedGame
+                                    ? () {
+                                        // 저장된 게임 이어서 하기 실행
+                                        mainNotifier.handleIntent(
+                                            const ContinueSavedGameIntent());
+                                      }
+                                    : null,
                               ),
                               HomeMenuButton(
                                 leadingIcon: Icons.emoji_events_rounded,
