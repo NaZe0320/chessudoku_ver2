@@ -45,8 +45,8 @@ final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
   );
 });
 
-
 /// PuzzleRepository Provider
 final puzzleRepositoryProvider = Provider<PuzzleRepository>((ref) {
-  return PuzzleRepositoryImpl();
+  final apiService = ref.watch(apiServiceProvider);
+  return PuzzleRepositoryImpl(apiService);
 });

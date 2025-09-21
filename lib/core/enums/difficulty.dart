@@ -6,4 +6,12 @@ enum Difficulty {
 
   final String label;
   const Difficulty(this.label);
+
+  /// 문자열에서 Difficulty 생성
+  static Difficulty fromString(String difficultyStr) {
+    return Difficulty.values.firstWhere(
+      (difficulty) => difficulty.name == difficultyStr,
+      orElse: () => Difficulty.easy,
+    );
+  }
 }

@@ -23,4 +23,12 @@ enum ChessPiece {
         return '♙';
     }
   }
+
+  /// 문자열에서 ChessPiece 생성
+  static ChessPiece fromString(String pieceStr) {
+    return ChessPiece.values.firstWhere(
+      (piece) => piece.name == pieceStr,
+      orElse: () => ChessPiece.pawn,
+    );
+  }
 }

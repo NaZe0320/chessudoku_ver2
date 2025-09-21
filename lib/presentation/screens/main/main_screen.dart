@@ -1,7 +1,7 @@
 // import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/di/game_provider.dart';
-// import 'package:chessudoku/core/enums/difficulty.dart';
+import 'package:chessudoku/core/enums/difficulty.dart';
 import 'package:chessudoku/application/intents/main_intent.dart';
 import 'package:chessudoku/application/intents/game_preparation_intent.dart';
 import 'package:chessudoku/application/intents/game_intent.dart';
@@ -44,10 +44,9 @@ class MainScreen extends HookConsumerWidget {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final gameNotifier = ref.read(gameNotifierProvider.notifier);
 
-          // 새 게임 시작 시 난이도 설정 추가
-          if (gamePreparationState.difficulty != null) {
-            gameNotifier.setCurrentDifficulty(gamePreparationState.difficulty!);
-          }
+          // 새 게임 시작 시 서버에서 받은 실제 난이도 설정
+          final preparedBoard = gamePreparationState.preparedBoard!;
+          gameNotifier.setCurrentDifficulty(preparedBoard.difficulty);
 
           // 새 게임 시작
           gameNotifier.handleIntent(
@@ -267,7 +266,13 @@ class MainScreen extends HookConsumerWidget {
                                 title: '새 게임',
                                 subtitle: '난이도를 선택해 시작하기',
                                 onTap: () {
-                                  // 다음 단계에서 난이도 페이지 연결 예정
+                                  // Easy 난이도로 새 게임 시작
+                                  gamePreparationNotifier.handleIntent(
+                                    const StartGamePreparationIntent(
+                                      difficulty: Difficulty.easy,
+                                      isNewGame: true,
+                                    ),
+                                  );
                                 },
                               ),
                               HomeMenuButton(
