@@ -279,7 +279,7 @@ class MainScreen extends HookConsumerWidget {
                                 leadingIcon: Icons.play_arrow_rounded,
                                 title: '이어서 하기',
                                 subtitle: mainState.hasSavedGame
-                                    ? (mainState.savedGameInfo ?? '최근 기록 불러오기')
+                                    ? '최근 기록 불러오기'
                                     : '저장된 게임이 없습니다',
                                 enabled: mainState.hasSavedGame,
                                 onTap: mainState.hasSavedGame

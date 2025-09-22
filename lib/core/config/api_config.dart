@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 /// API 설정 관리 클래스
 class ApiConfig {
-  static const String devUrl = 'http://192.168.0.4:3000';
+  static const String devUrl = 'http://192.168.15.114:3000';
   static const String prodUrl = 'https://api.chessudoku.com/api';
   static const Duration timeout = Duration(seconds: 30);
 

@@ -38,37 +38,14 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   /// 게임 상태 자동 저장
   Future<void> autoSave() async {
-    developer.log('자동 저장 시작', name: 'GameNotifier');
     if (state.currentBoard != null && _currentDifficulty != null) {
-      developer.log('저장 조건 충족 - 보드 존재, 난이도: $_currentDifficulty',
-          name: 'GameNotifier');
-
-      // SavedGameData 생성
-      final savedGameData = SavedGameData(
-        board: state.currentBoard!,
-        elapsedSeconds: state.elapsedSeconds,
-        history: state.history,
-        redoHistory: state.redoHistory,
-        difficulty: _currentDifficulty!,
-        savedAt: DateTime.now(),
-        checkpoints: state.checkpoints,
-      );
-
-      // 난이도별 저장 사용
-      final success = await _gameSaveRepository.saveGameByDifficulty(
-          savedGameData, _currentDifficulty!);
-      developer.log('자동 저장 결과: $success', name: 'GameNotifier');
-    } else {
-      developer.log(
-          '저장 조건 불충족 - 보드: ${state.currentBoard != null}, 난이도: $_currentDifficulty',
-          name: 'GameNotifier');
+      await _gameSaveRepository.saveCurrentGame(state, _currentDifficulty!);
     }
   }
 
   /// 현재 게임 난이도 설정 (MainScreen에서 호출)
   void setCurrentDifficulty(Difficulty difficulty) {
     _currentDifficulty = difficulty;
-    developer.log('현재 게임 난이도 설정: $difficulty', name: 'GameNotifier');
   }
 
   @override
@@ -119,12 +96,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
   /// 준비된 게임 데이터로 게임 시작
   void _handleStartGame(GameBoard preparedBoard) {
-    developer.log('준비된 게임 데이터로 게임 시작', name: 'GameNotifier');
-
     // 준비된 게임 보드의 난이도를 현재 난이도로 설정
     _currentDifficulty = preparedBoard.difficulty;
-    developer.log('준비된 게임 보드의 난이도를 현재 난이도로 설정: $_currentDifficulty',
-        name: 'GameNotifier');
 
     // 선택된 셀을 초기화한 보드 생성
     final boardWithoutSelection = preparedBoard.selectCell(null);
@@ -145,15 +118,10 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
     // 타이머 시작
     _handleStartTimer();
-    developer.log('게임 시작 완료', name: 'GameNotifier');
   }
 
   /// 저장된 게임 데이터로 게임 시작 (GamePreparationNotifier에서 호출)
-  void handleStartSavedGameFromPreparation(SavedGameData savedGameData) {
-    developer.log('저장된 게임 데이터로 게임 시작 (준비 단계에서)', name: 'GameNotifier');
-    developer.log('저장된 경과 시간: ${savedGameData.elapsedSeconds}초',
-        name: 'GameNotifier');
-
+  void handleStartSavedGame(SavedGameData savedGameData) {
     // 현재 난이도 설정
     _currentDifficulty = savedGameData.difficulty;
 
@@ -176,49 +144,16 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
 
     // 타이머 시작
     _handleStartTimer();
-    developer.log('저장된 게임 시작 완료', name: 'GameNotifier');
   }
 
   /// 저장된 게임 로드
   void _handleLoadSavedGame() {
-    developer.log('저장된 게임 로드 시작', name: 'GameNotifier');
-
     try {
       final savedGameData = _gameSaveRepository.loadCurrentGame();
       if (savedGameData != null) {
-        developer.log('저장된 게임 데이터 로드 성공', name: 'GameNotifier');
-        developer.log('저장된 경과 시간: ${savedGameData.elapsedSeconds}초',
-            name: 'GameNotifier');
-        developer.log('현재 설정된 난이도: $_currentDifficulty', name: 'GameNotifier');
-        developer.log('저장된 게임의 난이도: ${savedGameData.difficulty}',
-            name: 'GameNotifier');
-
-        // MainNotifier에서 설정한 난이도가 있으면 우선 사용
-        if (_currentDifficulty != null) {
-          developer.log('MainNotifier에서 설정한 난이도 사용: $_currentDifficulty',
-              name: 'GameNotifier');
-          // 난이도별 저장된 게임 데이터로 교체
-          final difficultySpecificData =
-              _gameSaveRepository.getSavedGameByDifficulty(_currentDifficulty!);
-          if (difficultySpecificData != null) {
-            handleStartSavedGameFromPreparation(difficultySpecificData);
-          } else {
-            // 해당 난이도의 저장된 게임이 없으면 기존 데이터 사용
-            developer.log('해당 난이도의 저장된 게임이 없어 기존 데이터 사용', name: 'GameNotifier');
-            handleStartSavedGameFromPreparation(savedGameData);
-          }
-        } else {
-          // MainNotifier에서 난이도가 설정되지 않았으면 저장된 게임의 난이도 사용
-          developer.log('MainNotifier에서 난이도가 설정되지 않아 저장된 게임의 난이도 사용',
-              name: 'GameNotifier');
-          // 저장된 게임의 난이도를 현재 난이도로 설정
-          _currentDifficulty = savedGameData.difficulty;
-          developer.log('저장된 게임의 난이도를 현재 난이도로 설정: $_currentDifficulty',
-              name: 'GameNotifier');
-          handleStartSavedGameFromPreparation(savedGameData);
-        }
-      } else {
-        developer.log('저장된 게임 데이터가 없습니다.', name: 'GameNotifier');
+        // 통합 시스템에서는 저장된 게임의 난이도를 현재 난이도로 설정
+        _currentDifficulty = savedGameData.difficulty;
+        handleStartSavedGame(savedGameData);
       }
     } catch (e) {
       developer.log('저장된 게임 로드 실패: $e', name: 'GameNotifier');
@@ -596,10 +531,8 @@ class GameNotifier extends BaseNotifier<GameIntent, GameState>
         isPaused: true,
       );
 
-      // 게임 완료 시 현재 난이도의 저장된 게임 삭제
-      if (_currentDifficulty != null) {
-        _gameSaveRepository.clearGameByDifficulty(_currentDifficulty!);
-      }
+      // 게임 완료 시 저장된 게임 삭제
+      _gameSaveRepository.clearCurrentGame();
     }
   }
 

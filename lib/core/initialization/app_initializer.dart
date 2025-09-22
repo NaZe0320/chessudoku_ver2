@@ -247,8 +247,8 @@ class AppInitializer {
       developer.log('저장된 게임 존재 여부: $hasSavedGame', name: 'AppInitializer');
 
       if (hasSavedGame) {
-        final savedGameInfo = await gameSaveRepository.getSavedGameInfo();
-        developer.log('저장된 게임 정보: $savedGameInfo', name: 'AppInitializer');
+        final savedGameData = gameSaveRepository.loadCurrentGame();
+        developer.log('저장된 게임 데이터: ${savedGameData?.difficulty}', name: 'AppInitializer');
       }
     } catch (e) {
       developer.log('저장된 게임 확인 실패: $e', name: 'AppInitializer');

@@ -58,9 +58,8 @@ class GamePreparationNotifier
         }
       } else {
         // 이어서 하기 - 저장된 게임 로드 (네트워크 불필요)
-        final savedGameData =
-            _gameSaveRepository.getSavedGameByDifficulty(difficulty);
-        if (savedGameData != null) {
+        final savedGameData = _gameSaveRepository.loadCurrentGame();
+        if (savedGameData != null && savedGameData.difficulty == difficulty) {
           gameBoard = savedGameData.board;
         } else {
           throw Exception('저장된 게임을 찾을 수 없습니다.');
