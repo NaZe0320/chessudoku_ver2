@@ -2,6 +2,7 @@ import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/initialization/app_initializer.dart';
 import 'package:chessudoku/application/intents/main_intent.dart';
+import 'package:chessudoku/application/intents/user_intent.dart';
 import 'package:chessudoku/presentation/screens/main/main_screen.dart';
 import 'package:chessudoku/presentation/theme/color_palette.dart';
 import 'package:chessudoku/presentation/screens/tutorial/tutorial_screen.dart';
@@ -85,6 +86,9 @@ class SplashScreen extends HookConsumerWidget {
         } catch (e) {
           debugPrint('[SplashScreen] 언어 설정 복원 실패: $e');
         }
+
+        // mounted 체크 후 네비게이션
+        if (!context.mounted) return;
 
         // 튜토리얼 완료 여부 확인 후 분기
         final cache = ref.read(cacheServiceProvider);
@@ -309,25 +313,53 @@ class SplashScreen extends HookConsumerWidget {
   }
 
   /// 통합된 초기화 수행
-  Future<void> _performInitialization(BuildContext context, WidgetRef ref) async {
+  Future<void> _performInitialization(
+      BuildContext context, WidgetRef ref) async {
     try {
       debugPrint('[SplashScreen] 통합 초기화 시작');
 
       // Repository 인스턴스 가져오기
       final gameSaveRepository = ref.read(gameSaveRepositoryProvider);
-      final userProfileRepository = ref.read(userProfileRepositoryProvider);
+      // userProfileRepository 제거됨
 
       // AppInitializer를 통한 초기화
       final appInitializer = ref.read(appInitializerProvider);
       final result = await appInitializer.initialize(
         gameSaveRepository: gameSaveRepository,
-        userProfileRepository: userProfileRepository,
       );
 
       debugPrint('[SplashScreen] 초기화 결과: $result');
 
+      // 사용자 초기화 (기본 초기화와 별개로 진행) - 테스트용 로그 추가
+      debugPrint('👤 [TEST] 스플래시에서 사용자 초기화 시작');
+      final userNotifier = ref.read(userNotifierProvider.notifier);
+      await userNotifier.handleIntent(InitializeUserIntent());
+      final user = ref.read(userNotifierProvider);
+
+      debugPrint(
+          '📊 [TEST] 사용자 초기화 결과: ${user != null ? "성공(${user.userId})" : "실패(null)"}');
+      if (user == null) {
+        debugPrint('🚨 [TEST] 사용자가 null임 - 이 상황은 발생하면 안 됨!');
+      }
+
       switch (result) {
         case InitializationResult.success:
+          // 사용자 정보가 없으면 오프라인 화면으로
+          if (user == null) {
+            debugPrint('❌ [TEST] 사용자 정보 없음 - 오프라인 화면으로 이동');
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OfflineWarningScreen(),
+                ),
+              );
+            }
+            return;
+          }
+
+          debugPrint('✅ [TEST] 앱 초기화 성공 - 메인으로 진행 (user: ${user.userId})');
+
           // 성공 시 동기화 시작
           ref.read(syncNotifierProvider.notifier).startSync();
 

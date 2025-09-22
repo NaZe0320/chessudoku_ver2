@@ -35,15 +35,5 @@ class TableSchemas {
     )
   ''';
 
-  static const String createUserProfileTable = '''
-    CREATE TABLE ${DatabaseConfig.tableUserProfiles} (
-      id TEXT PRIMARY KEY,
-      deviceId TEXT NOT NULL UNIQUE,
-      createdAt TEXT NOT NULL,
-      lastLoginAt TEXT NOT NULL,
-      isPremium INTEGER NOT NULL DEFAULT 0,
-      settings TEXT NOT NULL DEFAULT '{}'
-    )
-  ''';
-
+  // UserProfile 테이블 제거됨 - 새로운 User API 시스템 사용
 }

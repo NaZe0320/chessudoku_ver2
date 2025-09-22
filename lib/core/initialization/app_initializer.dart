@@ -1,22 +1,18 @@
 import 'dart:developer' as developer;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../domain/repositories/game_save_repository.dart';
-import '../../domain/repositories/user_profile_repository.dart';
 
 /// 앱 초기화를 관리하는 매니저
+/// TODO: 새로운 User 시스템으로 재구현 필요
 class AppInitializer {
   static final AppInitializer _instance = AppInitializer._internal();
   factory AppInitializer() => _instance;
   AppInitializer._internal();
 
-  static const String _firstLaunchKey = 'is_first_launch';
-
-  /// 앱 초기화
+  /// 앱 초기화 (간소화된 버전)
   Future<InitializationResult> initialize({
     required GameSaveRepository gameSaveRepository,
-    required UserProfileRepository userProfileRepository,
   }) async {
     try {
       developer.log('앱 초기화 시작', name: 'AppInitializer');
@@ -26,35 +22,10 @@ class AppInitializer {
       final isOnline =
           await connectivity.checkConnectivity() != ConnectivityResult.none;
 
-      // 데이터 상태 확인
-      final hasUserProfile = await _checkUserProfileExists(userProfileRepository);
-      final hasLanguageData = await _checkLanguageDataExists();
-      final hasVersionData = await _checkVersionDataExists();
-
-      developer.log('데이터 상태 확인 - 프로필: $hasUserProfile, 언어: $hasLanguageData, 버전: $hasVersionData', 
-          name: 'AppInitializer');
-
-      // 필수 데이터가 없고 오프라인인 경우
-      if (!isOnline && (!hasUserProfile || !hasLanguageData || !hasVersionData)) {
-        developer.log('필수 데이터 부족 + 오프라인 상태 감지', name: 'AppInitializer');
-        return InitializationResult.dataRequiredOffline;
-      }
-
-      // 온라인 상태이거나 필수 데이터가 있는 경우
-      if (isOnline) {
-        // 온라인 상태 - 데이터 동기화 및 프로필 확인
-        await _downloadInitialData();
-        await _ensureUserProfile(userProfileRepository);
-        developer.log('온라인 초기화 완료', name: 'AppInitializer');
-      } else {
-        // 오프라인이지만 필수 데이터가 있는 경우
-        await _ensureUserProfile(userProfileRepository);
-        developer.log('오프라인 초기화 완료', name: 'AppInitializer');
-      }
-
       // 저장된 게임 확인
       await _checkSavedGame(gameSaveRepository);
 
+      developer.log('앱 초기화 완료 (온라인: $isOnline)', name: 'AppInitializer');
       return InitializationResult.success;
     } catch (e) {
       developer.log('앱 초기화 실패: $e', name: 'AppInitializer');
@@ -65,7 +36,6 @@ class AppInitializer {
   /// 앱 재실행을 위한 초기화 (네트워크 복구 후)
   Future<InitializationResult> reinitialize({
     required GameSaveRepository gameSaveRepository,
-    required UserProfileRepository userProfileRepository,
   }) async {
     try {
       developer.log('앱 재초기화 시작', name: 'AppInitializer');
@@ -74,195 +44,17 @@ class AppInitializer {
       final connectivity = Connectivity();
       final isOnline =
           await connectivity.checkConnectivity() != ConnectivityResult.none;
+
       if (!isOnline) {
         developer.log('재초기화 시에도 오프라인 상태', name: 'AppInitializer');
         return InitializationResult.dataRequiredOffline;
       }
 
-      // 데이터 상태 확인
-      final hasUserProfile = await _checkUserProfileExists(userProfileRepository);
-      final hasLanguageData = await _checkLanguageDataExists();
-      final hasVersionData = await _checkVersionDataExists();
-
-      // 필수 데이터가 없는 경우 다운로드
-      if (!hasUserProfile || !hasLanguageData || !hasVersionData) {
-        await _downloadInitialData();
-        await _ensureUserProfile(userProfileRepository);
-        developer.log('재초기화 - 데이터 다운로드 완료', name: 'AppInitializer');
-      } else {
-        await _ensureUserProfile(userProfileRepository);
-        developer.log('재초기화 - 일반 실행 완료', name: 'AppInitializer');
-      }
-
+      developer.log('재초기화 완료', name: 'AppInitializer');
       return InitializationResult.success;
     } catch (e) {
       developer.log('앱 재초기화 실패: $e', name: 'AppInitializer');
       return InitializationResult.failure;
-    }
-  }
-
-  /// 사용자 프로필 존재 여부 확인
-  Future<bool> _checkUserProfileExists(UserProfileRepository userProfileRepository) async {
-    try {
-      final profile = await userProfileRepository.getUserProfile();
-      return profile != null && profile.id.isNotEmpty;
-    } catch (e) {
-      developer.log('사용자 프로필 확인 실패: $e', name: 'AppInitializer');
-      return false;
-    }
-  }
-
-  /// 언어 데이터 존재 여부 확인
-  Future<bool> _checkLanguageDataExists() async {
-    try {
-      // TODO: 언어팩 데이터 존재 여부 확인 로직 구현
-      // 현재는 기본값으로 true 반환
-      return true;
-    } catch (e) {
-      developer.log('언어 데이터 확인 실패: $e', name: 'AppInitializer');
-      return false;
-    }
-  }
-
-  /// 버전 데이터 존재 여부 확인
-  Future<bool> _checkVersionDataExists() async {
-    try {
-      // TODO: 버전 데이터 존재 여부 확인 로직 구현
-      // 현재는 기본값으로 true 반환
-      return true;
-    } catch (e) {
-      developer.log('버전 데이터 확인 실패: $e', name: 'AppInitializer');
-      return false;
-    }
-  }
-
-  /// 최초 실행 완료 표시
-  Future<void> _markFirstLaunchComplete() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_firstLaunchKey, false);
-    } catch (e) {
-      developer.log('최초 실행 완료 표시 실패: $e', name: 'AppInitializer');
-    }
-  }
-
-  /// 초기 데이터 다운로드
-  Future<void> _downloadInitialData() async {
-    try {
-      developer.log('초기 데이터 다운로드 시작', name: 'AppInitializer');
-
-      // 기본 퍼즐 데이터 다운로드
-      await _downloadPuzzleData();
-
-      // 언어팩 데이터 다운로드
-      await _downloadLanguagePackData();
-
-      // 기타 필수 데이터 다운로드
-      await _downloadOtherEssentialData();
-
-      developer.log('초기 데이터 다운로드 완료', name: 'AppInitializer');
-    } catch (e) {
-      developer.log('초기 데이터 다운로드 실패: $e', name: 'AppInitializer');
-      rethrow;
-    }
-  }
-
-  /// 퍼즐 데이터 다운로드
-  Future<void> _downloadPuzzleData() async {
-    try {
-      developer.log('퍼즐 데이터 다운로드 시작', name: 'AppInitializer');
-
-      // TODO: 실제 API 호출로 퍼즐 데이터 다운로드
-      // - 난이도별 기본 퍼즐 세트
-      // - 데일리 챌린지 퍼즐
-      // - 체스 기물 배치 데이터
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      developer.log('퍼즐 데이터 다운로드 완료', name: 'AppInitializer');
-    } catch (e) {
-      developer.log('퍼즐 데이터 다운로드 실패: $e', name: 'AppInitializer');
-      rethrow;
-    }
-  }
-
-  /// 언어팩 데이터 다운로드
-  Future<void> _downloadLanguagePackData() async {
-    try {
-      developer.log('언어팩 데이터 다운로드 시작', name: 'AppInitializer');
-
-      // TODO: 실제 API 호출로 언어팩 데이터 다운로드
-      // - 한국어 언어팩
-      // - 영어 언어팩
-      // - 기타 지원 언어팩
-
-      await Future.delayed(const Duration(milliseconds: 300));
-      developer.log('언어팩 데이터 다운로드 완료', name: 'AppInitializer');
-    } catch (e) {
-      developer.log('언어팩 데이터 다운로드 실패: $e', name: 'AppInitializer');
-      rethrow;
-    }
-  }
-
-  /// 기타 필수 데이터 다운로드
-  Future<void> _downloadOtherEssentialData() async {
-    try {
-      developer.log('기타 필수 데이터 다운로드 시작', name: 'AppInitializer');
-
-      // TODO: 실제 API 호출로 기타 데이터 다운로드
-      // - 앱 설정 데이터
-      // - 통계 초기값
-      // - 업데이트 정보
-
-      await Future.delayed(const Duration(milliseconds: 200));
-      developer.log('기타 필수 데이터 다운로드 완료', name: 'AppInitializer');
-    } catch (e) {
-      developer.log('기타 필수 데이터 다운로드 실패: $e', name: 'AppInitializer');
-      rethrow;
-    }
-  }
-
-  /// 사용자 프로필 초기화 (최초 실행 시)
-  Future<void> _initializeUserProfile(
-      UserProfileRepository userProfileRepository) async {
-    try {
-      developer.log('사용자 프로필 초기화 시작', name: 'AppInitializer');
-
-      // getUserProfile()을 호출하여 서버 확인 후 프로필 생성/가져오기
-      final userProfile = await userProfileRepository.getUserProfile();
-
-      if (userProfile == null) {
-        developer.log('프로필 생성 실패', name: 'AppInitializer');
-        throw Exception('사용자 프로필 생성에 실패했습니다.');
-      }
-
-      developer.log('사용자 프로필 초기화 완료: ${userProfile.deviceId}',
-          name: 'AppInitializer');
-    } catch (e) {
-      developer.log('사용자 프로필 초기화 실패: $e', name: 'AppInitializer');
-      rethrow;
-    }
-  }
-
-  /// 사용자 프로필 확인 및 복구 (일반 실행 시)
-  Future<void> _ensureUserProfile(
-      UserProfileRepository userProfileRepository) async {
-    try {
-      developer.log('사용자 프로필 확인 시작', name: 'AppInitializer');
-
-      var userProfile = await userProfileRepository.getUserProfile();
-
-      if (userProfile == null) {
-        developer.log('사용자 프로필이 없어 새로 생성', name: 'AppInitializer');
-        await _initializeUserProfile(userProfileRepository);
-      } else {
-        developer.log('기존 사용자 프로필 확인됨: ${userProfile.deviceId}',
-            name: 'AppInitializer');
-        // 마지막 로그인 시간 업데이트
-        //await userProfileRepository.updateLastLogin();
-      }
-    } catch (e) {
-      developer.log('사용자 프로필 확인 실패: $e', name: 'AppInitializer');
-      rethrow;
     }
   }
 
@@ -276,7 +68,8 @@ class AppInitializer {
 
       if (hasSavedGame) {
         final savedGameData = gameSaveRepository.loadCurrentGame();
-        developer.log('저장된 게임 데이터: ${savedGameData?.difficulty}', name: 'AppInitializer');
+        developer.log('저장된 게임 데이터: ${savedGameData?.difficulty}',
+            name: 'AppInitializer');
       }
     } catch (e) {
       developer.log('저장된 게임 확인 실패: $e', name: 'AppInitializer');

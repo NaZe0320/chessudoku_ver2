@@ -1,9 +1,8 @@
 /// API 엔드포인트 상수 정의
 class ApiEndpoints {
   // ==================== User & Account ====================
-  static const String userProfile = '/api/user/profile';
-  static const String userRegister = '/api/account/register';
-  static const String userLogin = '/api/account/login';
+  static const String userByDeviceId = '/api/user/device';
+  static const String userById = '/api/user';
 
   // ==================== Puzzles ====================
   static const String puzzles = '/api/puzzles';

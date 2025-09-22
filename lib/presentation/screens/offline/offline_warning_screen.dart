@@ -86,7 +86,9 @@ class OfflineWarningScreen extends HookConsumerWidget {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: isLoading.value ? null : () => _handleRetry(context, ref, isLoading),
+                    onPressed: isLoading.value
+                        ? null
+                        : () => _handleRetry(context, ref, isLoading),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accent,
                       foregroundColor: AppColors.textWhite,
@@ -102,17 +104,18 @@ class OfflineWarningScreen extends HookConsumerWidget {
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.textWhite),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.textWhite),
                             ),
                           )
-                        : Row(
+                        : const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.refresh_rounded, size: 20),
-                              const SizedBox(width: 8),
+                              Icon(Icons.refresh_rounded, size: 20),
+                              SizedBox(width: 8),
                               Text(
                                 '다시 시도',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -142,19 +145,19 @@ class OfflineWarningScreen extends HookConsumerWidget {
     );
   }
 
-  Future<void> _handleRetry(BuildContext context, WidgetRef ref, ValueNotifier<bool> isLoading) async {
+  Future<void> _handleRetry(BuildContext context, WidgetRef ref,
+      ValueNotifier<bool> isLoading) async {
     try {
       isLoading.value = true;
 
       // Repository 인스턴스 가져오기
       final gameSaveRepository = ref.read(gameSaveRepositoryProvider);
-      final userProfileRepository = ref.read(userProfileRepositoryProvider);
+      // userProfileRepository 제거됨
 
       // AppInitializer를 통한 재초기화
       final appInitializer = ref.read(appInitializerProvider);
       final result = await appInitializer.initialize(
         gameSaveRepository: gameSaveRepository,
-        userProfileRepository: userProfileRepository,
       );
 
       debugPrint('[OfflineWarningScreen] 재시도 결과: $result');

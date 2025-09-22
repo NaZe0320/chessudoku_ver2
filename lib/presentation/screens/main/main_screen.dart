@@ -1,14 +1,10 @@
-// import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/di/game_provider.dart';
 import 'package:chessudoku/core/enums/difficulty.dart';
 import 'package:chessudoku/application/intents/main_intent.dart';
 import 'package:chessudoku/application/intents/game_preparation_intent.dart';
 import 'package:chessudoku/application/intents/game_intent.dart';
-// import 'package:chessudoku/presentation/screens/main/widgets/quick_play_grid.dart';
-// import 'package:chessudoku/presentation/screens/main/widgets/continue_play_card.dart';
 import 'package:chessudoku/presentation/screens/main/widgets/home_menu_button.dart';
-// import 'package:chessudoku/presentation/common/widgets/game_selection_dialog.dart';
 import 'package:chessudoku/presentation/common/widgets/offline_dialog.dart';
 import 'package:chessudoku/presentation/screens/game/game_screen.dart';
 import 'package:chessudoku/presentation/screens/setting/settings_screen.dart';
@@ -209,7 +205,7 @@ class MainScreen extends HookConsumerWidget {
         child: SafeArea(
           child: Stack(
             children: [
-              // 상단 고정 설정 버튼
+              // 상단 설정 버튼
               Positioned(
                 top: 0,
                 right: 0,

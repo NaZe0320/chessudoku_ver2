@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/repositories/user_profile_repository_impl.dart';
+import '../../data/repositories/user_repository_impl.dart';
 import '../../data/repositories/version_repository_impl.dart';
 import '../../data/repositories/game_save_repository_impl.dart';
 import '../../data/repositories/puzzle_repository_impl.dart';
 import '../../data/repositories/language_repository_impl.dart';
-import '../../domain/repositories/user_profile_repository.dart';
+import '../../domain/repositories/user_repository.dart';
 import '../../domain/repositories/version_repository.dart';
 import '../../domain/repositories/game_save_repository.dart';
 import '../../domain/repositories/puzzle_repository.dart';
@@ -34,15 +34,11 @@ final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
   return GameSaveRepositoryImpl(cacheService);
 });
 
-/// UserProfileRepository Provider
-final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
-  final databaseService = ref.watch(databaseServiceProvider);
+/// UserRepository Provider
+final userRepositoryProvider = Provider<UserRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
 
-  return UserProfileRepositoryImpl(
-    databaseService,
-    apiService,
-  );
+  return UserRepositoryImpl(apiService);
 });
 
 /// PuzzleRepository Provider

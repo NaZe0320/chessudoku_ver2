@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/database_service.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/cache_service.dart';
+import '../../data/services/user_service.dart';
+import 'repository_providers.dart';
 
 // ==================== Core Services ====================
 
@@ -27,4 +29,12 @@ final cacheServiceProvider = Provider<CacheService>((ref) {
 /// ApiService Provider
 final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
+});
+
+/// UserService Provider
+final userServiceProvider = Provider<UserService>((ref) {
+  final userRepository = ref.watch(userRepositoryProvider);
+  final cacheService = ref.watch(cacheServiceProvider);
+
+  return UserService(userRepository, cacheService);
 });

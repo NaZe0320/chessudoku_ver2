@@ -8,5 +8,5 @@ class DatabaseConfig {
   static const String tableDataVersions = 'data_versions';
   static const String tableLanguagePacks = 'language_packs';
   static const String tableSettings = 'settings';
-  static const String tableUserProfiles = 'user_profiles';
+  // static const String tableUserProfiles = 'user_profiles'; // 제거됨
 }

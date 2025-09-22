@@ -3,6 +3,9 @@ import 'package:chessudoku/presentation/screens/setting/language_settings_screen
 import 'package:chessudoku/presentation/theme/color_palette.dart';
 import 'package:chessudoku/presentation/screens/setting/widgets/game_settings_card.dart';
 import 'package:chessudoku/presentation/screens/setting/widgets/language_tile.dart';
+import 'package:chessudoku/application/intents/user_intent.dart';
+import 'package:chessudoku/core/di/providers.dart';
+import 'package:chessudoku/core/di/notifier_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -15,6 +18,7 @@ class SettingsScreen extends HookConsumerWidget {
     final scrollController = useScrollController();
     final translate = ref.watch(translationProvider);
     final languageState = ref.watch(languagePackNotifierProvider);
+    final user = ref.watch(userNotifierProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -88,7 +92,8 @@ class SettingsScreen extends HookConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              translate('manage_profile', '프로필 설정 및 계정 관리'),
+                              user?.nickname ??
+                                  translate('manage_profile', '프로필 설정 및 계정 관리'),
                               style: TextStyle(
                                 fontSize: 14,
                                 color:
@@ -308,16 +313,14 @@ class SettingsScreen extends HookConsumerWidget {
 
                 const SizedBox(height: 16),
 
-                // 하단 위험 구역: 계정 삭제 링크 (붉은 글자)
+                // 하단 위험 구역: 탈퇴 링크 (붉은 글자)
                 Center(
                   child: InkWell(
-                    onTap: () {
-                      // 계정 삭제 플로우 시작
-                    },
+                    onTap: () => _showWithdrawDialog(context, ref),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12.0),
                       child: Text(
-                        translate('delete_account', '계정 삭제'),
+                        translate('withdraw', '탈퇴하기'),
                         style: const TextStyle(
                           color: Colors.redAccent,
                           fontWeight: FontWeight.w600,
@@ -334,6 +337,52 @@ class SettingsScreen extends HookConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// 탈퇴 확인 다이얼로그 표시
+  Future<void> _showWithdrawDialog(BuildContext context, WidgetRef ref) async {
+    final translate = ref.read(translationProvider);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.primary,
+        title: Text(
+          translate('withdraw_confirm_title', '정말 탈퇴하시겠습니까?'),
+          style: const TextStyle(color: AppColors.textWhite),
+        ),
+        content: Text(
+          translate('withdraw_confirm_message',
+              '탈퇴 시 모든 게임 데이터와 설정이 삭제되며, 복구할 수 없습니다.\n\n앱을 다시 실행하면 새로운 계정이 생성됩니다.'),
+          style: TextStyle(color: AppColors.textWhite.withValues(alpha: 0.8)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              translate('cancel', '취소'),
+              style: const TextStyle(color: AppColors.textWhite),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: Text(
+              translate('withdraw', '탈퇴하기'),
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // 탈퇴 처리
+      final userNotifier = ref.read(userNotifierProvider.notifier);
+      await userNotifier.handleIntent(WithdrawUserIntent());
+    }
   }
 
   Widget _buildSettingTile(

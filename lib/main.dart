@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:chessudoku/core/initialization/app_initializer.dart';
+// import 'package:chessudoku/core/initialization/app_initializer.dart'; // 사용되지 않음
 import 'package:chessudoku/core/utils/logging.dart';
 
 /// 앱 재시작을 위한 전역 함수
