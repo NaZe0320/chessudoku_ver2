@@ -40,16 +40,6 @@ void main() async {
   // 앱 실행에 필수적인 서비스들 초기화
   await _initializeServices(container);
 
-  // 앱 초기화 시스템 실행
-  final appInitializer = AppInitializer();
-  final gameSaveRepository = container.read(gameSaveRepositoryProvider);
-  final userProfileRepository = container.read(userProfileRepositoryProvider);
-
-  await appInitializer.initialize(
-    gameSaveRepository: gameSaveRepository,
-    userProfileRepository: userProfileRepository,
-  );
-
   // 사용이 끝난 임시 컨테이너는 폐기
   container.dispose();
 

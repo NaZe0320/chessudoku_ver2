@@ -5,6 +5,7 @@ import 'package:chessudoku/application/intents/main_intent.dart';
 import 'package:chessudoku/presentation/screens/main/main_screen.dart';
 import 'package:chessudoku/presentation/theme/color_palette.dart';
 import 'package:chessudoku/presentation/screens/tutorial/tutorial_screen.dart';
+import 'package:chessudoku/presentation/screens/offline/offline_warning_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -63,7 +64,7 @@ class SplashScreen extends HookConsumerWidget {
         progressController.forward();
 
         // AppInitializer를 통한 통합 초기화
-        await _performInitialization(ref);
+        await _performInitialization(context, ref);
       });
 
       return null;
@@ -308,7 +309,7 @@ class SplashScreen extends HookConsumerWidget {
   }
 
   /// 통합된 초기화 수행
-  Future<void> _performInitialization(WidgetRef ref) async {
+  Future<void> _performInitialization(BuildContext context, WidgetRef ref) async {
     try {
       debugPrint('[SplashScreen] 통합 초기화 시작');
 
@@ -336,13 +337,14 @@ class SplashScreen extends HookConsumerWidget {
               .handleIntent(const CheckSavedGameIntent());
           break;
 
-        case InitializationResult.firstLaunchOffline:
-          // 최초 실행 시 오프라인 - 오프라인 모드로 진행
-          debugPrint('[SplashScreen] 최초 실행 시 오프라인 상태');
-          ref.read(syncNotifierProvider.notifier).startSync();
-          ref
-              .read(mainNotifierProvider.notifier)
-              .handleIntent(const CheckSavedGameIntent());
+        case InitializationResult.dataRequiredOffline:
+          // 데이터 부족 + 오프라인 상태 - 오프라인 경고 페이지로 이동
+          debugPrint('[SplashScreen] 데이터 부족 + 오프라인 상태');
+          if (context.mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const OfflineWarningScreen()),
+            );
+          }
           break;
 
         case InitializationResult.failure:

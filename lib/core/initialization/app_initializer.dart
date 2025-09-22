@@ -21,35 +21,41 @@ class AppInitializer {
     try {
       developer.log('앱 초기화 시작', name: 'AppInitializer');
 
-      // 최초 실행 여부 확인
-      final isFirstLaunch = await _checkFirstLaunch();
+      // 네트워크 상태 확인
+      final connectivity = Connectivity();
+      final isOnline =
+          await connectivity.checkConnectivity() != ConnectivityResult.none;
 
-      if (isFirstLaunch) {
-        // 최초 실행 시 온라인 체크
-        final connectivity = Connectivity();
-        final isOnline =
-            await connectivity.checkConnectivity() != ConnectivityResult.none;
+      // 데이터 상태 확인
+      final hasUserProfile = await _checkUserProfileExists(userProfileRepository);
+      final hasLanguageData = await _checkLanguageDataExists();
+      final hasVersionData = await _checkVersionDataExists();
 
-        if (!isOnline) {
-          developer.log('최초 실행 시 오프라인 상태 감지', name: 'AppInitializer');
-          return InitializationResult.firstLaunchOffline;
-        }
+      developer.log('데이터 상태 확인 - 프로필: $hasUserProfile, 언어: $hasLanguageData, 버전: $hasVersionData', 
+          name: 'AppInitializer');
 
-        // 최초 실행 시 온라인 상태 - 기본 데이터 다운로드 및 사용자 프로필 생성
-        await _downloadInitialData();
-        await _initializeUserProfile(userProfileRepository);
-        await _markFirstLaunchComplete();
-
-        developer.log('최초 실행 초기화 완료', name: 'AppInitializer');
-        return InitializationResult.success;
-      } else {
-        // 일반 실행 - 저장된 게임 및 사용자 프로필 확인
-        await _checkSavedGame(gameSaveRepository);
-        await _ensureUserProfile(userProfileRepository);
-
-        developer.log('일반 실행 초기화 완료', name: 'AppInitializer');
-        return InitializationResult.success;
+      // 필수 데이터가 없고 오프라인인 경우
+      if (!isOnline && (!hasUserProfile || !hasLanguageData || !hasVersionData)) {
+        developer.log('필수 데이터 부족 + 오프라인 상태 감지', name: 'AppInitializer');
+        return InitializationResult.dataRequiredOffline;
       }
+
+      // 온라인 상태이거나 필수 데이터가 있는 경우
+      if (isOnline) {
+        // 온라인 상태 - 데이터 동기화 및 프로필 확인
+        await _downloadInitialData();
+        await _ensureUserProfile(userProfileRepository);
+        developer.log('온라인 초기화 완료', name: 'AppInitializer');
+      } else {
+        // 오프라인이지만 필수 데이터가 있는 경우
+        await _ensureUserProfile(userProfileRepository);
+        developer.log('오프라인 초기화 완료', name: 'AppInitializer');
+      }
+
+      // 저장된 게임 확인
+      await _checkSavedGame(gameSaveRepository);
+
+      return InitializationResult.success;
     } catch (e) {
       developer.log('앱 초기화 실패: $e', name: 'AppInitializer');
       return InitializationResult.failure;
@@ -70,41 +76,63 @@ class AppInitializer {
           await connectivity.checkConnectivity() != ConnectivityResult.none;
       if (!isOnline) {
         developer.log('재초기화 시에도 오프라인 상태', name: 'AppInitializer');
-        return InitializationResult.firstLaunchOffline;
+        return InitializationResult.dataRequiredOffline;
       }
 
-      // 최초 실행 여부 재확인
-      final isFirstLaunch = await _checkFirstLaunch();
+      // 데이터 상태 확인
+      final hasUserProfile = await _checkUserProfileExists(userProfileRepository);
+      final hasLanguageData = await _checkLanguageDataExists();
+      final hasVersionData = await _checkVersionDataExists();
 
-      if (isFirstLaunch) {
-        // 최초 실행 데이터 다운로드 및 사용자 프로필 생성
+      // 필수 데이터가 없는 경우 다운로드
+      if (!hasUserProfile || !hasLanguageData || !hasVersionData) {
         await _downloadInitialData();
-        await _initializeUserProfile(userProfileRepository);
-        await _markFirstLaunchComplete();
-
-        developer.log('재초기화 - 최초 실행 완료', name: 'AppInitializer');
-        return InitializationResult.success;
-      } else {
-        // 일반 실행 - 기본 확인만
         await _ensureUserProfile(userProfileRepository);
-
+        developer.log('재초기화 - 데이터 다운로드 완료', name: 'AppInitializer');
+      } else {
+        await _ensureUserProfile(userProfileRepository);
         developer.log('재초기화 - 일반 실행 완료', name: 'AppInitializer');
-        return InitializationResult.success;
       }
+
+      return InitializationResult.success;
     } catch (e) {
       developer.log('앱 재초기화 실패: $e', name: 'AppInitializer');
       return InitializationResult.failure;
     }
   }
 
-  /// 최초 실행 여부 확인
-  Future<bool> _checkFirstLaunch() async {
+  /// 사용자 프로필 존재 여부 확인
+  Future<bool> _checkUserProfileExists(UserProfileRepository userProfileRepository) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(_firstLaunchKey) ?? true;
+      final profile = await userProfileRepository.getUserProfile();
+      return profile != null && profile.id.isNotEmpty;
     } catch (e) {
-      developer.log('최초 실행 확인 실패: $e', name: 'AppInitializer');
+      developer.log('사용자 프로필 확인 실패: $e', name: 'AppInitializer');
+      return false;
+    }
+  }
+
+  /// 언어 데이터 존재 여부 확인
+  Future<bool> _checkLanguageDataExists() async {
+    try {
+      // TODO: 언어팩 데이터 존재 여부 확인 로직 구현
+      // 현재는 기본값으로 true 반환
       return true;
+    } catch (e) {
+      developer.log('언어 데이터 확인 실패: $e', name: 'AppInitializer');
+      return false;
+    }
+  }
+
+  /// 버전 데이터 존재 여부 확인
+  Future<bool> _checkVersionDataExists() async {
+    try {
+      // TODO: 버전 데이터 존재 여부 확인 로직 구현
+      // 현재는 기본값으로 true 반환
+      return true;
+    } catch (e) {
+      developer.log('버전 데이터 확인 실패: $e', name: 'AppInitializer');
+      return false;
     }
   }
 
@@ -262,8 +290,8 @@ enum InitializationResult {
   /// 성공
   success,
 
-  /// 최초 실행 시 오프라인
-  firstLaunchOffline,
+  /// 데이터 부족으로 인한 오프라인 모드 필요
+  dataRequiredOffline,
 
   /// 실패
   failure,
