@@ -20,6 +20,19 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 class MainScreen extends HookConsumerWidget {
   const MainScreen({super.key});
 
+  /// 경과 시간을 분:초 형식으로 포맷팅
+  String _formatGameTime(int elapsedSeconds) {
+    final minutes = elapsedSeconds ~/ 60;
+    final seconds = elapsedSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  /// 오늘 날짜를 문자열로 반환
+  String _getTodayDate() {
+    final now = DateTime.now();
+    return '${now.month}월 ${now.day}일';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // final translate = ref.watch(translationProvider);
@@ -279,7 +292,7 @@ class MainScreen extends HookConsumerWidget {
                                 leadingIcon: Icons.play_arrow_rounded,
                                 title: '이어서 하기',
                                 subtitle: mainState.hasSavedGame
-                                    ? '최근 기록 불러오기'
+                                    ? '${mainState.savedGameData?.difficulty.label} • ${_formatGameTime(mainState.savedGameData?.elapsedSeconds ?? 0)}'
                                     : '저장된 게임이 없습니다',
                                 enabled: mainState.hasSavedGame,
                                 onTap: mainState.hasSavedGame
@@ -293,7 +306,7 @@ class MainScreen extends HookConsumerWidget {
                               HomeMenuButton(
                                 leadingIcon: Icons.emoji_events_rounded,
                                 title: '데일리 챌린지',
-                                subtitle: '오늘의 퍼즐 도전',
+                                subtitle: _getTodayDate(),
                                 onTap: () {
                                   // 추후 연결
                                 },
