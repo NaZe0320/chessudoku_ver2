@@ -4,6 +4,7 @@ import 'package:chessudoku/presentation/theme/color_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // import 'package:chessudoku/core/initialization/app_initializer.dart'; // 사용되지 않음
 import 'package:chessudoku/core/utils/logging.dart';
@@ -20,6 +21,14 @@ void restartApp() {
 void main() async {
   // Flutter 엔진 초기화
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 환경 변수 파일 로드 (파일이 없어도 에러 없이 진행)
+  try {
+    await dotenv.load(fileName: ".env");
+    debugPrint('Main: .env 파일 로드 완료');
+  } catch (e) {
+    debugPrint('Main: .env 파일을 찾을 수 없습니다. 기본값을 사용합니다.');
+  }
 
   // 로깅 초기화
   setupLogging();
