@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chessudoku/application/intents/user_intent.dart';
 import 'package:chessudoku/domain/entities/user.dart';
+import 'package:chessudoku/domain/entities/user_initialization_result.dart';
 import 'package:chessudoku/data/services/user_service.dart';
 import 'package:flutter/services.dart';
 
@@ -13,48 +14,49 @@ class UserNotifier extends StateNotifier<User?> {
   UserNotifier(this._userService) : super(null);
 
   /// Intent 처리
-  Future<void> handleIntent(UserIntent intent) async {
+  Future<UserInitializationResult?> handleIntent(UserIntent intent) async {
     switch (intent) {
       case InitializeUserIntent():
-        await _handleInitializeUser();
+        return await _handleInitializeUser();
       case WithdrawUserIntent():
         await _handleWithdrawUser();
+        return null;
     }
   }
 
   /// 사용자 초기화 처리 - 테스트용 로그 추가
-  Future<User?> _handleInitializeUser() async {
+  Future<UserInitializationResult> _handleInitializeUser() async {
     developer.log('🚀 [TEST] UserNotifier 사용자 초기화 시작', name: 'UserNotifier');
 
     try {
       developer.log('🔄 [TEST] UserService.initializeUser() 호출 중...',
           name: 'UserNotifier');
-      final user = await _userService.initializeUser();
+      final result = await _userService.initializeUser();
 
       developer.log(
-          '📝 [TEST] UserService 결과 수신: ${user != null ? user.userId : "null"}',
+          '📝 [TEST] UserService 결과 수신: ${result.status} - ${result.user?.userId ?? "null"}',
           name: 'UserNotifier');
-      state = user;
+      
+      state = result.user;
 
-      if (user != null) {
-        developer.log('✅ [TEST] UserNotifier 사용자 초기화 성공: ${user.userId}',
+      if (result.isSuccess && result.user != null) {
+        developer.log('✅ [TEST] UserNotifier 사용자 초기화 성공: ${result.user!.userId}',
             name: 'UserNotifier');
         developer.log(
-            '👤 [TEST] 사용자 정보 - 닉네임: ${user.nickname}, 디바이스ID: ${user.deviceId}',
+            '👤 [TEST] 사용자 정보 - 닉네임: ${result.user!.nickname}, 디바이스ID: ${result.user!.deviceId}',
             name: 'UserNotifier');
       } else {
-        developer.log('❌ [TEST] UserNotifier 사용자 초기화 실패 - null 반환됨',
+        developer.log('❌ [TEST] UserNotifier 사용자 초기화 실패: ${result.status} - ${result.errorMessage}',
             name: 'UserNotifier');
-        developer.log('🚨 [TEST] 이 상황은 발생하면 안 됨!', name: 'UserNotifier');
       }
 
-      return user;
+      return result;
     } catch (e) {
       developer.log('💥 [TEST] UserNotifier 사용자 초기화 예외 발생: $e',
           name: 'UserNotifier');
       developer.log('🔧 [TEST] 상태를 null로 설정', name: 'UserNotifier');
       state = null;
-      return null;
+      return UserInitializationResult.unknownError(e.toString());
     }
   }
 

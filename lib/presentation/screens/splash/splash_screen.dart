@@ -7,6 +7,7 @@ import 'package:chessudoku/presentation/screens/main/main_screen.dart';
 import 'package:chessudoku/presentation/theme/color_palette.dart';
 import 'package:chessudoku/presentation/screens/tutorial/tutorial_screen.dart';
 import 'package:chessudoku/presentation/screens/offline/offline_warning_screen.dart';
+import 'package:chessudoku/presentation/screens/error/server_error_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -333,20 +334,27 @@ class SplashScreen extends HookConsumerWidget {
       // 사용자 초기화 (기본 초기화와 별개로 진행) - 테스트용 로그 추가
       debugPrint('👤 [TEST] 스플래시에서 사용자 초기화 시작');
       final userNotifier = ref.read(userNotifierProvider.notifier);
-      await userNotifier.handleIntent(InitializeUserIntent());
+      final userResult = await userNotifier.handleIntent(InitializeUserIntent());
       final user = ref.read(userNotifierProvider);
 
       debugPrint(
-          '📊 [TEST] 사용자 초기화 결과: ${user != null ? "성공(${user.userId})" : "실패(null)"}');
-      if (user == null) {
-        debugPrint('🚨 [TEST] 사용자가 null임 - 이 상황은 발생하면 안 됨!');
-      }
+          '📊 [TEST] 사용자 초기화 결과: ${userResult?.status ?? "null"} - ${user?.userId ?? "null"}');
 
       switch (result) {
         case InitializationResult.success:
-          // 사용자 정보가 없으면 오프라인 화면으로
-          if (user == null) {
-            debugPrint('❌ [TEST] 사용자 정보 없음 - 오프라인 화면으로 이동');
+          // 사용자 초기화 결과에 따른 분기 처리
+          if (userResult != null && userResult.isSuccess && user != null) {
+            debugPrint('✅ [TEST] 앱 및 사용자 초기화 성공 - 메인으로 진행 (user: ${user.userId})');
+
+            // 성공 시 동기화 시작
+            ref.read(syncNotifierProvider.notifier).startSync();
+
+            // MainNotifier 상태 초기화
+            ref
+                .read(mainNotifierProvider.notifier)
+                .handleIntent(const CheckSavedGameIntent());
+          } else if (userResult != null && userResult.isNetworkError) {
+            debugPrint('📴 [TEST] 네트워크 오류 - 오프라인 화면으로 이동');
             if (context.mounted) {
               Navigator.pushReplacement(
                 context,
@@ -356,17 +364,29 @@ class SplashScreen extends HookConsumerWidget {
               );
             }
             return;
+          } else if (userResult != null && userResult.isServerError) {
+            debugPrint('🚨 [TEST] 서버 오류 - 서버 오류 화면으로 이동');
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ServerErrorScreen(),
+                ),
+              );
+            }
+            return;
+          } else {
+            debugPrint('❓ [TEST] 알 수 없는 오류 - 서버 오류 화면으로 이동');
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ServerErrorScreen(),
+                ),
+              );
+            }
+            return;
           }
-
-          debugPrint('✅ [TEST] 앱 초기화 성공 - 메인으로 진행 (user: ${user.userId})');
-
-          // 성공 시 동기화 시작
-          ref.read(syncNotifierProvider.notifier).startSync();
-
-          // MainNotifier 상태 초기화
-          ref
-              .read(mainNotifierProvider.notifier)
-              .handleIntent(const CheckSavedGameIntent());
           break;
 
         case InitializationResult.dataRequiredOffline:

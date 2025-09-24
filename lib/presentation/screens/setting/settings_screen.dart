@@ -1,6 +1,7 @@
 import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/presentation/screens/setting/language_settings_screen.dart';
 import 'package:chessudoku/presentation/theme/color_palette.dart';
+import 'package:chessudoku/presentation/common/widgets/withdraw_dialog.dart';
 import 'package:chessudoku/presentation/screens/setting/widgets/game_settings_card.dart';
 import 'package:chessudoku/presentation/screens/setting/widgets/language_tile.dart';
 import 'package:chessudoku/application/intents/user_intent.dart';
@@ -343,39 +344,13 @@ class SettingsScreen extends HookConsumerWidget {
   Future<void> _showWithdrawDialog(BuildContext context, WidgetRef ref) async {
     final translate = ref.read(translationProvider);
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await WithdrawDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.primary,
-        title: Text(
-          translate('withdraw_confirm_title', '정말 탈퇴하시겠습니까?'),
-          style: const TextStyle(color: AppColors.textWhite),
-        ),
-        content: Text(
-          translate('withdraw_confirm_message',
-              '탈퇴 시 모든 게임 데이터와 설정이 삭제되며, 복구할 수 없습니다.\n\n앱을 다시 실행하면 새로운 계정이 생성됩니다.'),
-          style: TextStyle(color: AppColors.textWhite.withValues(alpha: 0.8)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              translate('cancel', '취소'),
-              style: const TextStyle(color: AppColors.textWhite),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
-            child: Text(
-              translate('withdraw', '탈퇴하기'),
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+      title: translate('withdraw_confirm_title', '정말 탈퇴하시겠습니까?'),
+      message: translate('withdraw_confirm_message',
+          '탈퇴 시 모든 게임 데이터와 설정이 삭제되며, 복구할 수 없습니다.\n\n앱을 다시 실행하면 새로운 계정이 생성됩니다.'),
+      cancelText: translate('cancel', '취소'),
+      withdrawText: translate('withdraw', '탈퇴하기'),
     );
 
     if (confirmed == true) {
