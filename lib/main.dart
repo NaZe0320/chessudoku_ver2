@@ -1,12 +1,16 @@
-import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/presentation/screens/splash/splash_screen.dart';
 import 'package:chessudoku/presentation/theme/color_palette.dart';
+import 'package:chessudoku/data/services/cache_service.dart';
+import 'package:chessudoku/data/services/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // import 'package:chessudoku/core/initialization/app_initializer.dart'; // 사용되지 않음
 import 'package:chessudoku/core/utils/logging.dart';
+
+// 전역 서비스 인스턴스들 (앱 시작 전 초기화)
+DatabaseService? _globalDatabaseService;
 
 /// 앱 재시작을 위한 전역 함수
 void restartApp() {
@@ -33,15 +37,9 @@ void main() async {
     ),
   );
 
-  // --- Dependency Injection Container 생성 ---
-  // 앱 실행 전 초기화가 필요한 프로바이더들을 위해 임시 컨테이너 생성
-  final container = ProviderContainer();
-
-  // 앱 실행에 필수적인 서비스들 초기화
-  await _initializeServices(container);
-
-  // 사용이 끝난 임시 컨테이너는 폐기
-  container.dispose();
+  // --- 전역 서비스들 초기화 ---
+  // Provider 시스템과 별개로 전역 서비스들을 먼저 초기화
+  await _initializeGlobalServices();
 
   runApp(
     const ProviderScope(
@@ -51,14 +49,23 @@ void main() async {
   );
 }
 
-/// 앱 실행에 필수적인 서비스들을 초기화하는 함수
-Future<void> _initializeServices(ProviderContainer container) async {
-  // 캐시 서비스 초기화
-  await container.read(cacheServiceProvider).init();
+/// 전역 서비스들을 초기화하는 함수 (Provider 시스템 이전에 실행)
+Future<void> _initializeGlobalServices() async {
+  // 캐시 서비스 전역 초기화 (Singleton)
+  await CacheService.initializeGlobal();
 
   // 데이터베이스 서비스 초기화
-  await container.read(databaseServiceProvider).database;
-  debugPrint('Main: 데이터베이스 서비스 초기화 완료');
+  _globalDatabaseService = DatabaseService();
+  await _globalDatabaseService!.database; // 데이터베이스 연결 초기화
+  debugPrint('Main: DatabaseService 전역 초기화 완료');
+}
+
+/// 전역 DatabaseService 인스턴스 반환 (Provider에서 사용)
+DatabaseService getGlobalDatabaseService() {
+  if (_globalDatabaseService == null) {
+    throw StateError('전역 DatabaseService가 초기화되지 않았습니다. main()에서 _initializeGlobalServices()를 먼저 호출하세요.');
+  }
+  return _globalDatabaseService!;
 }
 
 class MainApp extends ConsumerWidget {
