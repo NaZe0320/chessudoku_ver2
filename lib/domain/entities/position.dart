@@ -28,4 +28,13 @@ class Position with _$Position {
 
   /// 3x3 블록 인덱스 반환 (0-8)
   int get blockIndex => (row ~/ 3) * 3 + (col ~/ 3);
+
+  /// 문자열에서 Position 생성 (예: "0,1" -> Position(0, 1))
+  static Position fromString(String positionStr) {
+    final parts = positionStr.split(',');
+    return Position(
+      row: int.parse(parts[0]),
+      col: int.parse(parts[1]),
+    );
+  }
 }

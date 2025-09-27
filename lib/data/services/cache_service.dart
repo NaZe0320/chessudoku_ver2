@@ -2,12 +2,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
 /// 앱 전체에서 사용할 수 있는 캐시 서비스
-/// SharedPreferences를 래핑한 클래스
+/// SharedPreferences를 래핑한 클래스 (Singleton)
 class CacheService {
   SharedPreferences? _prefs;
+  static CacheService? _instance;
+  static bool _isInitialized = false;
 
   // 일반 생성자 사용
-  CacheService();
+  CacheService._();
+
+  /// Singleton 인스턴스 반환 (초기화는 별도)
+  static CacheService getInstance() {
+    _instance ??= CacheService._();
+    return _instance!;
+  }
+
+  /// 전역 초기화 (앱 시작 시 한 번만 호출)
+  static Future<void> initializeGlobal() async {
+    if (!_isInitialized) {
+      final instance = getInstance();
+      await instance.init();
+      _isInitialized = true;
+      developer.log('CacheService 전역 초기화 완료', name: 'CacheService');
+    }
+  }
 
   /// 캐시 서비스 초기화
   Future<void> init() async {

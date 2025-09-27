@@ -3,10 +3,12 @@ import '../../application/notifiers/main_notifier.dart';
 import '../../application/notifiers/game_preparation_notifier.dart';
 import '../../application/notifiers/sync_notifier.dart';
 import '../../application/notifiers/game_settings_notifier.dart';
+import '../../application/notifiers/user_notifier.dart';
 import '../../application/states/sync_state.dart';
 import '../../application/states/main_state.dart';
 import '../../application/states/game_preparation_state.dart';
 import '../../application/states/game_settings_state.dart';
+import '../../domain/entities/user.dart';
 import 'repository_providers.dart';
 import 'service_providers.dart';
 
@@ -34,7 +36,6 @@ final gamePreparationNotifierProvider =
   return GamePreparationNotifier(
     gameSaveRepository: gameSaveRepository,
     puzzleRepository: puzzleRepository,
-    puzzleRecordRepository: ref.watch(puzzleRecordRepositoryProvider),
   );
 });
 
@@ -43,4 +44,10 @@ final gameSettingsNotifierProvider =
     StateNotifierProvider<GameSettingsNotifier, GameSettingsState>((ref) {
   final cacheService = ref.watch(cacheServiceProvider);
   return GameSettingsNotifier(cacheService);
+});
+
+/// UserNotifier Provider
+final userNotifierProvider = StateNotifierProvider<UserNotifier, User?>((ref) {
+  final userService = ref.watch(userServiceProvider);
+  return UserNotifier(userService);
 });

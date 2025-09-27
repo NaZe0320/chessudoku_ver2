@@ -2,9 +2,12 @@ import 'package:chessudoku/core/di/language_pack_provider.dart';
 import 'package:chessudoku/core/di/providers.dart';
 import 'package:chessudoku/core/initialization/app_initializer.dart';
 import 'package:chessudoku/application/intents/main_intent.dart';
+import 'package:chessudoku/application/intents/user_intent.dart';
 import 'package:chessudoku/presentation/screens/main/main_screen.dart';
 import 'package:chessudoku/presentation/theme/color_palette.dart';
 import 'package:chessudoku/presentation/screens/tutorial/tutorial_screen.dart';
+import 'package:chessudoku/presentation/screens/offline/offline_warning_screen.dart';
+import 'package:chessudoku/presentation/screens/error/server_error_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -63,7 +66,7 @@ class SplashScreen extends HookConsumerWidget {
         progressController.forward();
 
         // AppInitializer를 통한 통합 초기화
-        await _performInitialization(ref);
+        await _performInitialization(context, ref);
       });
 
       return null;
@@ -84,6 +87,9 @@ class SplashScreen extends HookConsumerWidget {
         } catch (e) {
           debugPrint('[SplashScreen] 언어 설정 복원 실패: $e');
         }
+
+        // mounted 체크 후 네비게이션
+        if (!context.mounted) return;
 
         // 튜토리얼 완료 여부 확인 후 분기
         final cache = ref.read(cacheServiceProvider);
@@ -308,41 +314,89 @@ class SplashScreen extends HookConsumerWidget {
   }
 
   /// 통합된 초기화 수행
-  Future<void> _performInitialization(WidgetRef ref) async {
+  Future<void> _performInitialization(
+      BuildContext context, WidgetRef ref) async {
     try {
       debugPrint('[SplashScreen] 통합 초기화 시작');
 
       // Repository 인스턴스 가져오기
       final gameSaveRepository = ref.read(gameSaveRepositoryProvider);
-      final userProfileRepository = ref.read(userProfileRepositoryProvider);
+      // userProfileRepository 제거됨
 
       // AppInitializer를 통한 초기화
       final appInitializer = ref.read(appInitializerProvider);
       final result = await appInitializer.initialize(
         gameSaveRepository: gameSaveRepository,
-        userProfileRepository: userProfileRepository,
       );
 
       debugPrint('[SplashScreen] 초기화 결과: $result');
 
+      // 사용자 초기화 (기본 초기화와 별개로 진행) - 테스트용 로그 추가
+      debugPrint('👤 [TEST] 스플래시에서 사용자 초기화 시작');
+      final userNotifier = ref.read(userNotifierProvider.notifier);
+      final userResult = await userNotifier.handleIntent(InitializeUserIntent());
+      final user = ref.read(userNotifierProvider);
+
+      debugPrint(
+          '📊 [TEST] 사용자 초기화 결과: ${userResult?.status ?? "null"} - ${user?.userId ?? "null"}');
+
       switch (result) {
         case InitializationResult.success:
-          // 성공 시 동기화 시작
-          ref.read(syncNotifierProvider.notifier).startSync();
+          // 사용자 초기화 결과에 따른 분기 처리
+          if (userResult != null && userResult.isSuccess && user != null) {
+            debugPrint('✅ [TEST] 앱 및 사용자 초기화 성공 - 메인으로 진행 (user: ${user.userId})');
 
-          // MainNotifier 상태 초기화
-          ref
-              .read(mainNotifierProvider.notifier)
-              .handleIntent(const CheckSavedGameIntent());
+            // 성공 시 동기화 시작
+            ref.read(syncNotifierProvider.notifier).startSync();
+
+            // MainNotifier 상태 초기화
+            ref
+                .read(mainNotifierProvider.notifier)
+                .handleIntent(const CheckSavedGameIntent());
+          } else if (userResult != null && userResult.isNetworkError) {
+            debugPrint('📴 [TEST] 네트워크 오류 - 오프라인 화면으로 이동');
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OfflineWarningScreen(),
+                ),
+              );
+            }
+            return;
+          } else if (userResult != null && userResult.isServerError) {
+            debugPrint('🚨 [TEST] 서버 오류 - 서버 오류 화면으로 이동');
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ServerErrorScreen(),
+                ),
+              );
+            }
+            return;
+          } else {
+            debugPrint('❓ [TEST] 알 수 없는 오류 - 서버 오류 화면으로 이동');
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ServerErrorScreen(),
+                ),
+              );
+            }
+            return;
+          }
           break;
 
-        case InitializationResult.firstLaunchOffline:
-          // 최초 실행 시 오프라인 - 오프라인 모드로 진행
-          debugPrint('[SplashScreen] 최초 실행 시 오프라인 상태');
-          ref.read(syncNotifierProvider.notifier).startSync();
-          ref
-              .read(mainNotifierProvider.notifier)
-              .handleIntent(const CheckSavedGameIntent());
+        case InitializationResult.dataRequiredOffline:
+          // 데이터 부족 + 오프라인 상태 - 오프라인 경고 페이지로 이동
+          debugPrint('[SplashScreen] 데이터 부족 + 오프라인 상태');
+          if (context.mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const OfflineWarningScreen()),
+            );
+          }
           break;
 
         case InitializationResult.failure:

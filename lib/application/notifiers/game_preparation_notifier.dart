@@ -3,27 +3,24 @@ import 'package:chessudoku/application/intents/game_preparation_intent.dart';
 import 'package:chessudoku/application/states/game_preparation_state.dart';
 import 'package:chessudoku/domain/repositories/game_save_repository.dart';
 import 'package:chessudoku/domain/repositories/puzzle_repository.dart';
-import 'package:chessudoku/domain/repositories/puzzle_record_repository.dart';
 import 'package:chessudoku/core/enums/difficulty.dart';
+import 'package:chessudoku/core/enums/chess_piece.dart';
 import 'package:chessudoku/domain/entities/game_board.dart';
 import 'package:chessudoku/domain/entities/sudoku_board.dart';
+import 'package:chessudoku/domain/entities/position.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:developer' as developer;
-import 'dart:math';
 
 class GamePreparationNotifier
     extends BaseNotifier<GamePreparationIntent, GamePreparationState> {
   final GameSaveRepository _gameSaveRepository;
   final PuzzleRepository _puzzleRepository;
-  final PuzzleRecordRepository _puzzleRecordRepository;
 
   GamePreparationNotifier({
     required GameSaveRepository gameSaveRepository,
     required PuzzleRepository puzzleRepository,
-    required PuzzleRecordRepository puzzleRecordRepository,
   })  : _gameSaveRepository = gameSaveRepository,
         _puzzleRepository = puzzleRepository,
-        _puzzleRecordRepository = puzzleRecordRepository,
         super(const GamePreparationState());
 
   @override
@@ -61,9 +58,8 @@ class GamePreparationNotifier
         }
       } else {
         // 이어서 하기 - 저장된 게임 로드 (네트워크 불필요)
-        final savedGameData =
-            _gameSaveRepository.getSavedGameByDifficulty(difficulty);
-        if (savedGameData != null) {
+        final savedGameData = _gameSaveRepository.loadCurrentGame();
+        if (savedGameData != null && savedGameData.difficulty == difficulty) {
           gameBoard = savedGameData.board;
         } else {
           throw Exception('저장된 게임을 찾을 수 없습니다.');
@@ -115,49 +111,51 @@ class GamePreparationNotifier
       return null;
     }
 
-    // 로컬 데이터베이스에서 퍼즐 가져오기
-    return _loadPuzzleFromLocal(difficulty);
+    // 서버에서 랜덤 퍼즐 가져오기
+    return _loadRandomPuzzleFromServer(difficulty);
   }
 
-  /// 로컬 데이터베이스에서 퍼즐을 가져와서 GameBoard로 변환
-  Future<GameBoard?> _loadPuzzleFromLocal(Difficulty difficulty) async {
+  /// 서버에서 랜덤 퍼즐을 가져와서 GameBoard로 변환
+  Future<GameBoard?> _loadRandomPuzzleFromServer(Difficulty difficulty) async {
     try {
-      developer.log('로컬 데이터베이스에서 퍼즐 로드 시작 - $difficulty',
+      developer.log('서버에서 랜덤 퍼즐 로드 시작 - $difficulty',
           name: 'GamePreparationNotifier');
 
-      // 완료한 퍼즐 제외를 위한 임시 필터링
-      // 1) 해당 난이도의 완료 기록 조회 -> puzzleId 집합 생성
-      final completedRecords =
-          await _puzzleRecordRepository.getRecordsByDifficulty(difficulty);
-      final completedIds = completedRecords.map((r) => r.puzzleId).toSet();
+      // 서버에서 랜덤 퍼즐 조회 (난이도 파라미터 없이)
+      final puzzle = await _puzzleRepository.getRandomPuzzle();
 
-      // 2) 난이도별 퍼즐 목록을 배치로 가져와(임시: 50개) 완료 퍼즐 제외
-      final puzzles =
-          await _puzzleRepository.getPuzzlesByDifficulty(difficulty, limit: 50);
-      final candidates =
-          puzzles.where((p) => !completedIds.contains(p.puzzleId)).toList();
-
-      if (candidates.isEmpty) {
-        developer.log('완료하지 않은 퍼즐이 없습니다 - $difficulty',
+      if (puzzle == null) {
+        developer.log('서버에서 퍼즐을 가져올 수 없습니다 - $difficulty',
             name: 'GamePreparationNotifier');
-        throw Exception('완료하지 않은 퍼즐이 없습니다.');
+        throw Exception('서버에서 퍼즐을 가져올 수 없습니다.');
       }
-
-      // 3) 후보 중 랜덤 선택
-      final randomIndex = Random().nextInt(candidates.length);
-      final puzzle = candidates[randomIndex];
 
       developer.log('퍼즐 로드 완료 - ${puzzle.puzzleId}',
           name: 'GamePreparationNotifier');
 
-      // 로컬 데이터베이스에서 가져온 체스 기물 사용
-      developer.log('체스 기물 개수: ${puzzle.chessPieces.length}',
+      // 서버에서 가져온 체스 기물을 Position, ChessPiece 맵으로 변환
+      final chessPiecesMap = <Position, ChessPiece>{};
+      puzzle.chessPieces.forEach((key, value) {
+        // key는 "row,col" 형식, value는 체스 기물 이름
+        final parts = key.split(',');
+        if (parts.length == 2) {
+          final row = int.tryParse(parts[0]);
+          final col = int.tryParse(parts[1]);
+          if (row != null && col != null) {
+            final position = Position(row: row, col: col);
+            final chessPiece = ChessPiece.fromString(value);
+            chessPiecesMap[position] = chessPiece;
+          }
+        }
+      });
+
+      developer.log('체스 기물 개수: ${chessPiecesMap.length}',
           name: 'GamePreparationNotifier');
 
       // 체스 기물을 포함한 보드 생성
       final puzzleBoard = SudokuBoard.fromPuzzleWithChess(
         puzzle: puzzle.puzzle,
-        chessPieces: puzzle.chessPieces,
+        chessPieces: chessPiecesMap,
       );
 
       developer.log('퍼즐 보드 생성 완료 - 셀 수: ${puzzleBoard.cells.length}',
@@ -180,8 +178,7 @@ class GamePreparationNotifier
           name: 'GamePreparationNotifier');
       return gameBoard;
     } catch (e) {
-      developer.log('로컬 데이터베이스에서 퍼즐 로드 실패 - $e',
-          name: 'GamePreparationNotifier');
+      developer.log('서버에서 퍼즐 로드 실패 - $e', name: 'GamePreparationNotifier');
       rethrow;
     }
   }

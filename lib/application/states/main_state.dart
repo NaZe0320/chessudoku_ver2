@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:chessudoku/domain/entities/game_board.dart';
+import 'package:chessudoku/domain/entities/saved_game_data.dart';
 import 'package:chessudoku/core/enums/difficulty.dart';
 
 part 'main_state.freezed.dart';
@@ -9,7 +10,7 @@ class MainState with _$MainState {
   const factory MainState({
     @Default(false) bool isLoading,
     @Default(false) bool hasSavedGame,
-    String? savedGameInfo, // 저장된 게임 정보 (예: "보통 난이도 • 8번 정답 • 65% 완료")
+    SavedGameData? savedGameData, // 저장된 게임 데이터 (다국어 처리는 UI에서)
 
     // 게임 시작 관련 정보
     GameBoard? savedGameBoard, // 저장된 게임 보드

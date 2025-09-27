@@ -49,8 +49,7 @@ class DatabaseService {
     await db.execute(TableSchemas.createDataVersionsTable);
     await db.execute(TableSchemas.createLanguagePacksTable);
     await db.execute(TableSchemas.createSettingsTable);
-    await db.execute(TableSchemas.createUserProfileTable);
-    await db.execute(TableSchemas.createPuzzleRecordsTable);
+    // UserProfile 테이블 제거됨 - 새로운 User API 시스템 사용
     debugPrint('모든 테이블 생성 완료');
   }
 

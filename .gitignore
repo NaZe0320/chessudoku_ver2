@@ -69,3 +69,6 @@ android/app/.cxx/Debug/fx6g6m34/x86_64/.cmake/api/v1/reply/index-2025-07-18T06-2
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 firebase.json
+
+# 환경 변수 파일 (민감한 정보 포함)
+.env

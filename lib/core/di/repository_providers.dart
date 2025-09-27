@@ -1,14 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/repositories/user_profile_repository_impl.dart';
+import '../../data/repositories/user_repository_impl.dart';
 import '../../data/repositories/version_repository_impl.dart';
 import '../../data/repositories/game_save_repository_impl.dart';
-import '../../data/repositories/puzzle_record_repository_impl.dart';
 import '../../data/repositories/puzzle_repository_impl.dart';
 import '../../data/repositories/language_repository_impl.dart';
-import '../../domain/repositories/user_profile_repository.dart';
+import '../../domain/repositories/user_repository.dart';
 import '../../domain/repositories/version_repository.dart';
 import '../../domain/repositories/game_save_repository.dart';
-import '../../domain/repositories/puzzle_record_repository.dart';
 import '../../domain/repositories/puzzle_repository.dart';
 import '../../domain/repositories/language_repository.dart';
 import 'service_providers.dart';
@@ -36,24 +34,15 @@ final gameSaveRepositoryProvider = Provider<GameSaveRepository>((ref) {
   return GameSaveRepositoryImpl(cacheService);
 });
 
-/// UserProfileRepository Provider
-final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
-  final databaseService = ref.watch(databaseServiceProvider);
+/// UserRepository Provider
+final userRepositoryProvider = Provider<UserRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
 
-  return UserProfileRepositoryImpl(
-    databaseService,
-    apiService,
-  );
-});
-
-/// PuzzleRecordRepository Provider
-final puzzleRecordRepositoryProvider = Provider<PuzzleRecordRepository>((ref) {
-  final databaseService = ref.watch(databaseServiceProvider);
-  return PuzzleRecordRepositoryImpl(databaseService);
+  return UserRepositoryImpl(apiService);
 });
 
 /// PuzzleRepository Provider
 final puzzleRepositoryProvider = Provider<PuzzleRepository>((ref) {
-  return PuzzleRepositoryImpl();
+  final apiService = ref.watch(apiServiceProvider);
+  return PuzzleRepositoryImpl(apiService);
 });

@@ -63,20 +63,20 @@ class DeviceUtils {
   /// Fallback UUID 디바이스 ID
   static Future<String> _getFallbackId() async {
     // 캐시에서 기존 ID 확인
-    final cachedId = CacheService().getString(_fallbackCacheKey);
+    final cachedId = CacheService.getInstance().getString(_fallbackCacheKey);
     if (cachedId != null && cachedId.isNotEmpty) {
       return cachedId;
     }
 
     // 새로운 UUID 생성 및 캐시
     final newId = const Uuid().v4();
-    await CacheService().setString(_fallbackCacheKey, newId);
+    await CacheService.getInstance().setString(_fallbackCacheKey, newId);
     return newId;
   }
 
   /// 디바이스 ID 캐시 초기화 (테스트용)
   @visibleForTesting
   static Future<void> resetDeviceId() async {
-    await CacheService().remove(_fallbackCacheKey);
+    await CacheService.getInstance().remove(_fallbackCacheKey);
   }
 }

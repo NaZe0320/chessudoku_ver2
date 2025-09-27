@@ -2,7 +2,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:chessudoku/domain/entities/position.dart';
 import 'package:chessudoku/domain/entities/cell_content.dart';
 import 'package:chessudoku/core/enums/chess_piece.dart';
-import 'dart:developer' as developer;
 
 part 'sudoku_board.freezed.dart';
 
@@ -65,7 +64,6 @@ class SudokuBoard with _$SudokuBoard {
     required Map<Position, ChessPiece> chessPieces,
   }) {
     final cells = <Position, CellContent>{};
-    int cellCount = 0;
 
     for (int row = 0; row < 9; row++) {
       for (int col = 0; col < 9; col++) {
@@ -81,18 +79,10 @@ class SudokuBoard with _$SudokuBoard {
             chessPiece: chessPiece,
             isInitial: finalValue != null,
           );
-          cellCount++;
-
-          if (chessPiece != null) {
-            developer.log('체스 기물 셀 생성: ($row, $col) -> $chessPiece',
-                name: 'SudokuBoard');
-          }
         }
       }
     }
 
-    developer.log('SudokuBoard.fromPuzzleWithChess 완료 - 총 셀 수: $cellCount',
-        name: 'SudokuBoard');
     return SudokuBoard(cells: cells);
   }
 
