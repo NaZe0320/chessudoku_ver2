@@ -1,4 +1,4 @@
-# CheSudoku
+# ChesSudoku
 
 체스와 스도쿠를 결합한 퍼즐 게임 Flutter 앱입니다.
 
